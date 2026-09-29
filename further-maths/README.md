@@ -32,6 +32,8 @@ cd further-maths && python3 -m http.server 8000
 
 ## Deploy
 
+- **Netlify Drop (fastest)**: run `python3 tools/build_netlify.py`, then drag `phasespace-fm-netlify.zip` (or the `dist/netlify` folder) onto https://app.netlify.com/drop. The build inlines all CSS/JS into one `index.html`.
+
 - **GitHub Pages**: Settings → Pages → Source: *GitHub Actions*. The workflow `.github/workflows/deploy-further-maths.yml` publishes this folder on every push to `main`.
 - **Netlify / Vercel / Cloudflare Pages**: publish directory `further-maths` (a root `netlify.toml` is included). Or drag-and-drop the folder into Netlify Drop.
 
