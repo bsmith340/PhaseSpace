@@ -537,7 +537,7 @@ Substitute: $${V.dot(n, a)}${sgn(V.dot(n, d))}\lambda=${p}\Rightarrow\lambda=${t
       drills: [
         () => {
           let d, n; do { d = V.rnd(-4, 4); n = V.rnd(-4, 4); } while (V.isZero(d) || V.isZero(n) || V.dot(d, n) === 0);
-          const th = Math.asin(Math.abs(V.dot(d, n)) / (V.norm(d) * V.norm(n))) * 180 / Math.PI;
+          const th = Math.asin(Math.min(1, Math.abs(V.dot(d, n)) / (V.norm(d) * V.norm(n)))) * 180 / Math.PI;
           return {
             q: T`Find the acute angle (degrees) between the line with direction $${V.tex(d)}$ and the plane $${poly([[n[0], 'x'], [n[1], 'y'], [n[2], 'z']])}=${ri(-5, 5)}$.`,
             fields: [{ label: 'θ (°)', ans: th }],

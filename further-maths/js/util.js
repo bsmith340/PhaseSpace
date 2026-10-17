@@ -100,60 +100,7 @@ class Q {
   tex() { return fr(this.n, this.d); }
 }
 
-// ---------- answer parsing ----------
-const FN = {
-  arsinh: Math.asinh, arcosh: Math.acosh, artanh: Math.atanh, arcsinh: Math.asinh, arccosh: Math.acosh, arctanh: Math.atanh,
-  arcsin: Math.asin, arccos: Math.acos, arctan: Math.atan, sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh,
-  sech: x => 1 / Math.cosh(x), cosech: x => 1 / Math.sinh(x), coth: x => 1 / Math.tanh(x),
-  sin: Math.sin, cos: Math.cos, tan: Math.tan, sec: x => 1 / Math.cos(x), cosec: x => 1 / Math.sin(x), csc: x => 1 / Math.sin(x), cot: x => 1 / Math.tan(x),
-  sqrt: Math.sqrt, ln: Math.log, log: Math.log10, exp: Math.exp, abs: Math.abs,
-};
-const NAMES = [...Object.keys(FN), 'pi', 'e'].sort((a, b) => b.length - a.length);
-
-function tokenize(s) {
-  s = s.toLowerCase().replace(/π/g, 'pi').replace(/√/g, 'sqrt').replace(/[×·]/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-').replace(/\*\*/g, '^').replace(/\s+/g, '');
-  const out = []; let i = 0;
-  while (i < s.length) {
-    const c = s[i];
-    const m = /^(\d+\.?\d*|\.\d+)/.exec(s.slice(i));
-    if (m) { out.push({ t: 'n', v: parseFloat(m[1]) }); i += m[1].length; continue; }
-    if ('+-*/^()'.includes(c)) { out.push({ t: c }); i++; continue; }
-    const name = NAMES.find(n => s.startsWith(n, i));
-    if (name) { out.push(name === 'pi' ? { t: 'n', v: Math.PI } : name === 'e' ? { t: 'n', v: Math.E } : { t: 'f', v: name }); i += name.length; continue; }
-    throw new Error('bad char');
-  }
-  return out;
-}
-function evalExpr(str) {
-  let toks, p = 0;
-  try { toks = tokenize(str); } catch { return NaN; }
-  if (!toks.length) return NaN;
-  const peek = () => toks[p], eat = t => { if (toks[p] && toks[p].t === t) { p++; return true; } return false; };
-  const startsAtom = k => k && (k.t === 'n' || k.t === 'f' || k.t === '(');
-  function expr() { let v = term(); for (;;) { if (eat('+')) v += term(); else if (eat('-')) v -= term(); else return v; } }
-  function term() {
-    let v = unary();
-    for (;;) {
-      if (eat('*')) v *= unary(); else if (eat('/')) v /= unary();
-      else if (startsAtom(peek())) v *= power();
-      else return v;
-    }
-  }
-  function unary() { if (eat('-')) return -unary(); if (eat('+')) return unary(); return power(); }
-  function power() { const b = atom(); if (eat('^')) return Math.pow(b, unary()); return b; }
-  function atom() {
-    const k = toks[p++];
-    if (!k) throw 0;
-    if (k.t === 'n') return k.v;
-    if (k.t === '(') { const v = expr(); if (!eat(')')) throw 0; return v; }
-    if (k.t === 'f') {
-      if (eat('^')) { const e = unary(); return Math.pow(FN[k.v](power()), e); } // sin^2(x)
-      return FN[k.v](power());
-    }
-    throw 0;
-  }
-  try { const v = expr(); if (p !== toks.length) return NaN; return v; } catch { return NaN; }
-}
+// ---------- answer checking (parser lives in mathengine.js) ----------
 const splitList = s => s.split(/[,;]/).map(x => x.trim()).filter(x => x.length);
 function close(x, a, tol) {
   if (!isFinite(x)) return false;

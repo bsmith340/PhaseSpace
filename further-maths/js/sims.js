@@ -334,7 +334,7 @@ SIMS.space3d = {
         const { P: Pp, d, n, a, p, t0 } = cfg; planePatch(n, p, C.b, Pp);
         L3(V.sub(Pp, V.mul(d, 3)), V.add(Pp, V.mul(d, 3)), C.a, 2.5); D3(a, C.a, 4); T3('A', a, C.a); D3(Pp, C.c, 7); T3('P', Pp, C.c);
         const nn = V.mul(n, 1.6 / V.norm(n)); L3(Pp, V.add(Pp, nn), C.d, 2.5); T3('n', V.add(Pp, nn), C.d);
-        const th = Math.asin(Math.abs(V.dot(d, n)) / (V.norm(d) * V.norm(n))) * 180 / Math.PI;
+        const th = Math.asin(Math.min(1, Math.abs(V.dot(d, n)) / (V.norm(d) * V.norm(n)))) * 180 / Math.PI;
         html = `<p>Line $\\mathbf r=${V.row(a)}+\\lambda${V.row(d)}$</p><p>Plane $${eqS(n, p)}$</p><p class="hl">$\\lambda=${t0}$ → $P${V.row(Pp)}$<br>Angle line–plane $=${f3(th)}^\\circ$</p>`;
       } else if (mode === 'skew') {
         const { a, b, d1, d2, P1, P2, dist, c } = cfg;

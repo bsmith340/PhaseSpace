@@ -1,46 +1,40 @@
-# PhaseSpace · Further Maths A2 1
+# BCSFM · Further Maths A2 1
 
-Static study site for **CCEA GCE Further Mathematics, Unit A2 1 (Pure)**: notes, interactive simulations and endless randomised drills, organised by spec point.
+The complete self-study guide to **CCEA GCE Further Mathematics, Unit A2 1 (Pure)**. It's a static site with no build step and no server.
 
 ## What's inside
 
-| Topic | Spec points | Simulations |
-|---|---|---|
-| 1 Complex numbers | 1.1 exponential form · 1.2 de Moivre · 1.3 nth roots · 1.4 loci | Argand multiplier, de Moivre spiral, roots polygon, loci explorer |
-| 2 Matrices | 2.1 3×3 det/inverse · 2.2 eigen · 2.3 diagonalisation/Cayley–Hamilton · 2.4 systems of planes | 2×2 transformation + eigenvectors, 3D three-planes |
-| 3 Vectors | 3.1 vector/triple product · 3.2 lines & planes · 3.3 angles & distances | 3D line–plane, skew lines |
-| 4 Hyperbolic functions | 4.1 definitions/Osborn · 4.2 log forms · 4.3 equations · 4.4 calculus | Unit hyperbola + graphs |
-| 5 Further calculus | 5.1 inverse trig derivatives · 5.2 standard integrals · 5.3 reduction formulae · 5.4 arc length/surface area · 5.5 improper integrals & volumes | Arc length / surface / volume |
-| 6 Series | 6.1 Maclaurin · 6.2 limits · 6.3 Taylor | Maclaurin/Taylor polynomials |
-| 7 Polar | 7.1 sketching · 7.2 area · 7.3 tangents | Polar plotter with area + tangents |
-| 8 Differential equations | 8.1 integrating factor · 8.2 CF · 8.3 PI & IVPs · 8.4 SHM/damping | Slope field, damped/forced oscillator |
-| 9 Induction | 9.1 divisibility & matrices · 9.2 series & inequalities | Induction checker |
+- **Specification map** (`#/spec`): every A2 1 topic and outcome, linked to its chapter, simulation and drills. Each point is tagged *A2 1* (named in public course outlines), *Check spec* (usually taught alongside A2 1) or *AS 1 / Extension*. The outcome wording is BCSFM's summary, not CCEA's official text.
+- **Textbook** (`#/book`): one chapter per spec point. Each chapter has the big picture, definitions, theorems with full proofs and derivations, step-by-step worked examples, common mistakes, exam technique, check-yourself questions and an **original** exam-style question with a mark-scheme-style solution.
+- **Drills**: about 100 randomised question generators with worked solutions. *Smart drill* serves your weakest points first; *Sprint* is 10 timed questions.
+- **Simulations**: 13 interactive models (Argand diagram, roots of unity, loci, polar areas, hyperbola, Maclaurin, slope fields, oscillator, and more).
+- **Lab**: a graph plotter (y = f(x), parametric, polar; roots, turning points, intersections, areas), a complex-number workbench, a matrix calculator (eigenvalues and eigenvectors), calculus and series tools (integrals including improper ones, derivatives, Taylor coefficients, limits, Σ sums), an ODE solver, polynomial roots and partial fractions.
+- **Scientific calculator**: SHIFT/HYP, DEG/RAD, complex numbers, exact-value recognition (fractions, surds, multiples of π, logs) and history. It's available as a pop-up on every page (🧮 or Alt+C) or as a full page.
+- **Formula book**: searchable, with each formula linked to the chapter that proves it.
+- **Past papers**: links to the official CCEA papers, mark schemes and Chief Examiner's Reports, a score tracker, and your own bank of real past-paper questions and examiner quotes (with sources), tagged by spec point. Export and import your backups as JSON.
 
-- **Drills**: every question is generated with random parameters and a full worked solution. Answers are checked numerically, so exact forms (`5pi/12`, `2sqrt(3)`, `ln(3/2)`, `e^2/6`) and 3 s.f. decimals both work.
-- **Smart drill** weights questions toward spec points you haven't secured. **Sprint** = 10 timed mixed questions.
-- **Progress** (mastery = correct out of last 10 per spec point) is stored in `localStorage` only.
+BCSFM does not reproduce CCEA papers or reports. Add them yourself from the official PDFs.
 
-Spec numbering is PhaseSpace's own grouping of the A2 1 content — cross-check against the official CCEA specification.
+## Deploy (Netlify Drop)
+
+```bash
+python3 tools/build_netlify.py      # → bcsfm-netlify.zip (single index.html at the root)
+```
+
+Drag `bcsfm-netlify.zip` (or the `dist/netlify` folder) onto https://app.netlify.com/drop.
 
 ## Run locally
 
-No build step. Open `index.html` directly, or serve the folder:
+Open `further-maths/index.html`, or run `cd further-maths && python3 -m http.server 8000`.
 
-```bash
-cd further-maths && python3 -m http.server 8000
-```
+## Source layout
 
-## Deploy
-
-- **Netlify Drop (fastest)**: run `python3 tools/build_netlify.py`, then drag `phasespace-fm-netlify.zip` (or the `dist/netlify` folder) onto https://app.netlify.com/drop. The build inlines all CSS/JS into one `index.html`.
-
-- **GitHub Pages**: Settings → Pages → Source: *GitHub Actions*. The workflow `.github/workflows/deploy-further-maths.yml` publishes this folder on every push to `main`.
-- **Netlify / Vercel / Cloudflare Pages**: publish directory `further-maths` (a root `netlify.toml` is included). Or drag-and-drop the folder into Netlify Drop.
-
-## Editing content
-
-- `js/content-1.js` — Complex numbers, Matrices, Vectors
-- `js/content-2.js` — Hyperbolics, Calculus, Series, Polar, DEs, Induction
-- `js/sims.js` — simulations; `js/app.js` — routing, drill engine, progress; `js/util.js` — helpers and answer parser
-
-Each spec point is `{ id, code, title, notes, sims, drills }`; each drill is a function returning `{ q, fields | mc, sol, hint? }`.
+| File | Contents |
+|---|---|
+| `js/mathengine.js` | expression parser (real and complex), exact-value recognition, numerics |
+| `js/content-*.js` | spec points: summary notes and drill generators |
+| `js/spec.js` | A2 1 structure, status tags, sources |
+| `js/book-*.js` | textbook chapters |
+| `js/formulae.js` | formula book |
+| `js/sims.js`, `js/lab.js`, `js/calc.js` | simulations, lab tools, calculator |
+| `js/drill.js`, `js/app.js` | drill engine; routing and views |

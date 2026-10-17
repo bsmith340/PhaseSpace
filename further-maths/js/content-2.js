@@ -517,10 +517,10 @@ topic({
   blurb: 'Integrating factors, 2nd-order linear with constant coefficients, particular integrals, SHM & damping.',
   points: [
     {
-      id: 'de1', code: '8.1', title: 'First order: integrating factor',
+      id: 'de1', code: '8.1', title: 'First order: separable & integrating factor',
       sims: ['slopefield'],
       notes: T`
-<p>For $\dfrac{dy}{dx}+P(x)y=Q(x)$:</p>
+<p><b>Separable</b> $\dfrac{dy}{dx}=f(x)g(y)$: $\displaystyle\int\frac{dy}{g(y)}=\int f(x)\,dx$.</p><p><b>Linear</b> $\dfrac{dy}{dx}+P(x)y=Q(x)$:</p>
 $$\text{IF}=e^{\int P\,dx},\qquad \frac{d}{dx}\big(y\cdot\text{IF}\big)=Q\cdot\text{IF}\ \Rightarrow\ y\cdot\text{IF}=\int Q\cdot\text{IF}\,dx$$
 <ul><li>Divide first so the coefficient of $\frac{dy}{dx}$ is 1.</li>
 <li>No $+c$ needed in the IF; you <b>must</b> include $+c$ after the final integration — and divide it by the IF too.</li>
@@ -534,6 +534,12 @@ $$\text{IF}=e^{\int P\,dx},\qquad \frac{d}{dx}\big(y\cdot\text{IF}\big)=Q\cdot\t
           let p = ri(1, 4), q = ri(-3, 3); if (p + q === 0) q++;
           const y0 = ri(-2, 3), v = Math.exp(q) / (p + q) + (y0 - 1 / (p + q)) * Math.exp(-p);
           return { q: T`Solve $\dfrac{dy}{dx}+${p}y=e^{${q}x}$ with $y(0)=${y0}$. Find $y(1)$ (3 s.f.).`, fields: [{ label: 'y(1)', ans: v }], sol: T`IF $=e^{${p}x}$: $(ye^{${p}x})'=e^{${p + q}x}\Rightarrow ye^{${p}x}=\tfrac{1}{${p + q}}e^{${p + q}x}+C$.<br>$y=${fr(1, p + q)}e^{${q}x}+Ce^{-${p}x}$, $C=${y0}-${fr(1, p + q)}=${fr(y0 * (p + q) - 1, p + q)}$. $y(1)\approx${num(v)}$.` };
+        },
+        () => {
+          const t = ri(0, 1), k = rnz(-3, 3), y0 = ri(1, 5);
+          if (t === 0) { const v = y0 * Math.exp(k / 2); return { q: T`Solve the separable equation $\dfrac{dy}{dx}=${k === 1 ? '' : k === -1 ? '-' : k}xy$ with $y(0)=${y0}$, and find $y(1)$.`, fields: [{ label: 'y(1)', ans: v }], sol: T`Separate: $\int\frac{dy}{y}=\int ${k}x\,dx\Rightarrow\ln|y|=${nice(k / 2)}x^2+c$.<br>$y=Ae^{${nice(k / 2)}x^2}$, $y(0)=${y0}\Rightarrow A=${y0}$. $\;y(1)=${y0}e^{${nice(k / 2)}}\approx${num(v)}$.` }; }
+          const a = ri(1, 4), v = Math.tan(a * 0.25 + Math.atan(0));
+          return { q: T`Solve $\dfrac{dy}{dx}=${a}(1+y^2)$ with $y(0)=0$, and find $y\left(\tfrac14\right)$.`, fields: [{ label: 'y(1/4)', ans: v }], sol: T`$\int\frac{dy}{1+y^2}=\int${a}\,dx\Rightarrow\arctan y=${a}x+c$, $c=0$. $\;y=\tan(${a}x)$, $y(\tfrac14)=\tan${nice(a / 4)}\approx${num(v)}$.` };
         },
         () => {
           const L = [[T`\tan x`, T`\sec x`], [T`\cot x`, T`\sin x`], [T`\dfrac{2}{x}`, T`x^2`], [T`-\dfrac1x`, T`\dfrac1x`], [T`2x`, T`e^{x^2}`], [T`\dfrac1{x+1}`, T`x+1`], [T`-\tan x`, T`\cos x`], [T`3`, T`e^{3x}`], [T`\dfrac{2x}{x^2+1}`, T`x^2+1`]];
