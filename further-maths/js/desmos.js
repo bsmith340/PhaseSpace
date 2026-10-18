@@ -31,7 +31,7 @@ function mountDesmosAPI(el, presets) {
 }
 
 LAB.graph = {
-  title: 'Interactive grapher', icon: '📈', course: 'both', desc: 'Desmos-style graphing: type expressions, sliders appear automatically, drag points, see roots, turning points and intersections. Every spec preset for both courses, or a blank graph.',
+  title: 'Interactive grapher', icon: 'f(x)', course: 'both', desc: 'Desmos-style graphing: type expressions, sliders appear automatically, drag points, see roots, turning points and intersections. Every spec preset for both courses, or a blank graph.',
   mount(el) {
     const groups = {};
     for (const id of COURSE_ORDER) for (const p of COURSES[id].points) if (GRAPH_PRESETS[p.id]) groups[`${COURSES[id].short} ${p.code} ${p.title}`] = GRAPH_PRESETS[p.id];

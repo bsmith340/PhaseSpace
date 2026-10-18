@@ -10,7 +10,7 @@ function field(label, value, attrs = '') { return `<label class="lf"><span>${lab
 
 /* ---------------- Grapher ---------------- */
 LAB.grapher = {
-  title: 'Graph plotter', icon: '📈', desc: 'Plot y = f(x), parametric and polar curves. Find roots, turning points, intersections and areas.',
+  title: 'Graph plotter', icon: 'y=', desc: 'Plot y = f(x), parametric and polar curves. Find roots, turning points, intersections and areas.',
   mount(el) {
     const palette = () => { const C = COL(); return [C.a, C.b, C.c, C.d, '#a78bfa', '#38bdf8']; };
     let items = [{ t: 'y', e: 'sinh(x)' }, { t: 'y', e: 'cosh(x)' }, { t: 'polar', e: '2(1+cos(theta))', a: '0', b: '2pi' }];

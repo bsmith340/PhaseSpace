@@ -156,7 +156,7 @@ function mountGraph(el, presets, { free = false } = {}) {
     list.querySelectorAll('.gx-row').forEach(row => {
       const it = items[+row.dataset.i], ex = row.querySelector('.gx-extra');
       row.classList.toggle('bad', !!it.err);
-      if (it.err) { ex.innerHTML = `<span class="gx-err">⚠ ${esc(it.err)}</span>`; return; }
+      if (it.err) { ex.innerHTML = `<span class="gx-err">${esc(it.err)}</span>`; return; }
       if (it.kind === 'slider') {
         if (!ex.querySelector('input[type=range]')) {
           ex.innerHTML = `<div class="gx-sl"><input class="gx-min" value="${G_.fmt(it.min)}"><input type="range" min="${it.min}" max="${it.max}" step="${it.step || (it.max - it.min) / 200}" value="${it.val}"><input class="gx-max" value="${G_.fmt(it.max)}"></div>`;

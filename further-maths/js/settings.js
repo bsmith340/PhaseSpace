@@ -71,25 +71,25 @@ function backupDue() {
   if (!PREFS.remind || !hasProgress()) return false;
   return !PREFS.lastBackup || Date.now() - PREFS.lastBackup > PREFS.remind * 864e5;
 }
-const backupBanner = () => backupDue() ? `<div class="box notice backup"><b>💾 Save your progress.</b> ${PREFS.lastBackup ? `Your last saved copy is from ${new Date(PREFS.lastBackup).toLocaleDateString()}.` : "You haven't saved a copy yet."} Progress is kept only in this browser for this web address — if you redeploy to a new Netlify link or switch device it won't be there. <a class="btn small primary" href="javascript:void 0" onclick="downloadProgress(); this.closest('.backup').remove()">Download progress file</a> <a class="btn small" href="#/settings">More options</a></div>` : '';
+const backupBanner = () => backupDue() ? `<div class="box notice backup"><b>Save your progress.</b> ${PREFS.lastBackup ? `Your last saved copy is from ${new Date(PREFS.lastBackup).toLocaleDateString()}.` : "You haven't saved a copy yet."} Progress is kept only in this browser for this web address — if you redeploy to a new Netlify link or switch device it won't be there. <a class="btn small primary" href="javascript:void 0" onclick="downloadProgress(); this.closest('.backup').remove()">Download progress file</a> <a class="btn small" href="#/settings">More options</a></div>` : '';
 
 /* ---------- view ---------- */
 function viewSettings() {
   const nRead = Object.keys(DB.read).length, nQ = Object.values(DB.stats).reduce((a, s) => a + (s.a || 0), 0), size = (() => { try { return (localStorage.getItem(STORE) || '').length; } catch { return 0; } })();
   const opt = (name, val, label, cur) => `<label class="radio"><input type="radio" name="${name}" value="${val}" ${String(cur) === String(val) ? 'checked' : ''}> ${label}</label>`;
   mount(`<nav class="crumbs"><a href="#/">Courses</a> / Settings</nav>
-  <header class="phead slim"><div><h1>⚙ Settings</h1><p>Save and load your progress, and set up BCSFM the way you like it.</p></div></header>
+  <header class="phead slim"><div><h1>Settings</h1><p>Save and load your progress, and set up BCSFM the way you like it.</p></div></header>
 
-  <section class="card setsec" id="progress"><h2>💾 Your progress</h2>
+  <section class="card setsec" id="progress"><h2>Your progress</h2>
     <p>${nRead} chapter${nRead === 1 ? '' : 's'} read · ${nQ} question${nQ === 1 ? '' : 's'} answered · ${DB.bank.length} past-paper question${DB.bank.length === 1 ? '' : 's'} saved · ${(size / 1024).toFixed(1)} KB.
       ${PREFS.lastBackup ? `Last saved copy: <b>${new Date(PREFS.lastBackup).toLocaleString()}</b>.` : '<b>No saved copy yet.</b>'}</p>
     <div class="box notice">Progress is stored <b>only in this browser, for this web address</b>. If you drag a new zip onto Netlify Drop you get a <b>new address that starts empty</b> — so download your progress first and load it on the new site. (To keep the same address, use "Deploys → drag and drop" on your existing Netlify site instead of a new Drop.)</div>
     <h3>Save</h3>
-    <div class="row"><button class="btn primary" id="dl">⬇ Download progress file</button><button class="btn" id="mkcode">📋 Copy progress code</button></div>
+    <div class="row"><button class="btn primary" id="dl">${ico('down')} Download progress file</button><button class="btn" id="mkcode">Copy progress code</button></div>
     <textarea id="codeout" class="code-box" rows="3" readonly placeholder="Your progress code appears here — paste it into BCSFM on another device or site." hidden></textarea>
     <h3>Load</h3>
     <div class="row">${opt('mode', 'merge', 'Merge with what is here (keeps the best of both)', 'merge')}${opt('mode', 'replace', 'Replace everything here', 'merge')}</div>
-    <div class="row"><label class="btn">⬆ Load progress file<input type="file" id="ul" accept=".json,application/json" hidden></label></div>
+    <div class="row"><label class="btn">${ico('up')} Load progress file<input type="file" id="ul" accept=".json,application/json" hidden></label></div>
     <textarea id="codein" class="code-box" rows="3" placeholder="…or paste a progress code here"></textarea>
     <div class="row"><button class="btn" id="ldcode">Load code</button><span id="pmsg" class="muted small"></span></div>
     <h3>Keep it safe</h3>
@@ -97,18 +97,18 @@ function viewSettings() {
       <button class="btn small" id="persist">Ask the browser not to clear BCSFM data</button><span id="persistmsg" class="muted small"></span></div>
   </section>
 
-  <section class="card setsec"><h2>🎨 Appearance</h2>
+  <section class="card setsec"><h2>Appearance</h2>
     <div class="setrow"><b>Theme</b><div class="row">${opt('theme', '', 'Match my device', getTheme())}${opt('theme', 'light', 'Light', getTheme())}${opt('theme', 'dark', 'Dark', getTheme())}</div></div>
     <div class="setrow"><b>Text size</b><div class="row">${opt('size', 's', 'Small', PREFS.size)}${opt('size', 'm', 'Normal', PREFS.size)}${opt('size', 'l', 'Large', PREFS.size)}${opt('size', 'xl', 'Extra large', PREFS.size)}</div></div>
   </section>
 
-  <section class="card setsec"><h2>📚 Study</h2>
+  <section class="card setsec"><h2>Study</h2>
     <div class="setrow"><b>When I open BCSFM, go to</b><div class="row">${opt('start', 'chooser', 'the course chooser', PREFS.start)}${opt('start', 'last', 'the course I used last', PREFS.start)}${COURSE_ORDER.map(id => opt('start', id, COURSES[id].short, PREFS.start)).join('')}</div></div>
     <div class="setrow"><b>Sprint length</b><div class="row">${[5, 10, 15, 20].map(n => opt('sprintN', n, `${n} questions`, PREFS.sprintN)).join('')}</div></div>
     <div class="setrow"><b>Drills and sprints include</b><div class="row">${opt('support', 'true', 'every spec chapter', PREFS.support)}${opt('support', 'false', `only chapters tagged "${STATUS.core[0]}" (skip "${STATUS.check[0]}")`, PREFS.support)}</div></div>
   </section>
 
-  <section class="card setsec"><h2>🧮 Calculator & graphs</h2>
+  <section class="card setsec"><h2>Calculator &amp; graphs</h2>
     <div class="setrow"><b>Calculator angle mode</b><div class="row">${opt('deg', 'false', 'Radians', CALC_STATE.deg)}${opt('deg', 'true', 'Degrees', CALC_STATE.deg)}</div></div>
     <div class="setrow"><b>Calculator history</b><div class="row"><button class="btn small" id="clrhist">Clear history (${CALC_STATE.hist.length})</button></div></div>
     <div class="setrow"><b>Graph tab uses</b><div class="row">${opt('graph', 'native', 'BCSFM grapher (works offline, presets load instantly)', PREFS.graph)}${opt('graph', 'desmos', 'Desmos (needs a Desmos API key)', PREFS.graph)}</div></div>
@@ -116,7 +116,7 @@ function viewSettings() {
       <p class="muted small">Desmos issues API keys to developers on request. Without one, the BCSFM grapher is used and each preset has an "Open in Desmos" button that copies the expressions.</p></div>
   </section>
 
-  <section class="card setsec danger"><h2>⚠ Reset</h2>
+  <section class="card setsec danger"><h2>Reset</h2>
     <div class="row">${COURSE_ORDER.map(id => `<button class="btn small" data-reset="${id}">Reset ${COURSES[id].short} progress</button>`).join('')}<button class="btn small bad" id="resetall">Erase everything on this device</button></div>
     <p class="muted small">Download a progress file first if you might want it back.</p>
   </section>

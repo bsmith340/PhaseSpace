@@ -3,7 +3,7 @@
 
 defineCourse({
   id: 'm1', short: 'Maths AS 1', name: 'Mathematics', unit: 'AS 1 Pure Mathematics', board: 'CCEA GCE Mathematics (2018)',
-  icon: 'x²', color: '#4fd1a5', paper: 'AS 1',
+  icon: 'x²', color: '#00a896', paper: 'AS 1',
   exam: 'External written examination · 1 hour 45 minutes · 6–10 questions · 100 raw marks (60% of AS, 24% of A level)',
   specRef: 'CCEA GCE Mathematics (2018) specification, Sections 3.1 and 3.2 (pp. 7–13)',
   assumes: 'Compulsory for both AS and A level Mathematics. Proof is one of the overarching themes that apply across every unit.',
@@ -29,14 +29,14 @@ defineCourse({
   defaultPapers: ['Summer 2026 · AS 1', 'Summer 2025 · AS 1', 'Summer 2024 · AS 1', 'Summer 2023 · AS 1', 'Summer 2022 · AS 1', 'Summer 2021 · AS 1'],
   formulae: () => FORMULAE_M1,
   spec: [
-    { id: 'm-pr', code: '1', title: 'Proof (overarching theme)', icon: '∴', color: '#ff6b6b', blurb: 'Proof by deduction and exhaustion; disproof by counter example; mathematical language.',
+    { id: 'm-pr', code: '1', title: 'Proof (overarching theme)', icon: '∴', color: '#ff3b30', blurb: 'Proof by deduction and exhaustion; disproof by counter example; mathematical language.',
       outcomes: [
         ['O1', 'understand and use mathematical language and syntax, including equals, identically equals, therefore, because, implies, is implied by, necessary, sufficient, ∴, =, ≡, ≠, ⇒, ⇐ and ⇔;'],
         ['O2', 'understand and use the structure of mathematical proof, proceeding from given assumptions through a series of logical steps to a conclusion;'],
         ['O3', 'use methods of proof, including proof by deduction and proof by exhaustion;'],
         ['O4', 'use disproof by counter example;']],
       points: [['m_proof', 'core', 'Proof: deduction, exhaustion, counter example', '', ['O1', 'O2', 'O3', 'O4']]] },
-    { id: 'm-al', code: '2', title: 'Algebra and Functions', icon: 'x²', color: '#9d7bff', blurb: 'Indices, surds, quadratics, simultaneous equations, inequalities, polynomials, curve sketching, transformations.',
+    { id: 'm-al', code: '2', title: 'Algebra and Functions', icon: 'x²', color: '#af52de', blurb: 'Indices, surds, quadratics, simultaneous equations, inequalities, polynomials, curve sketching, transformations.',
       outcomes: [
         ['A1', 'demonstrate understanding of and use the laws of indices for all rational exponents;'],
         ['A2', 'use and manipulate surds, including rationalising the denominator;'],
@@ -55,7 +55,7 @@ defineCourse({
         ['A15', 'use intersection points of graphs to solve equations;'],
         ['A16', 'demonstrate understanding of the effect of simple transformations on the graph of y = f(x), including sketching associated graphs: y = af(x), y = f(x) + a, y = f(x + a) and y = f(ax)']],
       points: [['m_ind', 'core', 'Indices & surds', '', ['A1', 'A2']], ['m_quad', 'core', 'Quadratics: graphs, completing the square, discriminant', '', ['A3', 'A4', 'A5', 'A6']], ['m_sim', 'core', 'Simultaneous equations (two and three variables)', '', ['A7', 'A8']], ['m_ineq', 'core', 'Linear & quadratic inequalities (incl. brackets & fractions)', '', ['A9']], ['m_poly', 'core', 'Polynomials: division, factor & remainder theorems', '', ['A10', 'A11']], ['m_graph', 'core', 'Curve sketching, intersections & transformations', '', ['A12', 'A13', 'A14', 'A15', 'A16']]] },
-    { id: 'm-cg', code: '3', title: 'Co-ordinate Geometry in the (x, y) Plane', icon: '⌖', color: '#5ad1ff', blurb: 'Straight lines and circles.',
+    { id: 'm-cg', code: '3', title: 'Co-ordinate Geometry in the (x, y) Plane', icon: '⌖', color: '#30b0c7', blurb: 'Straight lines and circles.',
       outcomes: [
         ['G1', 'demonstrate understanding of and use the equation of a straight line, including the forms y − y₁ = m(x − x₁) and ax + by + c = 0'],
         ['G2', 'demonstrate understanding of how to find the mid-point of a line segment;'],
@@ -66,12 +66,12 @@ defineCourse({
         ['G7', 'use the standard circle properties: angle in a semicircle is a right angle, perpendicular from centre to a chord bisects the chord and perpendicularity of radius and tangent; and'],
         ['G8', 'find the equation of the tangent to a circle through a given point on the circumference.']],
       points: [['m_line', 'core', 'Straight lines & straight-line models', '', ['G1', 'G2', 'G3', 'G4']], ['m_circ', 'core', 'Circles', '', ['G5', 'G6', 'G7', 'G8']]] },
-    { id: 'm-ss', code: '4', title: 'Sequences and Series', icon: 'ⁿCᵣ', color: '#ffd166', blurb: 'Binomial expansion for positive integer n; n! and ⁿCᵣ.',
+    { id: 'm-ss', code: '4', title: 'Sequences and Series', icon: 'ⁿCᵣ', color: '#ff9500', blurb: 'Binomial expansion for positive integer n; n! and ⁿCᵣ.',
       outcomes: [
         ['S1', 'demonstrate understanding of and use the binomial expansion of (a + bx)ⁿ for positive integer n'],
         ['S2', 'demonstrate understanding of and use the notations n! and ⁿCᵣ']],
       points: [['m_bin', 'core', 'Binomial expansion (positive integer n)', '', ['S1', 'S2']]] },
-    { id: 'm-tr', code: '5', title: 'Trigonometry', icon: '△', color: '#f06fb0', blurb: 'Sine and cosine rules, area, graphs, identities, equations.',
+    { id: 'm-tr', code: '5', title: 'Trigonometry', icon: '△', color: '#ff2d55', blurb: 'Sine and cosine rules, area, graphs, identities, equations.',
       outcomes: [
         ['T1', 'demonstrate understanding of and use the definitions of sine, cosine and tangent for all arguments;'],
         ['T2', 'demonstrate understanding of and use the sine and cosine rules;'],
@@ -81,7 +81,7 @@ defineCourse({
         ['T6', 'demonstrate understanding of and use sin²θ + cos²θ = 1'],
         ['T7', 'solve simple trigonometric equations in a given interval, including quadratic equations in sin, cos and tan and equations involving multiples of the unknown angle;']],
       points: [['m_tri', 'core', 'Sine rule, cosine rule & area of a triangle', '', ['T2', 'T3']], ['m_tgraph', 'core', 'Trig functions for all angles: graphs, symmetries, periodicity', '', ['T1', 'T4']], ['m_tid', 'core', 'Identities: tan θ = sin θ / cos θ and sin²θ + cos²θ = 1', '', ['T5', 'T6']], ['m_teq', 'core', 'Solving trig equations in an interval', '', ['T7']]] },
-    { id: 'm-el', code: '6', title: 'Exponentials and Logarithms', icon: 'eˣ', color: '#7c9cff', blurb: 'aˣ, eˣ, logarithms and ln x, laws of logs, equations and inequalities, growth and decay models.',
+    { id: 'm-el', code: '6', title: 'Exponentials and Logarithms', icon: 'eˣ', color: '#007aff', blurb: 'aˣ, eˣ, logarithms and ln x, laws of logs, equations and inequalities, growth and decay models.',
       outcomes: [
         ['E1', 'demonstrate understanding of and use the function aˣ and its graph, where a is positive;'],
         ['E2', 'demonstrate understanding of and use the function eˣ and its graph;'],
@@ -94,7 +94,7 @@ defineCourse({
         ['E9', 'demonstrate understanding of and use exponential growth and decay;'],
         ['E10', 'use exponential growth and decay in modelling continuous compound interest, population growth, radioactive decay and drug concentration decay;']],
       points: [['m_exp', 'core', 'aˣ, eˣ and ln x: graphs and inverses', '', ['E1', 'E2', 'E4', 'E5']], ['m_log', 'core', 'Logarithms: laws (with proofs), equations & inequalities', '', ['E3', 'E6', 'E7', 'E8']], ['m_growth', 'core', 'Exponential growth & decay models', '', ['E9', 'E10']]] },
-    { id: 'm-df', code: '7', title: 'Differentiation', icon: 'd/dx', color: '#7ee081', blurb: 'Derivative as a gradient and a limit, xⁿ, second derivatives, tangents, normals, stationary points.',
+    { id: 'm-df', code: '7', title: 'Differentiation', icon: 'd/dx', color: '#34c759', blurb: 'Derivative as a gradient and a limit, xⁿ, second derivatives, tangents, normals, stationary points.',
       outcomes: [
         ['D1', 'demonstrate understanding of and use the derivative of f(x) as a function for the gradient of the tangent to the graph of y = f(x) at a general point (x, y)'],
         ['D2', 'demonstrate understanding of the gradient of the tangent to a curve as a limit;'],
@@ -105,14 +105,14 @@ defineCourse({
         ['D7', 'apply differentiation to find gradients, tangents and normals, maxima and minima and stationary points; and'],
         ['D8', 'identify increasing and decreasing functions.']],
       points: [['m_dfp', 'core', 'The derivative: gradient function, limit & rate of change', '', ['D1', 'D2', 'D3']], ['m_dx', 'core', 'Differentiating xⁿ; second derivatives; tangents & normals', '', ['D4', 'D6', 'D7']], ['m_stat', 'core', 'Stationary points, maxima & minima; increasing & decreasing', '', ['D5', 'D7', 'D8']]] },
-    { id: 'm-in', code: '8', title: 'Integration', icon: '∫', color: '#ff9f5a', blurb: 'Integration as the reverse of differentiation; definite integrals; area with either axis.',
+    { id: 'm-in', code: '8', title: 'Integration', icon: '∫', color: '#a2845e', blurb: 'Integration as the reverse of differentiation; definite integrals; area with either axis.',
       outcomes: [
         ['I1', 'demonstrate understanding of and use indefinite integration as the reverse of differentiation;'],
         ['I2', 'integrate xⁿ (excluding n = −1) and related sums, differences and constant multiples;'],
         ['I3', 'evaluate definite integrals;'],
         ['I4', 'use a definite integral to find the area defined by a curve and either axis;']],
       points: [['m_int', 'core', 'Indefinite integration', '', ['I1', 'I2']], ['m_area', 'core', 'Definite integrals & area with either axis', '', ['I3', 'I4']]] },
-    { id: 'm-ve', code: '9', title: 'Vectors', icon: '→', color: '#4fd1a5', blurb: 'Two-dimensional vectors: magnitude and direction, operations, position vectors, distance.',
+    { id: 'm-ve', code: '9', title: 'Vectors', icon: '→', color: '#00a896', blurb: 'Two-dimensional vectors: magnitude and direction, operations, position vectors, distance.',
       outcomes: [
         ['V1', 'use vectors in two dimensions (including i and j unit vectors);'],
         ['V2', 'calculate the magnitude and direction of a vector and convert between component form and magnitude/direction form;'],

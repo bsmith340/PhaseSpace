@@ -2,7 +2,7 @@
 
 Self-study guides for **CCEA GCE Further Mathematics, Unit A2 1 (Pure)** and **CCEA GCE Mathematics, Unit AS 1 (Pure)**. It's a static site with no build step and no server. Created by Ben Smith.
 
-You pick a course on the home page (`#/`). Each course has its own spec map, textbook, drills, formula book, past papers and progress. The Lab, Simulations, Desmos and the calculator are shared by both. More units can be added later as further courses.
+You pick a course on the home page (`#/`). Each course has its own spec map, textbook, drills, formula book, past papers and progress. The Lab, Simulations, the grapher and the calculator are shared by both. More units can be added later as further courses.
 
 ## What's inside (per course)
 
@@ -31,8 +31,18 @@ You pick a course on the home page (`#/`). Each course has its own spec map, tex
   - Both: interactive grapher, graph plotter, calculus & series, polynomials & partial fractions, scientific calculator.
   - Maths AS 1: quadratics & inequalities, simultaneous equations (2/3 unknowns, line & curve), triangle solver (incl. ambiguous case), trig equation solver, lines & circles, binomial expander, exponentials & logs, 2D vectors, tangents & stationary points, area with either axis.
   - FM A2 1: complex numbers, De Moivre multiple angles, polar curves & area, sums of series, ODE solver, matrix powers.
-- **Settings** (`#/settings`, ⚙): download/load a progress file, copy/paste a progress code (merge or replace), backup reminders, theme, text size, start page, sprint length, calculator angle mode, graph engine and Desmos key, resets.
-- **Scientific calculator**: SHIFT/HYP, DEG/RAD, complex numbers, exact-value recognition and history. Open it as a pop-up on every page (🧮 or Alt+C) or as a full page.
+- **Settings** (`#/settings`, gear icon): download/load a progress file, copy/paste a progress code (merge or replace), backup reminders, theme, text size, start page, sprint length, calculator angle mode, graph engine and Desmos key, resets.
+- **Scientific calculator**: SHIFT/HYP, DEG/RAD, complex numbers, exact-value recognition and history. Open it on any page from the calculator button (on phones, the Calculator tab) or with Alt+C, or use the full page. On phones it opens as a sheet: drag or flick it down to dismiss.
+
+## Design
+
+The interface follows Apple's design language:
+- **Type:** system font (SF Pro where available, Inter elsewhere), with tracking tuned to each size.
+- **Colour:** grey and white surfaces with a single blue accent, and Apple's system colours for topics.
+- **Navigation:** three layers. A frosted global bar; a local course bar that sticks while you scroll, as on apple.com; and an iOS-style tab bar on phones.
+- **Controls:** segmented controls, pill buttons and squircle icons.
+- **Motion:** springs defined by damping and response (`js/ui.js`). The calculator sheet tracks your finger 1:1, can be caught mid-animation, rubber-bands at the top and uses the flick's momentum to decide whether to close.
+- **Accessibility:** follows reduced motion (cross-fades only), reduced transparency (solid bars) and increased contrast.
 
 BCSFM does not reproduce CCEA papers or reports. Add them yourself from the official PDFs.
 
@@ -64,6 +74,7 @@ Open `further-maths/index.html`, or run `cd further-maths && python3 -m http.ser
 | `js/sims.js`, `js/sims-fm2.js`, `js/sims-m1.js` | simulations (the FM rebuilds override the originals) |
 | `js/graph.js`, `js/graph-presets.js`, `js/desmos.js` | grapher, per-point presets, optional Desmos API mode |
 | `js/lab-m1.js`, `js/lab-fm2.js` | course-specific Lab tools |
+| `js/ui.js` | icon set; springs, momentum projection, rubber-banding |
 | `js/settings.js` | settings, progress save/load/merge, backup reminders |
 | `js/lab.js`, `js/calc.js` | lab tools, calculator |
 | `js/drill.js`, `js/app.js` | drill engine; routing and views |

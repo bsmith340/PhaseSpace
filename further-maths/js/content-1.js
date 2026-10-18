@@ -9,7 +9,7 @@ function topic(t) { TOPICS.push(t); for (const p of t.points) { p.topic = t.id; 
 
 /* ======================= 1. COMPLEX NUMBERS ======================= */
 topic({
-  id: 'cx', code: '1', title: 'Complex Numbers', icon: 'ℂ', color: '#7c9cff',
+  id: 'cx', code: '1', title: 'Complex Numbers', icon: 'ℂ', color: '#007aff',
   blurb: 'Exponential form, de Moivre, roots of unity, loci in the Argand diagram.',
   points: [
     {
@@ -311,7 +311,7 @@ function unimod3() {
 function inv3int(P) { return M.adj3(P).map(r => r.map(x => x / M.det3(P))); }
 
 topic({
-  id: 'mx', code: '2', title: 'Matrices', icon: '▦', color: '#ff9f5a',
+  id: 'mx', code: '2', title: 'Matrices', icon: '▦', color: '#a2845e',
   blurb: '3×3 determinants & inverses, eigenvalues/eigenvectors, diagonalisation, systems of planes.',
   points: [
     {
@@ -500,7 +500,7 @@ $\mathbf A^3=p\mathbf A^2+q\mathbf A=p(p\mathbf A+q\mathbf I)+q\mathbf A=(p^2+q)
 /* ======================= 3. VECTORS ======================= */
 const lineAngle = (u, v) => Math.acos(Math.min(1, Math.abs(V.dot(u, v)) / (V.norm(u) * V.norm(v)))) * 180 / Math.PI;
 topic({
-  id: 'vc', code: '3', title: 'Vectors', icon: '→', color: '#4fd1a5',
+  id: 'vc', code: '3', title: 'Vectors', icon: '→', color: '#00a896',
   blurb: 'Vector product, lines & planes, angles, intersections and shortest distances.',
   points: [
     {

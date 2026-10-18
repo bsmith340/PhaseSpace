@@ -6,7 +6,7 @@ const lnTeX = (n, d = 1) => d === 1 ? `\\ln ${n}` : `\\ln\\left(${fr(n, d)}\\rig
 
 /* ======================= 4. HYPERBOLIC FUNCTIONS ======================= */
 topic({
-  id: 'hy', code: '4', title: 'Hyperbolic Functions', icon: 'cosh', color: '#f06fb0',
+  id: 'hy', code: '4', title: 'Hyperbolic Functions', icon: 'cosh', color: '#ff2d55',
   blurb: 'Definitions, identities (Osborn), inverse forms as logs, equations, calculus.',
   points: [
     {
@@ -168,7 +168,7 @@ $\sinh(2\ln${a})=\tfrac12(${a * a}-\tfrac1{${a * a}})=${fr(a ** 4 - 1, 2 * a * a
 /* ======================= 5. FURTHER CALCULUS ======================= */
 const simpson = (f, a, b, n = 2000) => { const h = (b - a) / n; let s = f(a) + f(b); for (let i = 1; i < n; i++) s += f(a + i * h) * (i % 2 ? 4 : 2); return s * h / 3; };
 topic({
-  id: 'ca', code: '5', title: 'Further Calculus', icon: '∫', color: '#ffd166',
+  id: 'ca', code: '5', title: 'Further Calculus', icon: '∫', color: '#ff9500',
   blurb: 'Inverse trig/hyperbolic derivatives & integrals, reduction formulae, arc length, surface area, improper integrals.',
   points: [
     {
@@ -308,7 +308,7 @@ $$S_x=2\pi\int y\,ds=2\pi\int_a^b y\sqrt{1+y'^2}\,dx\qquad(\text{about the }x\te
       notes: T`
 <p>An integral is <b>improper</b> if a limit is infinite or the integrand is unbounded. Replace the problem limit with a variable and take a limit:</p>
 $$\int_1^\infty x^{-p}\,dx=\lim_{t\to\infty}\left[\frac{x^{1-p}}{1-p}\right]_1^t=\frac1{p-1}\ (p\gt1),\quad\text{diverges for }p\le1$$
-<ul><li>Two kinds (both on the spec): an <b>infinite limit</b> ($\int_1^\infty$), or an integrand <b>undefined at a value in the range</b> ($\int_0^1\frac{dx}{\sqrt x}$) — including one inside the interval, where you must split.</li>
+<ul><li>Two kinds (both on the spec): an <b>infinite limit</b> ($\int_1^\infty$), or an integrand <b>not defined at a value in the range</b> ($\int_0^1\frac{dx}{\sqrt x}$) — including one inside the interval, where you must split.</li>
 <li>Key limits: $x^ke^{-x}\to0$ as $x\to\infty$; $x^k\ln x\to0$ as $x\to0^+$ ($k\gt0$). State them.</li></ul>`,
       drills: [
         () => {
@@ -326,7 +326,7 @@ $$\int_1^\infty x^{-p}\,dx=\lim_{t\to\infty}\left[\frac{x^{1-p}}{1-p}\right]_1^t
 
 /* ======================= 6. SERIES ======================= */
 topic({
-  id: 'sr', code: '6', title: 'Maclaurin & Taylor Series', icon: 'Σ', color: '#9d7bff',
+  id: 'sr', code: '6', title: 'Maclaurin & Taylor Series', icon: 'Σ', color: '#af52de',
   blurb: 'Maclaurin expansions, composite series, limits via series, Taylor about x = a.',
   points: [
     {
@@ -402,7 +402,7 @@ $$\lim_{x\to0}\frac{x-\sin x}{x^3}=\lim_{x\to0}\frac{\frac{x^3}{6}-\frac{x^5}{12
       sims: ['maclaurin'],
       notes: T`
 $$f(x)=f(a)+f'(a)(x-a)+\frac{f''(a)}{2!}(x-a)^2+\cdots\quad\text{or}\quad f(a+h)=f(a)+hf'(a)+\frac{h^2}{2!}f''(a)+\cdots$$
-<ul><li>Use when you need accuracy near $x=a\ne0$, or when $f(0)$ is undefined ($\ln x$, $\sqrt x$).</li>
+<ul><li>Use when you need accuracy near $x=a\ne0$, or when $f(0)$ is not defined ($\ln x$, $\sqrt x$).</li>
 <li>Approximations: $\sqrt{4.1}$ → expand $\sqrt x$ about $4$; $\ln1.1$ → expand $\ln x$ about $1$.</li></ul>`,
       drills: [
         () => {
@@ -425,7 +425,7 @@ $$f(x)=f(a)+f'(a)(x-a)+\frac{f''(a)}{2!}(x-a)^2+\cdots\quad\text{or}\quad f(a+h)
 
 /* ======================= 7. POLAR COORDINATES ======================= */
 topic({
-  id: 'pl', code: '7', title: 'Polar Coordinates', icon: 'r,θ', color: '#5ad1ff',
+  id: 'pl', code: '7', title: 'Polar Coordinates', icon: 'r,θ', color: '#30b0c7',
   blurb: 'Sketching polar curves, area enclosed, tangents parallel/perpendicular to the initial line.',
   points: [
     {
@@ -509,7 +509,7 @@ $$A=\frac12\int_\alpha^\beta r^2\,d\theta$$
 
 /* ======================= 8. DIFFERENTIAL EQUATIONS ======================= */
 topic({
-  id: 'de', code: '8', title: 'Differential Equations', icon: 'dy', color: '#7ee081',
+  id: 'de', code: '8', title: 'Differential Equations', icon: 'dy', color: '#34c759',
   blurb: 'Integrating factors, 2nd-order linear with constant coefficients, particular integrals, SHM & damping.',
   points: [
     {
@@ -639,7 +639,7 @@ $$\text{IF}=e^{\int P\,dx},\qquad \frac{d}{dx}\big(y\cdot\text{IF}\big)=Q\cdot\t
 /* ======================= 9. PROOF BY INDUCTION ======================= */
 const bgcd = (a, b) => { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b) [a, b] = [b, a % b]; return a; };
 topic({
-  id: 'pi', code: '9', title: 'Proof by Induction', icon: 'n→', color: '#ff6b6b',
+  id: 'pi', code: '9', title: 'Proof by Induction', icon: 'n→', color: '#ff3b30',
   blurb: 'Divisibility, matrix powers, series and inequalities.',
   points: [
     {

@@ -2,18 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BCSFM · Maths & Further Maths</title>
-  <meta name="description" content="BCSFM — self-study guides to CCEA GCE Further Mathematics A2 1 and Mathematics AS 1, following the specification point by point: textbook with full proofs, simulations, Desmos, endless drills, formula books, calculator and past-paper tracker. Created by Ben Smith.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1020'/%3E%3Cpath d='M12 44 C 22 10, 42 10, 52 44' stroke='%237c9cff' stroke-width='5' fill='none'/%3E%3Ctext x='32' y='46' font-size='26' font-family='Arial' font-weight='bold' fill='%23ffd166' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="BCSFM — self-study guides to CCEA GCE Further Mathematics A2 1 and Mathematics AS 1, following the specification point by point: textbook with full proofs, simulations, an interactive grapher, endless drills, formula books, calculator and past-paper tracker. Created by Ben Smith.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='.35' y2='1'%3E%3Cstop offset='0' stop-color='%233d8bff'/%3E%3Cstop offset='1' stop-color='%235e5ce6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='15' fill='url(%23g)'/%3E%3Cpath d='M15 45c6-26 11-26 17 0s11 26 17 0' stroke='white' stroke-opacity='.35' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Ctext x='32' y='44' font-size='34' font-family='-apple-system,Helvetica,Arial,sans-serif' font-weight='700' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
   <link rel="stylesheet" href="css/app.css">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
   <script defer src="js/mathengine.js"></script>
   <script defer src="js/util.js"></script>
+  <script defer src="js/ui.js"></script>
   <script defer src="js/content-1.js"></script>
   <script defer src="js/content-2.js"></script>
   <script defer src="js/content-3.js"></script>
@@ -46,14 +51,16 @@
   <script defer src="js/app.js"></script>
 </head>
 <body>
-  <header class="top">
-    <a class="brand" href="#/"><span class="logo">B</span> BCSFM <span class="sub" id="brandsub">Maths & Further Maths</span></a>
-    <nav class="nav" id="nav"></nav>
-  </header>
+  <header class="top"><div class="top-in">
+    <a class="brand" href="#/" aria-label="BCSFM — all courses"><span class="logo">B</span><span class="brand-t">BCSFM</span></a>
+    <nav class="nav" id="nav" aria-label="Global"></nav>
+  </div></header>
+  <nav class="lnav" id="lnav" aria-label="Course" hidden></nav>
   <main id="app"><p class="loading">Loading…</p></main>
   <footer class="foot">
     <p class="credit">Created by Ben Smith</p>
-    <p><b>BCSFM</b> — self-study guides for CCEA GCE Further Mathematics (A2 1 Pure) and Mathematics (AS 1 Pure). Learning outcomes are quoted from the CCEA GCE Mathematics (2018) and GCE Further Mathematics (2018) specifications; check CCEA's website for the latest version. Exam-style questions are BCSFM originals, not CCEA past papers. Progress and your question bank are stored only in this browser — save a copy from ⚙ Settings.</p>
+    <p><b>BCSFM</b> — self-study guides for CCEA GCE Further Mathematics (A2 1 Pure) and Mathematics (AS 1 Pure). Learning outcomes are quoted from the CCEA GCE Mathematics (2018) and GCE Further Mathematics (2018) specifications; check CCEA's website for the latest version. Exam-style questions are BCSFM originals, not CCEA past papers. Progress and your question bank are stored only in this browser — save a copy from Settings.</p>
   </footer>
+  <nav class="tabbar" id="tabbar" aria-label="Tabs"></nav>
 </body>
 </html>

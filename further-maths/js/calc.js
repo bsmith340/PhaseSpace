@@ -108,15 +108,60 @@ function mountCalc(root, { compact = false } = {}) {
   return { focus: () => inp.focus(), clearHistory: () => { CALC_STATE.hist = []; saveCalc(); renderHist(); } };
 }
 
-// Floating drawer available on every page
+// Calculator on every page. Desktop: a popover that grows out of its button. Phone: a sheet that tracks the finger
+// 1:1, can be grabbed mid-animation, and on release projects the flick's momentum to decide open or closed.
 function setupCalcDrawer() {
-  const d = document.createElement('aside'); d.className = 'calc-drawer'; d.setAttribute('aria-label', 'Calculator');
-  d.innerHTML = `<div class="cd-head"><b>🧮 Calculator</b><span><a href="#/calc" class="cd-full">full page</a><button class="cd-x" aria-label="Close">✕</button></span></div><div class="cd-body"></div>`;
-  document.body.append(d);
+  const d = document.createElement('aside'); d.className = 'calc-drawer'; d.setAttribute('aria-label', 'Calculator'); d.setAttribute('role', 'dialog');
+  d.innerHTML = `<div class="cd-grab" aria-hidden="true"></div><div class="cd-head"><b>Calculator</b><span><a href="#/calc" class="cd-full">${ico('expand')} Full page</a><button class="cd-x" aria-label="Close calculator">${ico('close')}</button></span></div><div class="cd-body"></div>`;
+  const scrim = document.createElement('div'); scrim.className = 'calc-scrim';
+  const fab = document.createElement('button'); fab.className = 'calc-fab'; fab.title = 'Calculator (Alt+C)'; fab.setAttribute('aria-label', 'Calculator'); fab.innerHTML = ico('calc', 'lg');
+  document.body.append(scrim, d, fab);
   const c = mountCalc(d.querySelector('.cd-body'), { compact: true });
-  const fab = document.createElement('button'); fab.className = 'calc-fab'; fab.title = 'Calculator (Alt+C)'; fab.textContent = '🧮'; document.body.append(fab);
-  const toggle = open => { d.classList.toggle('open', open ?? !d.classList.contains('open')); if (d.classList.contains('open')) setTimeout(() => c.focus(), 50); };
-  fab.onclick = () => toggle(); d.querySelector('.cd-x').onclick = () => toggle(false); d.querySelector('.cd-full').onclick = () => toggle(false);
+  const sheet = () => matchMedia('(max-width: 700px)').matches;
+  let open = false, H = 480, drag = null;
+  // p is openness: 0 hidden … 1 open (a sheet dragged past open goes slightly above 1, rubber-banded)
+  const paint = p => {
+    const vis = p > 0.002, q = Math.min(1, Math.max(0, p));
+    if (reducedMotion()) { d.style.transform = ''; d.style.opacity = vis ? 1 : 0; scrim.style.opacity = vis && sheet() ? 1 : 0; }
+    else if (sheet()) { d.style.transform = `translate3d(0, ${((1 - p) * H).toFixed(2)}px, 0)`; d.style.opacity = vis ? 1 : 0; scrim.style.opacity = q; }
+    else { d.style.transform = `translate3d(0, ${((1 - q) * 12).toFixed(2)}px, 0) scale(${(0.9 + 0.1 * q).toFixed(4)})`; d.style.opacity = q; scrim.style.opacity = 0; }
+    d.classList.toggle('shown', vis); scrim.classList.toggle('shown', vis && sheet());
+  };
+  const S = Spring(paint, { value: 0, eps: 0.0005 });
+  const setOpen = v => { open = v; d.classList.toggle('open', v); fab.setAttribute('aria-expanded', String(v)); document.body.classList.toggle('calc-open', v); };
+  const toggle = want => {
+    want = want ?? !open; if (want === open && !drag) return;
+    setOpen(want); H = d.offsetHeight || H;
+    // re-targeting keeps the current position and velocity, so a second press mid-flight simply reverses it
+    S.to(want ? 1 : 0, { damping: 1, response: sheet() ? 0.4 : 0.32 });
+    if (want && matchMedia('(pointer: fine)').matches) setTimeout(() => c.focus(), 40);
+  };
+  // drag the sheet by its grabber or header
+  d.addEventListener('pointerdown', e => {
+    if (!sheet() || !e.target.closest('.cd-grab, .cd-head') || e.target.closest('a, button')) return;
+    H = d.offsetHeight || H;
+    drag = { id: e.pointerId, y0: e.clientY, p0: S.stop(), samples: [{ y: e.clientY, t: e.timeStamp }] }; // start from the on-screen value
+    try { d.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ } d.classList.add('dragging');
+  });
+  d.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag.samples.push({ y: e.clientY, t: e.timeStamp }); if (drag.samples.length > 16) drag.samples.shift();
+    let p = drag.p0 - (e.clientY - drag.y0) / H;
+    if (p > 1) p = 1 + rubberband((p - 1) * H, H) / H;
+    S.set(p);
+  });
+  const release = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const v = velocityOf(drag.samples); drag = null; d.classList.remove('dragging'); // px/s, positive = downward
+    const rest = S.value - project(v) / H, want = rest > 0.5;
+    setOpen(want);
+    S.to(want ? 1 : 0, { velocity: -v / H, damping: Math.abs(v) > 400 ? 0.8 : 1, response: 0.32 }); // bounce only after a flick
+  };
+  d.addEventListener('pointerup', release); d.addEventListener('pointercancel', release);
+  fab.onclick = () => toggle(); scrim.onclick = () => toggle(false);
+  d.querySelector('.cd-x').onclick = () => toggle(false); d.querySelector('.cd-full').onclick = () => toggle(false);
   document.addEventListener('keydown', e => { if (e.altKey && (e.key === 'c' || e.key === 'C')) { e.preventDefault(); toggle(); } });
+  window.addEventListener('resize', () => { H = d.offsetHeight || H; paint(S.value); });
+  paint(0);
   return toggle;
 }

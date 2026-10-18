@@ -31,15 +31,15 @@ function drillPanel(el, { pool, sprint = 0, onDone }) {
       : `<div class="fields">${cur.fields.map((f, i) => `<label class="field"><span class="flab">${esc(f.label)}${f.set ? ' <em>(list, any order)</em>' : f.vec ? ` <em>(${f.vec.length} numbers${f.prop ? ', any multiple' : ''})</em>` : ''}</span>
           <input data-i="${i}" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" placeholder="${f.set ? 'e.g. 2, -3' : f.vec ? 'e.g. 1, -2, 3' : 'e.g. 3/4, sqrt(2), pi/3, ln(2)'}"><span class="prev" data-p="${i}"></span><span class="mark" data-m="${i}"></span></label>`).join('')}</div>`;
     box.innerHTML = `
-      <div class="dhead"><span class="chip" style="--tc:${t.color}">${p.code} ${p.title}</span>${sprint ? `<span class="chip">Q ${n}/${sprint}</span>` : ''}<span class="chip streak">🔥 ${DB.streak}</span></div>
+      <div class="dhead"><span class="chip" style="--tc:${t.color}">${p.code} ${p.title}</span>${sprint ? `<span class="chip">Q ${n}/${sprint}</span>` : ''}<span class="chip streak" title="Correct in a row">Streak ${DB.streak}</span></div>
       <div class="q">${tidy(cur.q)}</div>
       ${fieldsHtml}
       <div class="dact">
-        ${cur.mc ? '' : '<button class="btn primary" data-a="check">Check ⏎</button>'}
+        ${cur.mc ? '' : '<button class="btn primary" data-a="check">Check</button>'}
         ${cur.hint ? '<button class="btn ghost" data-a="hint">Hint</button>' : ''}
         <button class="btn ghost" data-a="sol">${sprint ? 'Skip' : 'Show solution'}</button>
-        <button class="btn" data-a="next">Next →</button>
-        <button class="btn ghost" data-a="calc" title="Open calculator (Alt+C)">🧮</button>
+        <button class="btn" data-a="next">Next ${ico('chevron')}</button>
+        <button class="btn ghost" data-a="calc" title="Open calculator (Alt+C)" aria-label="Open calculator">${ico('calc')}</button>
       </div>
       <div class="fb"></div><div class="sol hidden"><h4>Worked solution</h4>${tidy(cur.sol)}</div>
       <p class="help">Type exact or 3 s.f. — <code>3/4</code>, <code>2sqrt(3)</code>, <code>5pi/12</code>, <code>ln(3/2)</code>, <code>e^2/6</code>, <code>arsinh(2)</code> all work.</p>`;
@@ -52,12 +52,12 @@ function drillPanel(el, { pool, sprint = 0, onDone }) {
     }));
     const first = box.querySelector('input'); if (first && !('ontouchstart' in window)) first.focus();
     box.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => answerMC(+b.dataset.i)));
-    box.querySelector('.dact').addEventListener('click', e => { const a = e.target.closest('[data-a]')?.dataset.a; if (a === 'check') check(); else if (a === 'next') next(); else if (a === 'sol') reveal(); else if (a === 'calc') window.toggleCalc && window.toggleCalc(true); else if (a === 'hint') box.querySelector('.fb').innerHTML = `<div class="hint">💡 ${esc(cur.hint)}</div>`; });
+    box.querySelector('.dact').addEventListener('click', e => { const a = e.target.closest('[data-a]')?.dataset.a; if (a === 'check') check(); else if (a === 'next') next(); else if (a === 'sol') reveal(); else if (a === 'calc') window.toggleCalc && window.toggleCalc(true); else if (a === 'hint') box.querySelector('.fb').innerHTML = `<div class="hint"><b>Hint.</b> ${esc(cur.hint)}</div>`; });
   }
   function count(ok) {
     if (counted) return; counted = true; record(cur.pid, ok);
     log.push({ pid: cur.pid, ok, t: (performance.now() - tStart) / 1000 });
-    const sc = box.querySelector('.streak'); if (sc) sc.textContent = '🔥 ' + DB.streak;
+    const sc = box.querySelector('.streak'); if (sc) sc.textContent = 'Streak ' + DB.streak;
   }
   function feedback(ok) {
     const fb = box.querySelector('.fb');
