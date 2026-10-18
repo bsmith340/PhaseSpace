@@ -7,7 +7,7 @@ BOOK.cx1 = [
   B.pre(T`<p>AS 1: $i^2=-1$, the Argand diagram, adding/multiplying/dividing $x+iy$, conjugates. Trig: exact values, compound-angle formulae.</p>`),
   B.def('modulus and argument', T`<p>For $z=x+iy$, the <b>modulus</b> is the distance from $O$: $|z|=r=\sqrt{x^2+y^2}$.</p>
 <p>The <b>argument</b> $\arg z=\theta$ is the angle from the positive real axis, anticlockwise positive. The <b>principal argument</b> is the one with $-\pi\lt\theta\le\pi$.</p>
-<p>Since $x=r\cos\theta$ and $y=r\sin\theta$: $\quad z=r(\cos\theta+i\sin\theta)$ — the <b>modulus–argument form</b>.</p>`),
+<p>Since $x=r\cos\theta$ and $y=r\sin\theta$: $\quad z=r(\cos\theta+i\sin\theta)$ — the <b>modulus–argument form</b>. CCEA papers write this as $[r,\theta]$, e.g. $1+i=\left[\sqrt2,\tfrac\pi4\right]$.</p>`),
   T`<h3>1. Finding the argument without mistakes</h3>
 <p>$\tan\theta=\frac yx$ has two solutions in $(-\pi,\pi]$, so a calculator's $\arctan$ is right only in quadrants 1 and 4. Always: <b>sketch</b>, find the acute base angle $\alpha=\arctan\left|\frac yx\right|$, then adjust.</p>
 <table class="tbl"><tr><th>Quadrant</th><th>Example</th><th>$\arg z$</th></tr>
@@ -88,6 +88,16 @@ $$(\cos\theta+i\sin\theta)^{-m}=\frac{1}{\cos m\theta+i\sin m\theta}=\frac{\cos 
     T`Let $C=\sum\binom nk\cos k\theta$, $S=\sum\binom nk\sin k\theta$. Then $C+iS=\sum\binom nk e^{ik\theta}=(1+e^{i\theta})^n$ (binomial theorem).`,
     T`Factor out the half angle: $1+e^{i\theta}=e^{i\theta/2}\left(e^{-i\theta/2}+e^{i\theta/2}\right)=2\cos\frac\theta2\,e^{i\theta/2}$.`,
     T`So $C+iS=2^n\cos^n\frac\theta2\,e^{in\theta/2}$. Taking real parts: $C=2^n\cos^n\frac\theta2\cos\frac{n\theta}2$.`]),
+  T`<h3>5. $\tan n\theta$ and "show that" questions</h3>
+<p>For $\tan n\theta$, divide the imaginary part by the real part of $(c+is)^n$, then divide every term top and bottom by $c^n$. Each $\frac sc$ becomes $t=\tan\theta$.</p>`,
+  B.ex(8, T`By expanding $(\cos\theta+i\sin\theta)^5$, show that $\tan5\theta=\dfrac{5t-10t^3+t^5}{1-10t^2+5t^4}$, where $t=\tan\theta$.`, [
+    T`Binomial coefficients $1,5,10,10,5,1$: $(c+is)^5=c^5+5ic^4s-10c^3s^2-10ic^2s^3+5cs^4+is^5$.`,
+    T`De Moivre: this equals $\cos5\theta+i\sin5\theta$. Equate parts: $\cos5\theta=c^5-10c^3s^2+5cs^4$, $\ \sin5\theta=5c^4s-10c^2s^3+s^5$.`,
+    T`$\tan5\theta=\dfrac{5c^4s-10c^2s^3+s^5}{c^5-10c^3s^2+5cs^4}$. Divide top and bottom by $c^5$:`,
+    T`$=\dfrac{5\frac sc-10\frac{s^3}{c^3}+\frac{s^5}{c^5}}{1-10\frac{s^2}{c^2}+5\frac{s^4}{c^4}}=\dfrac{5t-10t^3+t^5}{1-10t^2+5t^4}$. ✓`,
+    T`<b>Check</b> at $\theta=0$: LHS $=0$, RHS $=\frac01=0$ ✓.`], T`"Show that": you're given the answer, so every line must be visible. If you get stuck, simplify the given right-hand side too and meet in the middle — that's allowed as long as each step is reversible.`),
+  B.tip(T`<p><b>Reuse an earlier result by substitution.</b> A "hence" part usually wants you to spot that a new equation is an old identity in disguise.</p>
+<p>Example: solve $8x^3-6x-1=0$. Halve it: $4x^3-3x=\frac12$. With $x=\cos\theta$ the left side is $\cos3\theta$, so $\cos3\theta=\frac12$, $3\theta=\frac\pi3,\frac{5\pi}3,\frac{7\pi}3$, giving the three roots $x=\cos\frac\pi9,\cos\frac{5\pi}9,\cos\frac{7\pi}9$. A cubic has at most three roots, so that's all of them.</p>`),
   B.warn([T`$(z-z^{-1})^n=(2i\sin\theta)^n$: forgetting the $i^n$.`, T`Losing the factor $2^n$ in $(2\cos\theta)^n$.`, T`Using De Moivre on something not of the form $\cos\theta+i\sin\theta$ — e.g. $(\cos\theta-i\sin\theta)^n=\cos n\theta-i\sin n\theta$ (rewrite as $e^{-i\theta}$ first).`]),
   B.exam([T`"Use De Moivre's theorem to show…" needs the binomial expansion visible and the real/imaginary part selected explicitly.`, T`These identities are often followed by "hence solve" or "hence integrate" — keep your result in the exact form asked.`]),
   B.checks([[T`Find $(\sqrt3-i)^{-4}$.`, T`$(2e^{-i\pi/6})^{-4}=\frac1{16}e^{2\pi i/3}=\frac1{16}\left(-\frac12+\frac{\sqrt3}2i\right)$.`], [T`Show $\tan3\theta=\dfrac{3t-t^3}{1-3t^2}$, $t=\tan\theta$.`, T`Divide $\sin3\theta=3c^2s-s^3$ by $\cos3\theta=c^3-3cs^2$, then divide top and bottom by $c^3$.`], [T`Express $\cos^3\theta$ in multiple angles.`, T`$8\cos^3\theta=2\cos3\theta+6\cos\theta$, so $\cos^3\theta=\frac14(\cos3\theta+3\cos\theta)$.`]]),
@@ -121,8 +131,19 @@ BOOK.cx3 = [
   B.ex(4, T`Factorise $z^5-1$ into real linear and quadratic factors.`, [
     T`Roots: $1,\ e^{\pm2\pi i/5},\ e^{\pm4\pi i/5}$ — the non-real roots come in conjugate pairs.`,
     T`For a conjugate pair: $(z-e^{i\alpha})(z-e^{-i\alpha})=z^2-(e^{i\alpha}+e^{-i\alpha})z+1=z^2-2\cos\alpha\,z+1$.`,
-    T`$z^5-1=(z-1)\left(z^2-2\cos\tfrac{2\pi}5z+1\right)\left(z^2-2\cos\tfrac{4\pi}5z+1\right)$.`]),
+    T`$$z^5-1=(z-1)\left(z^2-2\cos\tfrac{2\pi}5z+1\right)\left(z^2-2\cos\tfrac{4\pi}5z+1\right).$$`]),
   B.tip(T`<p>If $z_0$ is one root of $z^n=w$, then <b>all</b> roots are $z_0,\ z_0\omega,\ z_0\omega^2,\dots$ — multiplying by $\omega$ rotates by $\frac{2\pi}n$.</p>`),
+  T`<h3>3. Polygon geometry</h3>`,
+  B.thm('Area of the polygon formed by the roots', T`<p>The $n$ roots of $z^n=w$ form a regular $n$-gon with circumradius $r=|w|^{1/n}$. Joining each vertex to $O$ splits it into $n$ congruent isosceles triangles with apex angle $\frac{2\pi}{n}$, so</p>$$A=n\times\tfrac12r^2\sin\frac{2\pi}{n}=\frac n2\,r^2\sin\frac{2\pi}n.$$`),
+  B.ex(5, T`Find the area of the hexagon formed by the roots of $z^6=64$.`, [T`$r=64^{1/6}=2$.`, T`$A=\frac62\cdot2^2\sin\frac{\pi}{3}=12\cdot\frac{\sqrt3}{2}=6\sqrt3$.`]),
+  B.thm('Polygons not centred at the origin', T`<p>If a regular $n$-gon has centre $c$ and one vertex $v$, the vertices are</p>$$c+(v-c)\,\omega^k,\qquad\omega=e^{2\pi i/n},\ k=0,1,\dots,n-1.$$`),
+  B.proof(T`<p>$v-c$ is the vector from the centre to the vertex. Multiplying by $\omega$ rotates it by $\frac{2\pi}n$ about the origin (moduli multiply by $|\omega|=1$, arguments add $\frac{2\pi}{n}$). Adding $c$ moves the rotated vector back so it starts at the centre. Repeating gives every vertex.</p>`, 'Why'),
+  B.ex(6, T`A square has centre $2+3i$ and one vertex $5+3i$. Find the other vertices.`, [
+    T`$v-c=3$. For a square $\omega=i$.`,
+    T`$c+3i=2+6i$, $\ c+3i^2=-1+3i$, $\ c+3i^3=2$.`,
+    T`Vertices: $5+3i,\ 2+6i,\ -1+3i,\ 2$. (Area $=\frac42\cdot3^2\sin\frac\pi2=18$, which matches side $3\sqrt2$.)`]),
+  T`<h3>4. Reusing roots you've already found</h3><p>Once you know the roots $z_k$ of $z^n=w$:</p><ul><li>$(u-c)^n=w$ has roots $u=c+z_k$ (translate the polygon);</li><li>$(au)^n=w$ has roots $u=\frac{z_k}a$ (scale it);</li><li>$z^{2n}+pz^n+q=0$: treat it as a quadratic in $z^n$ first.</li></ul>`,
+  B.ex(7, T`Given that the roots of $z^4=-16$ are $\pm\sqrt2\pm\sqrt2\,i$, solve $(u-1)^4=-16$ and find the sum of the roots.`, [T`Let $z=u-1$: $z^4=-16$, so $u=1+z$.`, T`$u=1\pm\sqrt2\pm\sqrt2\,i$ (all four sign combinations).`, T`The $z_k$ sum to $0$, so the $u$'s sum to $4\times1=4$.`]),
   B.warn([T`Taking only $k=0$ and stopping with one root.`, T`Using $R^n$ instead of $R^{1/n}$ for the modulus.`, T`Not converting arguments back into $(-\pi,\pi]$ when principal values are required.`]),
   B.exam([T`Write the general argument $\varphi+2k\pi$ explicitly before dividing by $n$ — it's the method mark.`, T`If asked to show roots on an Argand diagram, draw the circle and equally spaced points.`]),
   B.checks([[T`Solve $z^6=1$ and describe the shape.`, T`$e^{ik\pi/3}$, $k=0..5$: regular hexagon with vertices $\pm1$, $\pm\frac12\pm\frac{\sqrt3}{2}i$.`], [T`$\omega=e^{2\pi i/7}$. Evaluate $\omega+\omega^2+\dots+\omega^6$.`, T`$-1$ (the full sum including 1 is 0).`]]),

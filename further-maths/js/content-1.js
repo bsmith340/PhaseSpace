@@ -18,6 +18,7 @@ topic({
       notes: T`
 <p>Every non-zero complex number has three equivalent forms:</p>
 $$z = x+iy = r(\cos\theta + i\sin\theta) = re^{i\theta},\qquad r=|z|=\sqrt{x^2+y^2},\ \theta=\arg z$$
+<p>CCEA's shorthand for the modulus–argument form is $[r,\theta]$.</p>
 <ul>
 <li><b>Principal argument</b>: $-\pi \lt \theta \le \pi$. Always sketch the quadrant first — $\arctan(y/x)$ alone is wrong in quadrants 2 and 3.</li>
 <li><b>Euler</b>: $e^{i\theta}=\cos\theta+i\sin\theta$, so $e^{i\pi}+1=0$ and $\cos\theta=\tfrac12(e^{i\theta}+e^{-i\theta})$, $\sin\theta=\tfrac1{2i}(e^{i\theta}-e^{-i\theta})$.</li>
@@ -67,6 +68,7 @@ Arguments ${op === '×' ? 'add' : 'subtract'}: $${pf(k1, 12)} ${op === '×' ? '+
       sims: ['demoivre'],
       notes: T`
 $$\big(r(\cos\theta+i\sin\theta)\big)^n=r^n(\cos n\theta+i\sin n\theta)\qquad (n\in\mathbb Z,\ \text{proved by induction for } n\in\mathbb Z^+)$$
+<p>CCEA writes modulus–argument form as $[r,\theta]$, so $[r,\theta]^n=[r^n,n\theta]$.</p>
 <h4>1. Powers</h4><p>Convert to $re^{i\theta}$, raise, convert back. $(1+i)^{8}=(\sqrt2)^8e^{2\pi i}=16$.</p>
 <h4>2. $\cos n\theta$ in powers of $\cos\theta$</h4>
 <p>Expand $(c+is)^n$ binomially, take real (or imaginary) part, replace $s^2=1-c^2$.</p>
@@ -74,7 +76,8 @@ $$\cos3\theta=4\cos^3\theta-3\cos\theta,\qquad \sin3\theta=3\sin\theta-4\sin^3\t
 <h4>3. Powers of $\cos\theta$ in multiple angles</h4>
 <p>With $z=e^{i\theta}$: $\;z^n+z^{-n}=2\cos n\theta,\quad z^n-z^{-n}=2i\sin n\theta$.</p>
 <p>Expand $(z+z^{-1})^n=(2\cos\theta)^n$ and pair terms. E.g. $\cos^4\theta=\tfrac18(\cos4\theta+4\cos2\theta+3)$ — this is how you integrate $\cos^4\theta$.</p>
-<div class="tip"><b>Trap:</b> $(z-z^{-1})^n=(2i\sin\theta)^n$ — don't lose the $i^n$.</div>`,
+<h4>4. $\tan n\theta$</h4><p>Divide $\operatorname{Im}$ by $\operatorname{Re}$ of $(c+is)^n$, then divide top and bottom by $c^n$: $\tan3\theta=\dfrac{3t-t^3}{1-3t^2}$, $t=\tan\theta$.</p>
+<div class="tip"><b>Trap:</b> $(z-z^{-1})^n=(2i\sin\theta)^n$ — don't lose the $i^n$. <b>Check every identity at $\theta=0$</b> (and one other easy angle) before moving on.</div>`,
       drills: [
         () => {
           const B = pick([
@@ -119,22 +122,49 @@ $a=${num(R)}\cos\left(${pf(m, 12)}\right)=${num(R * Math.cos(ang))},\quad b=${nu
             sol: T`$${P.s}$.<br>So ${P.a.map((v, i) => `$${'ABC'[i]}=${nice(v)}$`).join(', ')}.`,
           };
         },
+        () => {
+          const P = pick([
+            { n: 3, num: [[3, 1], [-1, 3]], den: [[1, 0], [-3, 2]], s: T`\dfrac{3t-t^3}{1-3t^2}` },
+            { n: 4, num: [[4, 1], [-4, 3]], den: [[1, 0], [-6, 2], [1, 4]], s: T`\dfrac{4t-4t^3}{1-6t^2+t^4}` },
+            { n: 5, num: [[5, 1], [-10, 3], [1, 5]], den: [[1, 0], [-10, 2], [5, 4]], s: T`\dfrac{5t-10t^3+t^5}{1-10t^2+5t^4}` }]);
+          const lbl = ['a', 'b', 'c'], dl = ['d', 'e'];
+          const numForm = P.num.map((_, i) => `${lbl[i]}t${P.num[i][1] > 1 ? `^{${P.num[i][1]}}` : ''}`).join('+');
+          const denForm = '1+' + P.den.slice(1).map((d, i) => `${dl[i]}t^{${d[1]}}`).join('+');
+          return {
+            q: T`Use De Moivre's theorem to show that $\tan${P.n}\theta=\dfrac{${numForm}}{${denForm}}$ where $t=\tan\theta$, and find the constants.`,
+            fields: [...P.num.map((c, i) => ({ label: lbl[i], ans: c[0] })), ...P.den.slice(1).map((c, i) => ({ label: dl[i], ans: c[0] }))],
+            sol: T`$\cos${P.n}\theta+i\sin${P.n}\theta=(c+is)^{${P.n}}$. Take $\sin${P.n}\theta=\operatorname{Im}$ and $\cos${P.n}\theta=\operatorname{Re}$ of the binomial expansion, divide them, then divide top and bottom by $c^{${P.n}}$ so every $\frac{s}{c}$ becomes $t$:<br>
+$\tan${P.n}\theta=${P.s}$. Check at $\theta=0$: both sides are $0$ ✓.`,
+          };
+        },
+        () => {
+          const k = pick([0.5, -0.5]), sgnK = k > 0 ? '-' : '+', base = Math.acos(k);
+          const xs = [0, 1, 2].map(j => Math.cos((base + 2 * Math.PI * j) / 3));
+          const ang = k > 0 ? [1, 5, 7] : [2, 4, 8];
+          return {
+            q: T`Using $\cos3\theta=4\cos^3\theta-3\cos\theta$, solve $8x^3-6x${sgnK}1=0$ (give all three roots, comma-separated).`,
+            fields: [{ label: 'x values', set: xs }],
+            sol: T`Spot the substitution: divide by 2, $4x^3-3x=${k > 0 ? '\\tfrac12' : '-\\tfrac12'}$. With $x=\cos\theta$ this is $\cos3\theta=${k > 0 ? '\\tfrac12' : '-\\tfrac12'}$.<br>
+$3\theta=${k > 0 ? '\\tfrac\\pi3,\\tfrac{5\\pi}3,\\tfrac{7\\pi}3' : '\\tfrac{2\\pi}3,\\tfrac{4\\pi}3,\\tfrac{8\\pi}3'}\Rightarrow\theta=${ang.map(a => pf(a, 9)).join(',\\ ')}$.<br>
+$x=${ang.map(a => `\\cos${pf(a, 9)}`).join(',\\ ')}$ $\approx${xs.map(x => num(x)).join(',\\ ')}$ — three distinct roots, so these are all of them.`,
+          };
+        },
       ],
     },
     {
-      id: 'cx3', code: '1.3', title: 'nth roots & roots of unity',
+      id: 'cx3', code: '1.3', title: 'nth roots, roots of unity & polygons',
       sims: ['roots'],
       notes: T`
-<p>To solve $z^n=w$ where $w=Re^{i\varphi}$:</p>
+<p>To solve $z^n=w$ where $w=[R,\varphi]=Re^{i\varphi}$:</p>
 $$z=R^{1/n}\,e^{i(\varphi+2k\pi)/n},\qquad k=0,1,\dots,n-1$$
 <ul>
-<li>All $n$ roots lie on a circle radius $R^{1/n}$ and form a <b>regular $n$-gon</b> — adjacent roots differ in argument by $2\pi/n$.</li>
-<li><b>Roots of unity</b>: $z^n=1\Rightarrow z=\omega^k$, $\omega=e^{2\pi i/n}$.</li>
-<li>Sum of the roots: $1+\omega+\omega^2+\dots+\omega^{n-1}=0$ (geometric series, $\omega\ne1$). More generally $\sum_{k=0}^{n-1}\omega^{mk}=n$ if $n\mid m$, else $0$.</li>
-<li>Product of the roots of $z^n-w=0$ is $(-1)^{n+1}w$ (from the constant term).</li>
-<li>$(z-\omega)(z-\omega^2)\cdots(z-\omega^{n-1})=1+z+\dots+z^{n-1}$; set $z=1$: $\prod(1-\omega^k)=n$.</li>
-</ul>
-<div class="tip"><b>Method:</b> write $w$ with a general argument $\varphi+2k\pi$ <i>before</i> taking the root — that's what generates all $n$ solutions.</div>`,
+<li>Write the general argument $\varphi+2k\pi$ <b>before</b> taking the root — that generates all $n$ solutions. Choose the $k$ values that put the arguments in the range asked for.</li>
+<li>All $n$ roots lie on a circle of radius $R^{1/n}$ and form a <b>regular $n$-gon</b>; adjacent roots differ in argument by $\frac{2\pi}{n}$.</li>
+<li><b>Roots of unity</b>: $z^n=1\Rightarrow z=e^{2\pi ki/n}=\omega^k$ (given in the formula booklet). Their sum is $0$.</li>
+<li><b>Polygon area</b>: $n$ congruent triangles at the centre, so $A=\frac n2\,r^2\sin\frac{2\pi}{n}$ with $r$ the circumradius.</li>
+<li><b>Off-centre polygon</b> with centre $c$ and a vertex $v$: the other vertices are $c+(v-c)\,\omega^k$ — rotate the vector $v-c$ about $c$.</li>
+<li><b>Reuse earlier answers</b>: if you know the roots $z_k$ of $z^n=w$, then $(u-c)^n=w$ has roots $u=c+z_k$, and $(au)^n=w$ has $u=z_k/a$.</li>
+</ul>`,
       drills: [
         () => {
           const n = pick([3, 4, 5, 6]), m = n === 3 ? ri(1, 3) : ri(1, 2), R = Math.pow(m, n), k = ri(-5, 6);
@@ -148,28 +178,60 @@ Arguments: $${args.map(v => pf(v, 6 * n)).join(',\\ ')}$ — spaced $${pf(2, n)}
           };
         },
         () => {
-          const n = ri(3, 6), a = rnz(-6, 6), b = rnz(-6, 6), s = n % 2 ? 1 : -1;
+          const C = pick([[3, 8, 'i', 6], [3, 8, '-i', -6], [3, 27, '', 0], [4, 16, '-', 12], [4, 81, 'i', 6], [6, 64, '-', 12], [3, 8, '-', 12], [4, 16, '', 0], [6, 1, '-', 12], [3, 1, 'i', 6]]);
+          const [n, R, sym, k12] = C, r = Math.pow(R, 1 / n), wTex = sym === '' ? `${R}` : sym === '-' ? `-${R}` : sym === 'i' ? `${R === 1 ? '' : R}i` : `-${R === 1 ? '' : R}i`;
+          const roots = []; for (let j = 0; j < n; j++) { const a = (k12 * Math.PI / 12 + 2 * Math.PI * j) / n; roots.push([r * Math.cos(a), r * Math.sin(a), a]); }
+          const quad = z => (z[0] > 1e-9 ? (z[1] > 1e-9 ? 1 : z[1] < -1e-9 ? 4 : 0) : z[0] < -1e-9 ? (z[1] > 1e-9 ? 2 : z[1] < -1e-9 ? 3 : 0) : 0);
+          const cands = roots.filter(z => quad(z) > 0); const target = cands.length ? pick(cands) : roots[0], q = quad(target);
+          const desc = q ? `in quadrant ${q} of the Argand diagram` : 'on the real axis';
           return {
-            q: T`Let $z_1,\dots,z_{${n}}$ be the roots of $z^{${n}}=${poly([[a, ''], [b, 'i']])}$. Find the product $z_1z_2\cdots z_{${n}}$ as $p+qi$.`,
-            fields: [{ label: 'p', ans: s * a }, { label: 'q', ans: s * b }],
-            sol: T`The polynomial is $z^{${n}}-(${poly([[a, ''], [b, 'i']])})=0$. Product of roots $=(-1)^{${n}}\times\dfrac{\text{constant}}{\text{leading}}=(-1)^{${n}}\cdot(-w)=${s > 0 ? '' : '-'}w$.<br>So product $=${poly([[s * a, ''], [s * b, 'i']])}$.`,
+            q: T`Solve $z^{${n}}=${wTex}$ and give the root ${desc} in the form $a+bi$.`,
+            fields: [{ label: 'a', ans: target[0] }, { label: 'b', ans: target[1] }],
+            sol: T`$${wTex}=${R}e^{i(${pf(k12, 12)}+2k\pi)}$, so $z=${num(r)}e^{i(${pf(k12, 12 * n)}+${pf(2, n)}k)}$, $k=0,\dots,${n - 1}$.<br>
+The root ${desc} has argument $${num(Math.atan2(target[1], target[0]))}$: $z=${num(r)}\left(\cos\theta+i\sin\theta\right)=${num(target[0])}${target[1] < 0 ? '-' : '+'}${num(Math.abs(target[1]))}i$ (exact forms like sqrt(3) accepted).`,
           };
         },
         () => {
-          const n = ri(3, 9);
-          if (Math.random() < 0.5) {
-            const m = ri(1, 2 * n);
-            return {
-              q: T`$\omega=e^{2\pi i/${n}}$. Evaluate $\displaystyle\sum_{k=0}^{${n - 1}}\omega^{${m}k}$.`,
-              fields: [{ label: 'value', ans: m % n === 0 ? n : 0 }],
-              sol: m % n === 0 ? T`$\omega^{${m}}=1$ since ${n} divides ${m}, so every term is 1: total $${n}$.`
-                : T`$\omega^{${m}}\neq1$, so it's a geometric series: $\dfrac{1-(\omega^{${m}})^{${n}}}{1-\omega^{${m}}}=\dfrac{1-1}{1-\omega^{${m}}}=0$.`,
-            };
-          }
+          const n = pick([3, 4, 5, 6, 8]), r = pick([1, 2, 3]), R = Math.pow(r, n), A = n / 2 * r * r * Math.sin(2 * Math.PI / n);
           return {
-            q: T`$\omega=e^{2\pi i/${n}}$. Evaluate $(1-\omega)(1-\omega^2)\cdots(1-\omega^{${n - 1}})$.`,
-            fields: [{ label: 'value', ans: n }],
-            sol: T`$z^{${n}}-1=(z-1)(z-\omega)\cdots(z-\omega^{${n - 1}})$, so $(z-\omega)\cdots(z-\omega^{${n - 1}})=1+z+\dots+z^{${n - 1}}$. Put $z=1$: $${n}$.`,
+            q: T`The roots of $z^{${n}}=${R}$ are the vertices of a polygon in the Argand diagram. Find its exact area.`,
+            fields: [{ label: 'area', ans: A }],
+            sol: T`The roots have modulus $${R}^{1/${n}}=${r}$ and are equally spaced, so they form a regular ${n}-gon with circumradius ${r}.<br>
+It splits into ${n} congruent triangles at $O$, each with two sides ${r} and angle $${pf(2, n)}$: $A=${n}\times\tfrac12(${r})^2\sin${pf(2, n)}=${num(A)}$.`,
+          };
+        },
+        () => {
+          const n = pick([3, 4, 6]), c = [ri(-3, 3), ri(-3, 3)], d = pick([[2, 0], [0, 2], [3, 0], [1, 1], [2, 2], [0, -3], [-2, 0]]), v = [c[0] + d[0], c[1] + d[1]];
+          const th = 2 * Math.PI / n, w = [c[0] + d[0] * Math.cos(th) - d[1] * Math.sin(th), c[1] + d[0] * Math.sin(th) + d[1] * Math.cos(th)];
+          const area = n / 2 * (d[0] ** 2 + d[1] ** 2) * Math.sin(th), cT = poly([[c[0], ''], [c[1], 'i']]), vT = poly([[v[0], ''], [v[1], 'i']]);
+          return {
+            q: T`A regular ${n === 3 ? 'triangle' : n === 4 ? 'square' : 'hexagon'} has centre $${cT}$ and one vertex at $${vT}$. Find the next vertex anticlockwise (as $x+yi$) and the area of the polygon.`,
+            fields: [{ label: 'x', ans: w[0] }, { label: 'y', ans: w[1] }, { label: 'area', ans: area }],
+            sol: T`Rotate the vector from the centre: $v-c=${poly([[d[0], ''], [d[1], 'i']])}$. Multiply by $\omega=e^{2\pi i/${n}}$ and add $c$ back:<br>
+$c+(v-c)\,e^{${pf(2, n)}i}=${num(w[0])}${w[1] < 0 ? '-' : '+'}${num(Math.abs(w[1]))}i$.<br>
+Area $=\frac{${n}}{2}|v-c|^2\sin${pf(2, n)}=\frac{${n}}{2}(${d[0] ** 2 + d[1] ** 2})\sin${pf(2, n)}=${num(area)}$.`,
+          };
+        },
+        () => {
+          const base = pick([{ n: 4, w: '-16', roots: [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([a, b]) => [a * Math.SQRT2, b * Math.SQRT2]), rt: T`\pm\sqrt2\pm\sqrt2\,i` },
+            { n: 3, w: '8i', roots: [[Math.sqrt(3), 1], [-Math.sqrt(3), 1], [0, -2]], rt: T`\sqrt3+i,\ -\sqrt3+i,\ -2i` },
+            { n: 6, w: '-64', roots: [[Math.sqrt(3), 1], [0, 2], [-Math.sqrt(3), 1], [-Math.sqrt(3), -1], [0, -2], [Math.sqrt(3), -1]], rt: T`\pm2i,\ \pm\sqrt3\pm i` }]);
+          const c = [rnz(-3, 3), ri(-2, 2)], roots = base.roots.map(z => [z[0] + c[0], z[1] + c[1]]), tgt = roots.reduce((b, z) => (z[0] > b[0] + 1e-9 || (Math.abs(z[0] - b[0]) < 1e-9 && z[1] > b[1]) ? z : b));
+          const cT = poly([[c[0], ''], [c[1], 'i']]);
+          return {
+            q: T`The roots of $z^{${base.n}}=${base.w}$ are $${base.rt}$. Hence solve $\left(u-(${cT})\right)^{${base.n}}=${base.w}$: give the root with the greatest real part (and, if tied, greatest imaginary part) as $a+bi$, and the sum of all the roots.`,
+            fields: [{ label: 'a', ans: tgt[0] }, { label: 'b', ans: tgt[1] }, { label: 'sum (real part)', ans: base.n * c[0] }, { label: 'sum (imag part)', ans: base.n * c[1] }],
+            sol: T`Substitute $z=u-(${cT})$: it satisfies $z^{${base.n}}=${base.w}$, so $u=${cT}+z$ — shift every known root by $${cT}$.<br>
+Greatest real part: $${num(tgt[0])}${tgt[1] < 0 ? '-' : '+'}${num(Math.abs(tgt[1]))}i$.<br>The original roots sum to $0$ (they're centred on $O$), so the new roots sum to $${base.n}(${cT})=${poly([[base.n * c[0], ''], [base.n * c[1], 'i']])}$.`,
+          };
+        },
+        () => {
+          const n = ri(3, 9), m = ri(1, 2 * n);
+          return {
+            q: T`$\omega=e^{2\pi i/${n}}$. Evaluate $\displaystyle\sum_{k=0}^{${n - 1}}\omega^{${m}k}$.`,
+            fields: [{ label: 'value', ans: m % n === 0 ? n : 0 }],
+            sol: m % n === 0 ? T`$\omega^{${m}}=1$ since ${n} divides ${m}, so every term is 1: total $${n}$.`
+              : T`$\omega^{${m}}\neq1$, so it's a geometric series: $\dfrac{1-(\omega^{${m}})^{${n}}}{1-\omega^{${m}}}=\dfrac{1-1}{1-\omega^{${m}}}=0$.`,
           };
         },
       ],
@@ -303,7 +365,7 @@ $$\mathbf A^{-1}=\frac{1}{\det\mathbf A}\operatorname{adj}\mathbf A$$</li>
 $$\det(\mathbf A-\lambda\mathbf I)=0\quad\text{(characteristic equation)}$$
 <ul>
 <li>2×2: $\lambda^2-(\operatorname{tr}\mathbf A)\lambda+\det\mathbf A=0$.</li>
-<li>3×3: $\lambda^3-(\operatorname{tr})\lambda^2+(\text{sum of principal 2×2 minors})\lambda-\det=0$. Sum of eigenvalues = trace, product = det.</li>
+<li>3×3: $\lambda^3-(\operatorname{tr})\lambda^2+(\text{sum of principal }2\times2\text{ minors})\lambda-\det=0$. Sum of eigenvalues = trace, product = det.</li>
 <li>For each $\lambda$, solve $(\mathbf A-\lambda\mathbf I)\mathbf v=\mathbf 0$ — the equations are dependent; take any non-zero solution (for 3×3, cross two rows of $\mathbf A-\lambda\mathbf I$).</li>
 <li>Eigenvectors are only defined up to scale; normalised means unit length.</li>
 </ul>

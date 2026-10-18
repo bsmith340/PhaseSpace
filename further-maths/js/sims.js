@@ -38,7 +38,8 @@ function setRead(read, html) { if (read._last === html) return; read._last = htm
 
 // Responsive canvas with a world-coordinate plotter
 function makeCanvas(stage, aspect = 1) {
-  const cv = h('canvas'); stage.append(cv);
+  const cv = h('canvas');
+  if (stage.classList.contains('twin')) { const cell = h('div', { class: 'twincell' }); cell.append(cv); stage.append(cell); stage = cell; } else stage.append(cv);
   const ctx = cv.getContext('2d');
   const P = { cv, ctx, w: 0, h: 0, xmin: -5, xmax: 5, ymin: -5, ymax: 5, onresize: null };
   P.fit = () => {
@@ -102,6 +103,11 @@ function makeCanvas(stage, aspect = 1) {
   return P;
 }
 const f3 = x => (Math.abs(x) < 5e-4 ? 0 : +x.toFixed(3));
+// TeX helpers for readouts: small numbers in ×10ⁿ form; signed terms that drop zero terms and unit coefficients
+const sci = x => { const ax = Math.abs(x); if (!ax || ax >= 1e-3) return String(f3(x)); const [m, e] = x.toExponential(2).split('e'); return `${m}\\times10^{${+e}}`; };
+const tm = (c, v = '') => { if (Math.abs(c) < 5e-4) return ''; const m = Math.abs(c); return (c < 0 ? '-' : '+') + (v && Math.abs(m - 1) < 5e-4 ? '' : f3(m)) + v; };
+const ex = (...ts) => ts.map(([c, v]) => tm(c, v)).join('').replace(/^\+/, '') || '0';
+const cf = c => (Math.abs(c - 1) < 5e-4 ? '' : Math.abs(c + 1) < 5e-4 ? '-' : String(f3(c)));
 const cstr = (x, y) => `${f3(x)} ${y < 0 ? '-' : '+'} ${f3(Math.abs(y))}i`;
 const loop = fn => { let id, alive = true; const step = t => { if (!alive) return; fn(t); id = requestAnimationFrame(step); }; id = requestAnimationFrame(step); return () => { alive = false; cancelAnimationFrame(id); }; };
 
@@ -442,7 +448,7 @@ SIMS.arclength = {
       let L = 0; const pts = []; for (let i = 0; i <= n; i++) { const x = lo + (hi - lo) * i / n; pts.push([x, F.f(x)]); if (i) L += Math.hypot(x - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); }
       for (let i = 1; i <= n; i++) P.line(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], C.c, 2); pts.forEach(p => P.dot(p[0], p[1], C.c, 3.5));
       const s = simpson(x => Math.sqrt(1 + F.d(x) ** 2), lo, hi, 4000), Sx = simpson(x => 2 * Math.PI * F.f(x) * Math.sqrt(1 + F.d(x) ** 2), lo, hi, 4000), Vx = simpson(x => Math.PI * F.f(x) ** 2, lo, hi, 4000);
-      setRead(S.read, `<p>$${F.tex}$, $\\ ${f3(lo)}\\le x\\le${f3(hi)}$</p><p>Sum of ${n} chords $=${f3(L)}$</p><p class="hl">$s=\\int\\sqrt{1+y'^2}\\,dx=${f3(s)}$</p><p>Error $=${(s - L).toExponential(2)}$</p><p>$S_x=2\\pi\\int y\\,ds=${f3(Sx)}$<br>$V_x=\\pi\\int y^2dx=${f3(Vx)}$</p><p class="muted">Doubling n roughly quarters the error.</p>`);
+      setRead(S.read, `<p>$${F.tex}$, $\\ ${f3(lo)}\\le x\\le${f3(hi)}$</p><p>Sum of ${n} chords $=${f3(L)}$</p><p class="hl">$s=\\int\\sqrt{1+y'^2}\\,dx=${f3(s)}$</p><p>Error $=${sci(s - L)}$</p><p>$S_x=2\\pi\\int y\\,ds=${f3(Sx)}$<br>$V_x=\\pi\\int y^2dx=${f3(Vx)}$</p><p class="muted">Doubling n roughly quarters the error.</p>`);
     }
     P.onresize = draw; draw();
     return () => P.destroy();
@@ -478,8 +484,8 @@ SIMS.maclaurin = {
       const c = coefs(), T = x => c.reduce((s, ck, k) => s + ck * Math.pow(x - a, k), 0);
       P.curve(x => (F.dom && !F.dom(x) ? NaN : F.f(x)), C.a, 3); P.curve(T, C.c, 2.5); P.dot(a, F.f(a), C.d, 5);
       const fx = F.dom && !F.dom(x0) ? NaN : F.f(x0), tx = T(x0); P.line(x0, P.ymin, x0, P.ymax, C.grid, 1, [3, 3]); if (isFinite(fx)) P.dot(x0, fx, C.a); P.dot(x0, tx, C.c);
-      const terms = c.map((ck, k) => [ck, k]).filter(([ck]) => Math.abs(ck) > 1e-12).slice(0, 6).map(([ck, k]) => `${f3(ck)}${k ? (a ? `(x${a > 0 ? '-' : '+'}${Math.abs(a)})` : 'x') + (k > 1 ? `^{${k}}` : '') : ''}`).join(' + ').replace(/\+ -/g, '- ');
-      setRead(S.read, `<p>$P_{${n}}(x)=${terms || '0'}${c.filter(x => Math.abs(x) > 1e-12).length > 6 ? '+\\cdots' : ''}$</p><p class="hl">At $x=${f3(x0)}$: $f=${isFinite(fx) ? f3(fx) : '\\text{undef}'}$, $P_{${n}}=${f3(tx)}$<br>Error $=${isFinite(fx) ? Math.abs(fx - tx).toExponential(2) : '—'}$</p><p>Maclaurin series valid for: ${F.conv}</p><p class="muted">Try ln(1+x) with x = 1.5 and increase n: the error grows — outside the interval of convergence.</p>`);
+      const terms = c.map((ck, k) => [ck, k]).filter(([ck]) => Math.abs(ck) > 1e-12).slice(0, 6).map(([ck, k]) => `${k ? cf(ck) : f3(ck)}${k ? (a ? `(x${a > 0 ? '-' : '+'}${Math.abs(a)})` : 'x') + (k > 1 ? `^{${k}}` : '') : ''}`).join(' + ').replace(/\+ -/g, '- ');
+      setRead(S.read, `<p>$P_{${n}}(x)=${terms || '0'}${c.filter(x => Math.abs(x) > 1e-12).length > 6 ? '+\\cdots' : ''}$</p><p class="hl">At $x=${f3(x0)}$: $f=${isFinite(fx) ? f3(fx) : '\\text{undef}'}$, $P_{${n}}=${f3(tx)}$<br>Error $=${isFinite(fx) ? sci(Math.abs(fx - tx)) : '—'}$</p><p>Maclaurin series valid for: ${F.conv}</p><p class="muted">Try ln(1+x) with x = 1.5 and increase n: the error grows — outside the interval of convergence.</p>`);
     }
     P.onresize = draw; draw();
     return () => P.destroy();
