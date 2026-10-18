@@ -53,21 +53,22 @@ BOOK.de3 = [
   T`<h3>Choosing the trial PI</h3><table class="tbl"><tr><th>$f(x)$</th><th>Try</th></tr>
 <tr><td>constant $k$</td><td>$\lambda$</td></tr><tr><td>$ax+b$</td><td>$\lambda x+\mu$</td></tr><tr><td>$ax^2+bx+c$</td><td>$\lambda x^2+\mu x+\nu$</td></tr>
 <tr><td>$ke^{px}$</td><td>$\lambda e^{px}$</td></tr><tr><td>$k\cos\omega x$ or $k\sin\omega x$</td><td>$\lambda\cos\omega x+\mu\sin\omega x$</td></tr></table>
-<p><b>Golden rule:</b> if your trial (or part of it) is already in the CF, multiply the trial by $x$ (by $x^2$ if the CF root is repeated).</p>`,
+<p>The specification only uses $f(x)$ that is a polynomial, exponential or trigonometric function and <b>not</b> a solution of the homogeneous equation — so a trial from this table always works.</p>`,
   B.ex(1, T`Find a PI for $y''-y'-6y=6x+1$.`, [T`Try $y=\lambda x+\mu$: $y'=\lambda$, $y''=0$.`, T`$0-\lambda-6(\lambda x+\mu)=6x+1$.`, T`$x$: $-6\lambda=6\Rightarrow\lambda=-1$. Constant: $-\lambda-6\mu=1\Rightarrow\mu=0$.`, T`PI: $y=-x$.`]),
   B.ex(2, T`Find a PI for $y''-y'-6y=5e^{2x}$.`, [T`Try $\lambda e^{2x}$: $(4\lambda-2\lambda-6\lambda)e^{2x}=5e^{2x}\Rightarrow\lambda=-\frac54$.`]),
   B.ex(3, T`Find a PI for $y''+y=3\cos2x$.`, [T`Try $\lambda\cos2x+\mu\sin2x$: $y''=-4y$, so $y''+y=-3(\lambda\cos2x+\mu\sin2x)$.`, T`$-3\lambda=3$, $-3\mu=0$: PI $=-\cos2x$.`], T`Always include <b>both</b> cos and sin in the trial, even if $f$ has only one — with a $y'$ term they get mixed.`),
-  B.ex(4, T`Find a PI for $y''-y'-6y=5e^{3x}$.`, [T`CF is $Ae^{3x}+Be^{-2x}$ — $e^{3x}$ is in it, so $\lambda e^{3x}$ would give $0$. Try $\lambda xe^{3x}$.`, T`$y'=\lambda e^{3x}(1+3x)$, $y''=\lambda e^{3x}(6+9x)$.`, T`$y''-y'-6y=\lambda e^{3x}\left[(6+9x)-(1+3x)-6x\right]=5\lambda e^{3x}$, so $\lambda=1$: PI $=xe^{3x}$.`]),
-  B.ex(5, T`Resonance: find a PI for $y''+4y=\sin2x$.`, [T`CF $=A\cos2x+B\sin2x$ contains $\sin2x$. Try $x(\lambda\cos2x+\mu\sin2x)$.`, T`Working through gives $y=-\frac x4\cos2x$. Check: $y''=\sin2x+x\cos2x$, so $y''+4y=\sin2x$. ✓`, T`The amplitude grows like $x$: that's <b>resonance</b> (forcing at the natural frequency).`]),
+  B.beyond(T`<p>What if $f(x)$ <i>is</i> in the CF? The trial gives $0=f(x)$, so multiply the trial by $x$. Two illustrations (not on the A2 1 specification):</p>`),
+  B.ex(4, T`(Beyond the spec) Find a PI for $y''-y'-6y=5e^{3x}$.`, [T`CF is $Ae^{3x}+Be^{-2x}$ — $e^{3x}$ is in it, so $\lambda e^{3x}$ would give $0$. Try $\lambda xe^{3x}$.`, T`$y'=\lambda e^{3x}(1+3x)$, $y''=\lambda e^{3x}(6+9x)$.`, T`$y''-y'-6y=\lambda e^{3x}\left[(6+9x)-(1+3x)-6x\right]=5\lambda e^{3x}$, so $\lambda=1$: PI $=xe^{3x}$.`]),
+  B.ex(5, T`(Beyond the spec) Resonance: find a PI for $y''+4y=\sin2x$.`, [T`CF $=A\cos2x+B\sin2x$ contains $\sin2x$. Try $x(\lambda\cos2x+\mu\sin2x)$.`, T`Working through gives $y=-\frac x4\cos2x$. Check: $y''=\sin2x+x\cos2x$, so $y''+4y=\sin2x$. ✓`, T`The amplitude grows like $x$: that's <b>resonance</b> (forcing at the natural frequency).`]),
   T`<h3>Initial conditions</h3><p>Apply them to the <b>full</b> general solution (CF + PI), never the CF alone.</p>`,
   B.ex(6, T`Solve $y''-y'-6y=12$, $y(0)=0$, $y'(0)=1$.`, [T`CF $Ae^{3x}+Be^{-2x}$; PI: $-6\lambda=12$, $\lambda=-2$.`, T`$y=Ae^{3x}+Be^{-2x}-2$.`, T`$y(0)=0$: $A+B=2$. $y'(0)=1$: $3A-2B=1$. So $A=1$, $B=1$.`, T`$y=e^{3x}+e^{-2x}-2$.`]),
-  B.warn([T`Applying initial conditions before adding the PI.`, T`Trial PI already in the CF (gives $0=f$, a contradiction).`, T`Trying only $\lambda\cos\omega x$ when $f=\cos\omega x$ and the equation has a $y'$ term.`]),
-  B.checks([[T`PI for $y''+3y'+2y=4$.`, T`$2$.`], [T`PI for $y''+3y'+2y=e^{-x}$.`, T`$e^{-x}$ is in the CF ($m=-1,-2$): try $\lambda xe^{-x}$; $\lambda=1$.`]]),
+  B.warn([T`Applying initial conditions before adding the PI.`, T`Trying only $\lambda\cos\omega x$ when $f=\cos\omega x$ and the equation has a $y'$ term.`, T`Forgetting the constant term in a polynomial trial ($\lambda x+\mu$, not just $\lambda x$).`]),
+  B.checks([[T`PI for $y''+3y'+2y=4$.`, T`$2$.`], [T`PI for $y''+3y'+2y=e^{x}$.`, T`$\lambda(1+3+2)=1$: PI $=\frac16e^x$.`]]),
   B.examq(9, T`<p>Solve $\dfrac{d^2y}{dx^2}+2\dfrac{dy}{dx}+5y=10$ given $y=0$ and $\dfrac{dy}{dx}=0$ when $x=0$. Describe the behaviour of $y$ for large $x$.</p>`,
     T`<p>$m=-1\pm2i$ <span class="mk">M1</span>; CF $e^{-x}(A\cos2x+B\sin2x)$ <span class="mk">A1</span>; PI $y=2$ <span class="mk">B1</span></p>
 <p>$y(0)=0$: $A+2=0$, $A=-2$ <span class="mk">M1 A1</span>. $y'=e^{-x}\left[(2B-A)\cos2x-(2A+B)\sin2x\right]$ <span class="mk">M1</span>; $y'(0)=2B-A=0$, $B=-1$ <span class="mk">A1</span></p>
 <p>$y=2-e^{-x}(2\cos2x+\sin2x)$ <span class="mk">A1</span>; as $x\to\infty$, $e^{-x}\to0$ so $y\to2$ (oscillations die away) <span class="mk">B1</span></p>`),
-  B.key([T`$y=$ CF $+$ PI.`, T`Trial PI from the table; multiply by $x$ if it clashes with the CF.`, T`Conditions go on the full solution.`]),
+  B.key([T`$y=$ CF $+$ PI (general solution); conditions give the particular solution.`, T`Trial PI from the table — on the spec it never clashes with the CF.`, T`Conditions go on the full solution.`]),
 ].join('');
 
 BOOK.de4 = [
@@ -83,12 +84,13 @@ BOOK.de4 = [
     T`$r=-2\pm3i$: under-damped. $x=e^{-2t}(A\cos3t+B\sin3t)$.`,
     T`$x(0)=2\Rightarrow A=2$. $\dot x=e^{-2t}\left[(3B-2A)\cos3t-(3A+2B)\sin3t\right]$, so $\dot x(0)=3B-4=0\Rightarrow B=\frac43$.`,
     T`$x=e^{-2t}\left(2\cos3t+\tfrac43\sin3t\right)$: oscillations with period $\frac{2\pi}3$ inside an envelope decaying like $e^{-2t}$.`]),
-  T`<h3>Forced motion and resonance</h3><p>$\ddot x+b\dot x+cx=F\cos\omega t$: the CF decays (if $b\gt0$) and the PI is the long-term <b>steady state</b>. If $b=0$ and $\omega^2=c$ the PI is $\frac{F}{2\omega}t\sin\omega t$, growing without bound — resonance. Try it in the oscillator sim.</p>`,
+  T`<h3>Forced motion</h3><p>$\ddot x+b\dot x+cx=F\cos\omega t$: the CF decays (if $b\gt0$) and the PI is the long-term <b>steady state</b>.</p>`,
+  B.beyond(T`<p>If $b=0$ and $\omega^2=c$, the forcing term is itself a solution of the homogeneous equation and the PI is $\frac{F}{2\omega}t\sin\omega t$, growing without bound — <b>resonance</b>. The A2 1 specification excludes this case, but you can see it in the oscillator simulation.</p>`),
   B.checks([[T`$\ddot x+16x=0$, $x(0)=3$, $\dot x(0)=8$: amplitude and period?`, T`$x=3\cos4t+2\sin4t$, $R=\sqrt{13}$, $T=\frac\pi2$.`], [T`For which $c$ is $\ddot x+6\dot x+cx=0$ critically damped?`, T`$36=4c$, $c=9$.`]]),
   B.examq(7, T`<p>$\ddot x+6\dot x+9x=0$, with $x=1$ and $\dot x=0$ when $t=0$. (a) Find $x$ in terms of $t$. (b) Show that $x\gt0$ for all $t\ge0$ and state the type of damping.</p>`,
     T`<p>(a) $r=-3$ repeated <span class="mk">M1</span>; $x=(A+Bt)e^{-3t}$ <span class="mk">A1</span>; $A=1$; $\dot x=(B-3A-3Bt)e^{-3t}$, so $B=3$ <span class="mk">M1 A1</span>: $x=(1+3t)e^{-3t}$ <span class="mk">A1</span></p>
 <p>(b) $1+3t\gt0$ and $e^{-3t}\gt0$ for $t\ge0$, so $x\gt0$ <span class="mk">B1</span>: critically damped (never overshoots) <span class="mk">B1</span></p>`),
-  B.key([T`SHM: $x=R\cos(\omega t-\varphi)$, $T=\frac{2\pi}{\omega}$.`, T`Damping regime from the discriminant.`, T`Steady state = PI; resonance when forcing matches the natural frequency with no damping.`]),
+  B.key([T`SHM: $x=R\cos(\omega t-\varphi)$, $T=\frac{2\pi}{\omega}$.`, T`Damping regime from the discriminant of the auxiliary equation.`, T`Steady state = PI; the CF is the transient.`]),
 ].join('');
 
 // Prerequisite / extension chapters reuse the summary notes with a short preface.

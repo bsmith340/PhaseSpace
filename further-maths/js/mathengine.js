@@ -79,7 +79,9 @@ function lex(src, vars) {
     if (m) { out.push({ t: 'n', v: parseFloat(m[1]) }); i += m[1].length; continue; }
     if ('+-*/^(),!²³°√'.includes(c)) { out.push({ t: c }); i++; continue; }
     const low = s.slice(i).toLowerCase();
-    const name = names.find(n => low.startsWith(n.toLowerCase()) && (vars.includes(n) ? s.startsWith(n, i) : true));
+    const exact = vars.filter(v => s.startsWith(v, i)).sort((a, b) => b.length - a.length)[0];
+    let name = names.find(n => low.startsWith(n.toLowerCase()) && (vars.includes(n) ? s.startsWith(n, i) : true));
+    if (exact && (!name || exact.length >= name.length)) name = exact; // a variable typed with exact case beats a same-length function/constant
     if (name) {
       i += name.length;
       if (vars.includes(name)) out.push({ t: 'v', v: name });

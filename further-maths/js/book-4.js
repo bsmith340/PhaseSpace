@@ -112,14 +112,12 @@ $$\int_a^\infty f(x)\,dx=\lim_{t\to\infty}\int_a^tf(x)\,dx,\qquad\int_0^1f(x)\,d
   B.ex(4, T`Evaluate $\int_0^1\ln x\,dx$.`, [T`$\int_t^1\ln x\,dx=[x\ln x-x]_t^1=-1-t\ln t+t$.`, T`As $t\to0^+$, $t\ln t\to0$: value $-1$.`]),
   B.ex(5, T`Evaluate $\int_0^\infty\frac{dx}{(x+1)(x+2)}$.`, [T`Partial fractions: $\frac1{x+1}-\frac1{x+2}$, so $\int_0^t=\left[\ln\frac{x+1}{x+2}\right]_0^t=\ln\frac{t+1}{t+2}-\ln\frac12$.`, T`$\frac{t+1}{t+2}\to1$, so $\ln\to0$: value $\ln2$.`], T`Combine the logs <b>before</b> taking the limit — separately, $\ln(t+1)$ and $\ln(t+2)$ both diverge.`),
   B.tip(T`<p><b>Trap:</b> $\int_{-1}^1\frac{dx}{x^2}$ "=" $\left[-\frac1x\right]_{-1}^1=-2$ is nonsense — a positive function can't have negative area. The integrand blows up at $x=0$ inside the interval; split at $0$ and each half diverges.</p>`),
-  T`<h3>Volumes of revolution</h3><p>Rotating $y=f(x)$, $a\le x\le b$, about the $x$-axis: each thin slice is a disc of volume $\pi y^2\,\delta x$, so</p>$$V=\pi\int_a^by^2\,dx.$$<p>About the $y$-axis: $V=\pi\int x^2\,dy$.</p>`,
-  B.ex(6, T`Rotate $y=\frac1x$, $x\ge1$, about the $x$-axis. Find the volume.`, [T`$V=\pi\int_1^\infty\frac{dx}{x^2}=\pi$ — finite, even though the area under the curve, $\int_1^\infty\frac1x\,dx$, is infinite ("Gabriel's horn").`]),
   B.warn([T`Substituting $\infty$ as if it were a number. Write $\lim_{t\to\infty}$.`, T`Missing a singularity inside the interval.`, T`Taking limits of separate logs that each diverge.`]),
   B.checks([[T`$\int_0^\infty e^{-3x}dx$`, T`$\frac13$.`], [T`Does $\int_0^1\frac{dx}{x^2}$ converge?`, T`No ($p=2\ge1$).`], [T`$\int_0^\infty\frac{dx}{x^2+4}$`, T`$\frac12\cdot\frac\pi2=\frac\pi4$.`]]),
   B.examq(6, T`<p>Evaluate $\displaystyle\int_1^\infty\frac{2}{x(x+2)}\,dx$, showing the limiting process clearly.</p>`,
     T`<p>$\frac{2}{x(x+2)}=\frac1x-\frac1{x+2}$ <span class="mk">B1</span>; $\int_1^t=\left[\ln\frac{x}{x+2}\right]_1^t=\ln\frac t{t+2}-\ln\frac13$ <span class="mk">M1 A1</span></p>
 <p>As $t\to\infty$, $\frac{t}{t+2}=\frac1{1+2/t}\to1$ <span class="mk">M1</span>, so value $=\ln3$ <span class="mk">A1 A1</span></p>`),
-  B.key([T`Replace the problem limit by $t$; integrate; take the limit.`, T`p-test; $x^ke^{-x}\to0$; $x^k\ln x\to0$.`, T`$V=\pi\int y^2dx$.`]),
+  B.key([T`Replace the problem limit by $t$; integrate; take the limit.`, T`Two kinds: infinite range, or an integrand undefined in the range (split at an interior point).`, T`p-test; $x^ke^{-x}\to0$; $x^k\ln x\to0$.`]),
 ].join('');
 
 BOOK.ca1 = [
@@ -142,11 +140,13 @@ BOOK.ca1 = [
 ].join('');
 
 BOOK.ca2 = [
-  B.why(T`<p>Four integrals appear over and over — $\int\frac{1}{a^2+x^2}$, $\int\frac{1}{\sqrt{a^2-x^2}}$, $\int\frac1{\sqrt{x^2+a^2}}$, $\int\frac1{\sqrt{x^2-a^2}}$. Each comes from a substitution that turns the root or the sum of squares into a single trig or hyperbolic function.</p>`),
-  B.thm('Standard integrals', T`$$\begin{aligned}\int\frac{dx}{a^2+x^2}&=\frac1a\arctan\frac xa+c &\qquad \int\frac{dx}{\sqrt{a^2-x^2}}&=\arcsin\frac xa+c\\ \int\frac{dx}{\sqrt{x^2+a^2}}&=\operatorname{arsinh}\frac xa+c &\qquad \int\frac{dx}{\sqrt{x^2-a^2}}&=\operatorname{arcosh}\frac xa+c\end{aligned}$$`),
-  B.proof(T`<p><b>arctan</b>: $x=a\tan\theta$, $dx=a\sec^2\theta\,d\theta$, $a^2+x^2=a^2\sec^2\theta$: $\int\frac{a\sec^2\theta}{a^2\sec^2\theta}d\theta=\frac\theta a$.</p>
-<p><b>arcsin</b>: $x=a\sin\theta$, $dx=a\cos\theta\,d\theta$, $\sqrt{a^2-x^2}=a\cos\theta$: $\int d\theta=\theta$.</p>
-<p><b>arsinh / arcosh</b>: $x=a\sinh u$ / $x=a\cosh u$ — see chapter 5.4.</p>`),
+  B.why(T`<p>The specification names two integrals here — $\int(a^2-x^2)^{-1/2}\,dx$ and $\int(a^2+x^2)^{-1}\,dx$ — and asks you to <b>choose trigonometric substitutions</b> for "associated functions". Both come from one idea: a substitution that turns $a^2-x^2$ or $a^2+x^2$ into a single squared trig function. (The hyperbolic partners, $(x^2\pm a^2)^{-1/2}$, are in chapter 6.4.)</p>`),
+  B.thm('Standard integrals (in the formula booklet)', T`$$\int\frac{dx}{a^2+x^2}=\frac1a\arctan\frac xa+c,\qquad\int\frac{dx}{\sqrt{a^2-x^2}}=\arcsin\frac xa+c\quad(|x|\lt a).$$`),
+  B.proof(T`<p><b>arctan</b>: $x=a\tan\theta$, $dx=a\sec^2\theta\,d\theta$, $a^2+x^2=a^2(1+\tan^2\theta)=a^2\sec^2\theta$: $\int\frac{a\sec^2\theta}{a^2\sec^2\theta}d\theta=\frac\theta a=\frac1a\arctan\frac xa$.</p>
+<p><b>arcsin</b>: $x=a\sin\theta$ with $-\frac\pi2\le\theta\le\frac\pi2$, $dx=a\cos\theta\,d\theta$, $\sqrt{a^2-x^2}=\sqrt{a^2\cos^2\theta}=a\cos\theta$ (as $\cos\theta\ge0$): $\int d\theta=\theta=\arcsin\frac xa$.</p>`),
+  T`<h3>Choosing a trigonometric substitution</h3><table class="tbl"><tr><th>If you see</th><th>Substitute</th><th>Because</th></tr><tr><td>$\sqrt{a^2-x^2}$</td><td>$x=a\sin\theta$</td><td>$a^2-a^2\sin^2\theta=a^2\cos^2\theta$</td></tr><tr><td>$a^2+x^2$</td><td>$x=a\tan\theta$</td><td>$a^2+a^2\tan^2\theta=a^2\sec^2\theta$</td></tr></table><p>Always: change $dx$, change the <b>limits</b>, simplify to a single trig function, then use $\cos^2\theta=\frac12(1+\cos2\theta)$ or $\sin^2\theta=\frac12(1-\cos2\theta)$ if needed.</p>`,
+  B.ex(5, T`Use $x=2\sin\theta$ to find $\displaystyle\int_0^{2}\sqrt{4-x^2}\,dx$.`, [T`$dx=2\cos\theta\,d\theta$; $x=0\to\theta=0$, $x=2\to\theta=\frac\pi2$; $\sqrt{4-4\sin^2\theta}=2\cos\theta$.`, T`$\int_0^{\pi/2}4\cos^2\theta\,d\theta=2\int_0^{\pi/2}(1+\cos2\theta)\,d\theta=2\left[\theta+\tfrac12\sin2\theta\right]_0^{\pi/2}=\pi$.`], T`Sanity check: it's a quarter of a circle of radius 2, area $\frac14\pi\cdot2^2=\pi$. ✓`),
+  B.ex(6, T`Use $x=3\tan\theta$ to find $\displaystyle\int_0^{3}\frac{dx}{(9+x^2)^{3/2}}$.`, [T`$dx=3\sec^2\theta\,d\theta$, $(9+9\tan^2\theta)^{3/2}=27\sec^3\theta$, limits $0\to\frac\pi4$.`, T`$\int_0^{\pi/4}\frac{3\sec^2\theta}{27\sec^3\theta}d\theta=\frac19\int_0^{\pi/4}\cos\theta\,d\theta=\frac19\sin\frac\pi4=\frac{\sqrt2}{18}$.`]),
   T`<h3>Technique 1 — completing the square</h3>`,
   B.ex(1, T`Find $\displaystyle\int\frac{dx}{x^2+4x+13}$.`, [T`$x^2+4x+13=(x+2)^2+9$.`, T`With $u=x+2$: $\int\frac{du}{u^2+9}=\frac13\arctan\frac{x+2}3+c$.`]),
   B.ex(2, T`Find $\displaystyle\int\frac{dx}{\sqrt{5+4x-x^2}}$.`, [T`$5+4x-x^2=9-(x-2)^2$.`, T`$=\arcsin\frac{x-2}{3}+c$.`]),
@@ -154,9 +154,11 @@ BOOK.ca2 = [
   B.ex(3, T`Find $\displaystyle\int\frac{dx}{9+4x^2}$.`, [T`$9+4x^2=9+(2x)^2$; with $u=2x$, $dx=\frac12du$.`, T`$\frac12\cdot\frac13\arctan\frac{2x}3=\frac16\arctan\frac{2x}{3}+c$.`]),
   T`<h3>Technique 3 — split the numerator</h3><p>Write the numerator as (multiple of the derivative of the denominator) + (constant): the first part gives a log, the second an arctan.</p>`,
   B.ex(4, T`Find $\displaystyle\int\frac{2x+5}{x^2+2x+5}dx$.`, [T`Derivative of the denominator is $2x+2$, so $2x+5=(2x+2)+3$.`, T`$\int\frac{2x+2}{x^2+2x+5}dx=\ln(x^2+2x+5)$.`, T`$\int\frac{3}{(x+1)^2+4}dx=\frac32\arctan\frac{x+1}2$.`, T`Answer: $\ln(x^2+2x+5)+\frac32\arctan\frac{x+1}2+c$.`]),
-  B.warn([T`$\int\frac{1}{4+x^2}dx=\arctan\frac x2$ — missing the $\frac12$.`, T`Confusing $\sqrt{a^2-x^2}$ (arcsin) with $\sqrt{x^2-a^2}$ (arcosh).`]),
-  B.checks([[T`$\int_0^{3}\frac{dx}{\sqrt{9-x^2}}$`, T`$\arcsin1=\frac\pi2$ (improper at $x=3$ but converges).`], [T`$\int\frac{dx}{\sqrt{x^2+6x+10}}$`, T`$\operatorname{arsinh}(x+3)+c$.`]]),
-  B.examq(5, T`<p>Show that $\displaystyle\int_1^2\frac{dx}{\sqrt{x^2-2x+2}}=\ln\left(1+\sqrt2\right)$.</p>`,
-    T`<p>$x^2-2x+2=(x-1)^2+1$ <span class="mk">M1</span>; $\left[\operatorname{arsinh}(x-1)\right]_1^2$ <span class="mk">A1</span> $=\operatorname{arsinh}1-0$ <span class="mk">A1</span> $=\ln(1+\sqrt2)$ <span class="mk">M1 A1</span></p>`),
-  B.key([T`Four standard forms; complete the square; split numerators.`]),
+  B.warn([T`$\int\frac{1}{4+x^2}dx=\arctan\frac x2$ — missing the $\frac12$.`, T`Forgetting to change the limits after a substitution (or changing $x$ but not $dx$).`, T`Confusing $\sqrt{a^2-x^2}$ (arcsin, this chapter) with $\sqrt{x^2-a^2}$ (arcosh, chapter 6.4).`]),
+  B.exam([T`If the substitution is given, use it — and show $dx$, the new limits and the simplified integrand on separate lines.`, T`Both standard results are in the formula booklet; the derivation by substitution may still be asked for.`]),
+  B.checks([[T`$\int_0^{3}\frac{dx}{\sqrt{9-x^2}}$`, T`$\arcsin1=\frac\pi2$ (improper at $x=3$ but converges).`], [T`$\int\frac{dx}{x^2+6x+10}$`, T`$(x+3)^2+1$: $\arctan(x+3)+c$.`], [T`Which substitution for $\int\frac{x^2}{\sqrt{1-x^2}}dx$?`, T`$x=\sin\theta$: it becomes $\int\sin^2\theta\,d\theta$.`]]),
+  B.examq(7, T`<p>(a) Use the substitution $x=\sin\theta$ to show that $\displaystyle\int_0^{1/2}\frac{x^2}{\sqrt{1-x^2}}\,dx=\frac{\pi}{12}-\frac{\sqrt3}{8}$. <span class="mk">[5]</span></p><p>(b) Find $\displaystyle\int\frac{dx}{x^2+4x+8}$. <span class="mk">[2]</span></p>`,
+    T`<p>(a) $dx=\cos\theta\,d\theta$, limits $0\to\frac\pi6$ <span class="mk">B1</span>; integrand $\frac{\sin^2\theta}{\cos\theta}\cos\theta=\sin^2\theta$ <span class="mk">M1</span>; $\frac12\int_0^{\pi/6}(1-\cos2\theta)\,d\theta$ <span class="mk">M1</span> $=\frac12\left[\theta-\frac12\sin2\theta\right]_0^{\pi/6}$ <span class="mk">A1</span> $=\frac{\pi}{12}-\frac{\sqrt3}{8}$. <span class="mk">A1</span></p>
+<p>(b) $(x+2)^2+4$ <span class="mk">M1</span>; $\frac12\arctan\frac{x+2}{2}+c$. <span class="mk">A1</span></p>`),
+  B.key([T`$\int\frac{dx}{a^2+x^2}=\frac1a\arctan\frac xa$; $\int\frac{dx}{\sqrt{a^2-x^2}}=\arcsin\frac xa$.`, T`$\sqrt{a^2-x^2}$ → $x=a\sin\theta$; $a^2+x^2$ → $x=a\tan\theta$.`, T`Complete the square; split numerators; change the limits.`]),
 ].join('');

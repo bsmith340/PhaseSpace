@@ -6,11 +6,11 @@ You pick a course on the home page (`#/`). Each course has its own spec map, tex
 
 ## What's inside (per course)
 
-- **Specification map** (`#/<course>/spec`): every topic and outcome, linked to its chapter, simulation, Desmos presets and drills.
-  - Each point is tagged *On spec* or *Check spec* (normally taught in the unit; confirm the wording in the official specification).
-  - FM complex-number points show their CCEA codes (C1–C4).
+- **Specification map** (`#/<course>/spec`): every learning outcome **quoted from the official CCEA specification** (FM: Section 3.4; Maths: Sections 3.1–3.2), with links to the chapters that cover it.
+  - Outcome codes (P1, A1–A7, C1–C4, …) are BCSFM labels; CCEA prints the bullets unnumbered.
+  - Each chapter opens with a "The specification says" box listing the outcomes it covers.
+  - Points are tagged *On spec* or *Supporting* (an example context or technique an outcome relies on).
   - Content that isn't in the unit is kept in a separate archive and never appears in drills.
-  - The outcome wording is BCSFM's summary, not CCEA's official text.
 - **Textbook** (`#/<course>/book`): one chapter per spec point. Each chapter covers:
   - the big picture and definitions;
   - theorems with full proofs and derivations;
@@ -18,7 +18,7 @@ You pick a course on the home page (`#/`). Each course has its own spec map, tex
   - check-yourself questions;
   - an **original** exam-style question with a mark-scheme-style solution.
 - **Drills**: randomised question generators with worked solutions. *Smart drill* serves your weakest points first; *Sprint* gives 10 timed questions.
-- **Formula book**: searchable, with each formula linked to its chapter.
+- **Formula book**: searchable, each formula linked to its chapter and tagged *In booklet* or *Learn it* against CCEA's Mathematical Formulae and Tables booklet.
 - **Past papers**: links to the official CCEA papers, mark schemes and Chief Examiner's Reports. There's also a score tracker and your own bank of real past-paper questions and examiner quotes (with sources), tagged by spec point. Backups export and import as JSON.
 
 ## Shared tools
@@ -26,13 +26,19 @@ You pick a course on the home page (`#/`). Each course has its own spec map, tex
 - **Simulations** (`#/sims`):
   - FM: roots of zⁿ = w and polygon geometry; De Moivre identities; polar sectors; hyperbola; induction; method of differences; partial fractions; improper integrals; and more.
   - AS 1: quadratics; transformations; circles; binomial; sine/cosine rules; unit circle and trig equations; log-linear graphs; first principles; area; vectors.
-- **Desmos**: ready-made graphs for each spec point.
-  - Without a key, the Desmos calculator is embedded and you copy the expressions into it.
-  - With your own free Desmos API key (saved in this browser only), the presets load automatically.
-- **Lab**: graph plotter, complex-number workbench, matrix calculator, calculus and series tools, ODE solver, and polynomial roots and partial fractions.
+- **Graph tab / Interactive grapher** (`graph.js`): a Desmos-style grapher that works offline — sliders, draggable points, implicit curves, polar and parametric curves, shaded inequalities, roots/turning points/intersections. Every spec point has presets (`graph-presets.js`). "Copy for Desmos" exports the expressions; with a Desmos API key (Settings) the presets load into real Desmos.
+- **Lab**, grouped by course:
+  - Both: interactive grapher, graph plotter, calculus & series, polynomials & partial fractions, scientific calculator.
+  - Maths AS 1: quadratics & inequalities, simultaneous equations (2/3 unknowns, line & curve), triangle solver (incl. ambiguous case), trig equation solver, lines & circles, binomial expander, exponentials & logs, 2D vectors, tangents & stationary points, area with either axis.
+  - FM A2 1: complex numbers, De Moivre multiple angles, polar curves & area, sums of series, ODE solver, matrix powers.
+- **Settings** (`#/settings`, ⚙): download/load a progress file, copy/paste a progress code (merge or replace), backup reminders, theme, text size, start page, sprint length, calculator angle mode, graph engine and Desmos key, resets.
 - **Scientific calculator**: SHIFT/HYP, DEG/RAD, complex numbers, exact-value recognition and history. Open it as a pop-up on every page (🧮 or Alt+C) or as a full page.
 
 BCSFM does not reproduce CCEA papers or reports. Add them yourself from the official PDFs.
+
+## Progress between deploys
+
+Progress lives in the browser's localStorage for one web address. A new Netlify Drop gives a new address that starts empty, so download your progress file (⚙ Settings) before redeploying and load it on the new site — or redeploy to the same Netlify site to keep the address.
 
 ## Deploy (Netlify Drop)
 
@@ -56,7 +62,9 @@ Open `further-maths/index.html`, or run `cd further-maths && python3 -m http.ser
 | `js/book-*.js` | textbook chapters (`book-m1a/b/c.js` = AS 1) |
 | `js/formulae.js` | FM formula book |
 | `js/sims.js`, `js/sims-fm2.js`, `js/sims-m1.js` | simulations (the FM rebuilds override the originals) |
-| `js/desmos.js` | Desmos presets and embed |
+| `js/graph.js`, `js/graph-presets.js`, `js/desmos.js` | grapher, per-point presets, optional Desmos API mode |
+| `js/lab-m1.js`, `js/lab-fm2.js` | course-specific Lab tools |
+| `js/settings.js` | settings, progress save/load/merge, backup reminders |
 | `js/lab.js`, `js/calc.js` | lab tools, calculator |
 | `js/drill.js`, `js/app.js` | drill engine; routing and views |
 

@@ -283,3 +283,69 @@ SIMS.m_vectors = {
     return () => P.destroy();
   },
 };
+
+/* ---------- Exponential and log graphs (E1–E8) ---------- */
+SIMS.m_expgraph = {
+  title: 'aˣ, eˣ, logₐ x and ln x', desc: 'y = aˣ and its inverse y = logₐ x are reflections in y = x. Solve aˣ = b graphically, and see the solution set of aˣ < b — it reverses when 0 < a < 1.',
+  mount(el) {
+    const S = simShell(el), P = makeCanvas(S.stage, 1.2);
+    let a = 2, b = 5, showLog = true, showE = false, ineq = true;
+    slider(S.ctrls, 'base a', 0.2, 5, 0.05, a, v => { a = Math.abs(v - 1) < 0.02 ? 1.05 : v; draw(); }, v => (+v).toFixed(2));
+    slider(S.ctrls, 'b (solve aˣ = b)', 0.2, 12, 0.1, b, v => { b = v; draw(); }, v => (+v).toFixed(1));
+    check(S.ctrls, 'Show y = logₐ x (reflection in y = x)', true, v => { showLog = v; draw(); });
+    check(S.ctrls, 'Show y = eˣ and y = ln x', false, v => { showE = v; draw(); });
+    check(S.ctrls, 'Shade the solution of aˣ < b', true, v => { ineq = v; draw(); });
+    function draw() {
+      const C = COL(); P.view(2, 2, 7); P.clear(); P.grid(1, true);
+      const x0 = Math.log(b) / Math.log(a);
+      if (ineq && isFinite(x0)) { const ctx = P.ctx; ctx.fillStyle = C.fill; const lo = a > 1 ? P.xmin : x0, hi = a > 1 ? x0 : P.xmax; ctx.fillRect(P.X(lo), 0, P.X(hi) - P.X(lo), P.h); }
+      P.line(P.xmin, P.xmin, P.xmax, P.xmax, C.grid, 1.2, [5, 5]);
+      P.curve(x => Math.pow(a, x), C.a, 3);
+      if (showLog) P.curve(x => (x > 0 ? Math.log(x) / Math.log(a) : NaN), C.b, 2.5, 0.001, P.xmax, 900);
+      if (showE) { P.curve(Math.exp, C.d, 1.8); P.curve(x => (x > 0 ? Math.log(x) : NaN), C.d, 1.8, 0.001, P.xmax, 900); }
+      P.line(P.xmin, b, P.xmax, b, C.c, 1.5, [3, 3]); if (isFinite(x0)) { P.dot(x0, b, C.c, 6); P.line(x0, 0, x0, b, C.c, 1, [2, 3]); }
+      P.dot(0, 1, C.a, 5); P.dot(1, a, C.a, 5); if (showLog) { P.dot(1, 0, C.b, 5); P.dot(a, 1, C.b, 5); }
+      tex(S.read, `<p>$y=${a.toFixed(2)}^x$ passes through $(0,1)$ and $(1,${a.toFixed(2)})$; asymptote $y=0$. ${a > 1 ? 'Increasing (growth).' : 'Decreasing (decay).'}</p>
+        <p class="hl">$${a.toFixed(2)}^x=${b.toFixed(1)}\\iff x=\\log_{${a.toFixed(2)}}${b.toFixed(1)}=\\dfrac{\\ln ${b.toFixed(1)}}{\\ln ${a.toFixed(2)}}=${f3(x0)}$</p>
+        <p>$${a.toFixed(2)}^x\\lt ${b.toFixed(1)}$: $x\\ln ${a.toFixed(2)}\\lt\\ln ${b.toFixed(1)}$, so $x${a > 1 ? '\\lt' : '\\gt'}${f3(x0)}$${a < 1 ? ' — <b>reversed</b>, because $\\ln a\\lt0$ when $a\\lt1$' : ''}.</p>
+        ${legend([[C.a, 'y = aˣ'], [C.b, 'y = logₐ x'], ...(showE ? [[C.d, 'eˣ, ln x']] : []), [C.fill, 'aˣ < b']])}`);
+    }
+    P.onresize = draw; draw();
+    return () => P.destroy();
+  },
+};
+
+/* ---------- Exponential growth & decay models (E9–E10) ---------- */
+SIMS.m_growth = {
+  title: 'Exponential growth & decay models', desc: 'N = N₀eᵏᵗ for continuous compound interest, population growth, radioactive decay and drug concentration. Read off half-lives and doubling times, and solve "when does it pass c?".',
+  mount(el) {
+    const S = simShell(el), P = makeCanvas(S.stage, 1.3);
+    const MODELS = { interest: ['Continuous compound interest A = Peʳᵗ', 1000, 0.05, 2000, 'years', '£'], population: ['Population P = P₀eᵏᵗ', 200, 0.08, 600, 'years', ''], radio: ['Radioactive decay m = m₀e⁻ᵏᵗ', 100, -0.0866, 20, 'days', 'g '], drug: ['Drug concentration C = C₀e⁻ᵏᵗ', 12, -0.35, 2, 'hours', 'mg/l '] };
+    let key = 'interest', [, N0, k, c] = MODELS[key];
+    const sN = slider(S.ctrls, 'N₀ (initial value)', 1, 2000, 1, N0, v => { N0 = v; draw(); }, v => (+v).toFixed(0));
+    const sk = slider(S.ctrls, 'k (rate)', -0.5, 0.5, 0.001, k, v => { k = Math.abs(v) < 0.001 ? 0.001 : v; draw(); }, v => (+v).toFixed(3));
+    const sc = slider(S.ctrls, 'threshold c', 0.5, 4000, 0.5, c, v => { c = v; draw(); }, v => (+v).toFixed(1));
+    select(S.ctrls, 'Model', Object.entries(MODELS).map(([id, m]) => [id, m[0]]), v => { key = v; [, N0, k, c] = MODELS[key]; sN.set(N0); sk.set(k); sc.set(c); draw(); });
+    function draw() {
+      const C = COL(), [name, , , , unit, pre] = MODELS[key], N = t => N0 * Math.exp(k * t);
+      const tStar = Math.log(c / N0) / k, Tmax = Math.max(10, isFinite(tStar) && tStar > 0 ? tStar * 1.6 : 0, Math.abs(Math.log(2) / k) * 3);
+      const yMax = Math.max(N0, c, N(Tmax)) * 1.15;
+      P.xmin = -Tmax * 0.06; P.xmax = Tmax; P.ymin = -yMax * 0.06; P.ymax = yMax; P.clear();
+      const ctx = P.ctx; ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+      const nice = v => { const p = Math.pow(10, Math.floor(Math.log10(v))); return [1, 2, 5, 10].map(m => m * p).find(s => v / s <= 8); };
+      const sx = nice(Tmax), sy = nice(yMax); ctx.beginPath(); for (let x = 0; x <= P.xmax; x += sx) { ctx.moveTo(P.X(x), 0); ctx.lineTo(P.X(x), P.h); } for (let y = 0; y <= P.ymax; y += sy) { ctx.moveTo(0, P.Y(y)); ctx.lineTo(P.w, P.Y(y)); } ctx.stroke();
+      P.line(0, P.ymin, 0, P.ymax, C.axis, 1.5); P.line(P.xmin, 0, P.xmax, 0, C.axis, 1.5);
+      ctx.fillStyle = C.text; ctx.font = '11px ui-monospace, monospace'; for (let x = sx; x <= P.xmax; x += sx) ctx.fillText(+x.toFixed(2), P.X(x) - 6, P.Y(0) + 14); for (let y = sy; y <= P.ymax; y += sy) ctx.fillText(+y.toFixed(2), P.X(0) + 4, P.Y(y) - 3);
+      P.curve(N, C.a, 3, 0, Tmax); P.line(0, c, Tmax, c, C.c, 1.5, [4, 4]);
+      const T2 = Math.log(2) / Math.abs(k); if (T2 < Tmax) { const y2 = k > 0 ? 2 * N0 : N0 / 2; P.dot(T2, y2, C.b, 5); P.line(T2, 0, T2, y2, C.b, 1, [2, 3]); }
+      if (isFinite(tStar) && tStar > 0 && tStar < Tmax) { P.dot(tStar, c, C.c, 6); P.line(tStar, 0, tStar, c, C.c, 1, [2, 3]); }
+      const passes = isFinite(tStar) && tStar > 0, word = k > 0 ? 'exceeds' : 'falls below';
+      tex(S.read, `<p><b>${name}</b></p><p>$N=${f3(N0)}e^{${f3(k)}t}$ (${k > 0 ? 'growth' : 'decay'})</p>
+        <p>${k > 0 ? 'Doubling time' : 'Half-life'} $=\\dfrac{\\ln2}{|k|}=${f3(T2)}$ ${unit}</p>
+        <p class="hl">${passes ? `$N$ ${word} ${pre}${f3(c)} when $t${k > 0 ? '\\gt' : '\\gt'}\\dfrac{\\ln(${f3(c)}/${f3(N0)})}{${f3(k)}}=${f3(tStar)}$ ${unit}` : `$N$ never ${word} ${pre}${f3(c)} for $t\\gt0$.`}</p>
+        ${legend([[C.a, 'model'], [C.c, 'threshold'], [C.b, k > 0 ? 'doubling' : 'half-life']])}<p class="muted">${k < 0 ? 'Dividing by the negative k reverses the inequality.' : 'Is unlimited growth realistic? Comment on the model.'}</p>`);
+    }
+    P.onresize = draw; draw();
+    return () => P.destroy();
+  },
+};

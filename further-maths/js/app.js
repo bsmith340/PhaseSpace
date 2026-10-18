@@ -55,14 +55,14 @@ function renderNav(inCourse) {
   sub.textContent = inCourse ? `${C.short}` : 'Maths & Further Maths';
   const courseLinks = inCourse ? [['', 'Home'], ['spec', 'Spec'], ['book', 'Book'], ['drill', 'Drill'], ['formulae', 'Formulae'], ['papers', 'Papers'], ['progress', 'Progress']].map(([p, l]) => `<a href="#/${C.id}${p ? '/' + p : ''}" data-r="${C.id}/${p}">${l}</a>`).join('') : '';
   const switcher = `<div class="cswitch">${COURSE_ORDER.map(id => `<a href="#/${id}" class="${inCourse && C.id === id ? 'on' : ''}" style="--cc:${COURSES[id].color}">${COURSES[id].short}</a>`).join('')}</div>`;
-  nav.innerHTML = `${switcher}${courseLinks}<a href="#/lab" data-r="lab">Lab</a><a href="#/sims" data-r="sims">Sims</a><a href="#/calc" class="navcalc" title="Calculator (Alt+C)" data-r="calc">🧮</a><button id="theme" class="icon-btn" title="Toggle light/dark" aria-label="Toggle theme">◐</button>`;
+  nav.innerHTML = `${switcher}${courseLinks}<a href="#/lab" data-r="lab">Lab</a><a href="#/sims" data-r="sims">Sims</a><a href="#/calc" class="navcalc" title="Calculator (Alt+C)" data-r="calc">🧮</a><a href="#/settings" class="navset" title="Settings, save & load progress" aria-label="Settings" data-r="settings">⚙</a><button id="theme" class="icon-btn" title="Toggle light/dark" aria-label="Toggle theme">◐</button>`;
   $('#theme').onclick = toggleTheme;
 }
 const crumbs = (...parts) => `<nav class="crumbs"><a href="#/">Courses</a> / <a href="#/${C.id}">${C.short}</a>${parts.map(p => ' / ' + p).join('')}</nav>`;
 
 /* ---------- COURSE CHOOSER ---------- */
 function viewChooser() {
-  mount(`<section class="chooser">
+  mount(`${backupBanner()}<section class="chooser">
     <p class="kicker">CCEA GCE Mathematics & Further Mathematics</p>
     <h1><span class="grad">BCSFM</span></h1>
     <p class="lead">Pick a course. Each one follows its CCEA specification point by point: textbook with full proofs → simulation → drills → real past papers.</p>
@@ -83,14 +83,14 @@ function viewHome() {
   const read = pts.filter(p => isRead(p.id)).length, secure = pts.filter(p => mastery(p.id) >= 0.8).length;
   const nextRead = pts.find(p => !isRead(p.id)), weakest = pts.filter(p => st(p.id).a > 0).sort((x, y) => mastery(x.id) - mastery(y.id))[0];
   const tiles = [['spec', '📋', 'Specification', 'Every point, status & confidence'], ['book', '📖', 'Textbook', `${pts.length} chapters with full proofs`], ['drill', '🎯', 'Smart drill', 'Endless questions, weakest first'],
-    ['formulae', '∑', 'Formula book', 'Every result, searchable'], ['papers', '📝', 'Past papers', 'Official links, tracker, your question bank'], ['sprint', '⏱', 'Sprint', '10 timed mixed questions']];
-  mount(`
+    ['formulae', '∑', 'Formula book', 'Every result, searchable'], ['papers', '📝', 'Past papers', 'Official links, tracker, your question bank'], ['sprint', '⏱', 'Sprint', `${PREFS.sprintN} timed mixed questions`]];
+  mount(`${backupBanner()}
   <section class="hero">
     <div>
       <p class="kicker">${esc(C.board)} · Unit ${esc(C.unit)}</p>
       <h1>${C.name} <span class="grad">${C.unit.split(' ')[0]} ${C.unit.split(' ')[1]}</span></h1>
       <p class="lead">${esc(C.tagline)} Read the textbook → see it in a simulation → drill it until it's secure → test yourself on real past papers.</p>
-      <div class="cta">${nextRead ? `<a class="btn primary" href="${cr('point/' + nextRead.id)}?tab=learn">📖 ${read ? 'Continue' : 'Start'} reading: ${nextRead.code} ${esc(nextRead.title)}</a>` : `<a class="btn primary" href="${cr('drill')}">🎯 Everything read — drill it</a>`}<a class="btn" href="${cr('sprint')}">⏱ 10-question sprint</a></div>
+      <div class="cta">${nextRead ? `<a class="btn primary" href="${cr('point/' + nextRead.id)}?tab=learn">📖 ${read ? 'Continue' : 'Start'} reading: ${nextRead.code} ${esc(nextRead.title)}</a>` : `<a class="btn primary" href="${cr('drill')}">🎯 Everything read — drill it</a>`}<a class="btn" href="${cr('sprint')}">⏱ ${PREFS.sprintN}-question sprint</a></div>
     </div>
     <div class="stats">
       <div class="stat"><b>${read}/${pts.length}</b><span>chapters read</span></div>
@@ -116,10 +116,11 @@ function viewSpec() {
     <td><select data-conf="${p.id}">${['', 'Not started', 'Shaky', 'OK', 'Confident'].map(o => `<option ${DB.conf[p.id] === o ? 'selected' : ''}>${o}</option>`).join('')}</select></td></tr>`; };
   mount(`${crumbs('Specification')}
   <header class="phead slim"><div><h1>📋 ${C.unit} — specification map</h1><p>Every topic and learning outcome for ${esc(C.board)}, linked to its chapter, simulation and drills. Only specification content is in this course.</p></div></header>
-  <div class="box notice"><b>About this map.</b> The outcomes are <b>BCSFM's summary</b> of the ${C.unit} content, compiled from CCEA's published materials and public course outlines (sources below), not CCEA's official wording. Badges: ${['core', 'check'].map(k => `<span class="sbadge s-${k}">${STATUS[k][0]}</span> ${STATUS[k][1]}`).join(' · ')}. Where a CCEA reference code is known it's shown next to the point. <b>Cross-check against the official specification.</b></div>
-  <div class="box"><b>Assessment.</b> ${esc(C.exam)} (as stated in CCEA's specification and addenda — check the current version). Formulae provided in the exam are in the <a href="${C.sources[2].url}" target="_blank" rel="noopener">Mathematical Formulae and Tables</a> booklet.</div>
+  <div class="box notice"><b>Official wording.</b> Every learning outcome below is quoted from the ${esc(C.specRef)}. The codes (${C.topics[0].outcomes[0].code}, …) are BCSFM labels — CCEA prints the bullets unnumbered. Next to each outcome are the chapters that cover it, so you can see that nothing is missing and nothing extra is included. Badges: ${['core', 'check'].map(k => `<span class="sbadge s-${k}">${STATUS[k][0]}</span> ${STATUS[k][1]}`).join(' · ')}.</div>
+  <div class="box"><b>Assessment.</b> ${esc(C.exam)}. ${esc(C.assumes || '')} Formulae provided in the exam are in the <a href="${C.sources[2].url}" target="_blank" rel="noopener">Mathematical Formulae and Tables</a> booklet — see the <a href="${cr('formulae')}">formula book</a> for what is given and what you must learn.</div>
   ${C.topics.map(t => `<section class="card spect" style="--tc:${t.color}"><h2><span class="code">${t.code}</span> ${t.title}</h2>
-    <ul class="outc">${t.outcomes.map(o => `<li>${esc(o)}</li>`).join('')}</ul>
+    <p class="muted small">Students should be able to:</p>
+    <ul class="outc coded">${t.outcomes.map(o => `<li><span class="ocode">${o.code}</span><span class="otext">${esc(o.text)}</span><span class="olinks">${o.points.length ? o.points.map(p => `<a href="${cr('point/' + p.id)}?tab=learn" class="opt ${isRead(p.id) ? 'done' : ''}">${p.code}</a>`).join('') : '<span class="bad small">not covered</span>'}</span></li>`).join('')}</ul>
     <table class="tbl"><tr><th>#</th><th>Spec point</th><th>Read</th><th>Mastery</th><th>Confidence</th></tr>${t.points.map(row).join('')}</table></section>`).join('')}
   <div class="box"><b>Sources</b><ul>${C.sources.map(s => `<li><a href="${s.url}" target="_blank" rel="noopener">${esc(s.label)}</a></li>`).join('')}</ul></div>
   ${C.archiveTopic.points.length ? `<p class="muted small">Material that isn't on this unit's specification has been moved to the <a href="${cr('archive')}">archive</a> and is excluded from drills and sprints.</p>` : ''}`);
@@ -143,7 +144,7 @@ function viewTopic(id) {
   mount(`${crumbs(t.title)}
   <header class="phead" style="--tc:${t.color}"><div class="ticon big">${t.icon}</div><div><h1><span class="code">${t.code}</span> ${t.title}</h1><p>${t.blurb}</p></div>
   <a class="btn primary" href="${cr('drill')}?topics=${t.id}">Drill whole topic</a></header>
-  <ul class="outc card">${t.outcomes.map(o => `<li>${esc(o)}</li>`).join('')}</ul>
+  <ul class="outc coded card">${t.outcomes.map(o => `<li><span class="ocode">${o.code}</span><span class="otext">${esc(o.text)}</span></li>`).join('')}</ul>
   <section class="plist">${t.points.map(p => { const m = mastery(p.id), [lv, cls] = level(m), s = st(p.id); return `
     <div class="card point" style="--tc:${t.color}">
       <div class="pmain"><h3><span class="code">${p.code}</span> ${esc(p.title)} ${badge(p)}</h3>
@@ -158,13 +159,15 @@ function viewPoint(id, tab = 'learn') {
   if (p.course !== C.id) { C = courseOf(p); renderNav(true); }
   const t = TP[p.topic], list = p.status === 'beyond' ? C.archiveTopic.points : C.points, idx = list.indexOf(p), prev = list[idx - 1], next = list[idx + 1];
   const nPP = DB.bank.filter(b => b.pid === id).length + DB.notes.filter(b => b.pid === id).length;
-  const hasDes = typeof DESMOS_PRESETS !== 'undefined' && DESMOS_PRESETS[p.id];
-  const tabs = [['learn', '📖 Textbook'], ['summary', '⚡ Summary'], ...(p.sims.length ? [['sim', '🧪 Simulate']] : []), ...(hasDes ? [['desmos', '📈 Desmos']] : []), ['drill', '🎯 Drill'], ['papers', `📝 Past papers${nPP ? ` (${nPP})` : ''}`]];
+  const hasDes = typeof GRAPH_PRESETS !== 'undefined' && GRAPH_PRESETS[p.id];
+  if (tab === 'desmos') tab = 'graph';
+  const tabs = [['learn', '📖 Textbook'], ['summary', '⚡ Summary'], ...(p.sims.length ? [['sim', '🧪 Simulate']] : []), ...(hasDes ? [['graph', '📈 Graph']] : []), ['drill', '🎯 Drill'], ['papers', `📝 Past papers${nPP ? ` (${nPP})` : ''}`]];
   if (!tabs.find(x => x[0] === tab)) tab = 'learn';
   mount(`${crumbs(`<a href="${cr('topic/' + t.id)}">${t.title}</a>`, p.code)}
   <header class="phead slim" style="--tc:${t.color}"><div><h1><span class="code">${p.code}</span> ${esc(p.title)}</h1><p>${badge(p)} ${isRead(p.id) ? '<span class="muted small">✓ read</span>' : ''}</p></div>
   <div class="mast">${bar(mastery(p.id), t.color)}<small>${level(mastery(p.id))[0]} · ${Math.round(mastery(p.id) * 100)}%</small></div></header>
   ${p.status === 'beyond' ? `<div class="box notice">⚠ This topic is <b>not on the ${C.unit} specification</b>. It's archived for reference only.</div>` : ''}
+  ${p.covers && p.covers.length ? `<div class="box specsays"><div class="lbl">📋 The specification says — students should be able to:</div><ul>${p.covers.map(o => `<li><span class="ocode">${o.code}</span> ${esc(o.text)}</li>`).join('')}</ul>${p.status === 'check' ? '<p class="muted small">This chapter supports these outcomes (an example context or a technique they rely on) rather than being named outright.</p>' : ''}</div>` : ''}
   <div class="tabs">${tabs.map(([k, l]) => `<a class="tab ${k === tab ? 'on' : ''}" href="${cr('point/' + p.id)}?tab=${k}">${l}</a>`).join('')}</div>
   <section id="pane"></section>
   <nav class="pn">${prev ? `<a class="btn ghost" href="${cr('point/' + prev.id)}?tab=${tab}">← ${prev.code} ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a class="btn ghost" href="${cr('point/' + next.id)}?tab=${tab}">${next.code} ${esc(next.title)} →</a>` : ''}</nav>`);
@@ -173,7 +176,7 @@ function viewPoint(id, tab = 'learn') {
     const ch = chapterOf(p);
     pane.innerHTML = `<article class="card book"><div class="ctoc"></div><div class="bookc">${ch || p.notes}</div>
       <div class="bookend"><button class="btn ${isRead(p.id) ? '' : 'primary'}" id="markread">${isRead(p.id) ? '✓ Marked as read' : 'Mark chapter as read'}</button>
-      ${p.sims.length ? `<a class="btn" href="${cr('point/' + p.id)}?tab=sim">🧪 See it in the simulation</a>` : ''}${hasDes ? `<a class="btn" href="${cr('point/' + p.id)}?tab=desmos">📈 Explore in Desmos</a>` : ''}<a class="btn" href="${cr('point/' + p.id)}?tab=drill">🎯 Drill it</a><button class="btn ghost" onclick="window.print()">🖨 Print</button></div></article>`;
+      ${p.sims.length ? `<a class="btn" href="${cr('point/' + p.id)}?tab=sim">🧪 See it in the simulation</a>` : ''}${hasDes ? `<a class="btn" href="${cr('point/' + p.id)}?tab=graph">📈 Explore the graph</a>` : ''}<a class="btn" href="${cr('point/' + p.id)}?tab=drill">🎯 Drill it</a><button class="btn ghost" onclick="window.print()">🖨 Print</button></div></article>`;
     const toc = pane.querySelector('.ctoc'), hs = [...pane.querySelectorAll('.bookc h3')];
     if (hs.length > 2) toc.innerHTML = `<b>In this chapter:</b> ` + hs.map((h, i) => { h.id = 'sec' + i; return `<a href="javascript:void 0" data-sec="sec${i}">${esc(h.textContent)}</a>`; }).join('');
     toc.addEventListener('click', e => { const s = e.target.dataset.sec; if (s) document.getElementById(s).scrollIntoView({ behavior: 'smooth', block: 'start' }); });
@@ -184,8 +187,8 @@ function viewPoint(id, tab = 'learn') {
     renderMath(pane);
   } else if (tab === 'sim') {
     p.sims.forEach(sid => { const [k, opt] = sid.split(':'), S = SIMS[k]; if (!S) return; const box = document.createElement('div'); box.className = 'card simcard'; box.innerHTML = `<h3>${S.title}</h3><p class="muted">${S.desc}</p>`; pane.append(box); cleanup.push(S.mount(box, opt)); });
-  } else if (tab === 'desmos') {
-    const box = document.createElement('div'); box.className = 'card'; pane.append(box); cleanup.push(mountDesmos(box, DESMOS_PRESETS[p.id]));
+  } else if (tab === 'graph') {
+    const box = document.createElement('div'); box.className = 'card'; pane.append(box); cleanup.push(mountGraphTab(box, GRAPH_PRESETS[p.id]));
   } else if (tab === 'papers') {
     papersForPoint(pane, p);
   } else {
@@ -201,17 +204,17 @@ function viewDrill(qs) {
   <div class="filters">${C.topics.map(t => `<label class="fchip" style="--tc:${t.color}"><input type="checkbox" value="${t.id}" ${sel.has(t.id) ? 'checked' : ''}> ${t.title}</label>`).join('')}</div>
   <section id="pane"></section>`);
   document.querySelectorAll('.filters input').forEach(c => c.addEventListener('change', () => { const on = [...document.querySelectorAll('.filters input:checked')].map(x => x.value); location.hash = cr('drill') + '?topics=' + (on.join(',') || C.topics[0].id); }));
-  drillPanel($('#pane'), { pool: C.points.filter(p => sel.has(p.topic)).map(p => p.id) });
+  drillPanel($('#pane'), { pool: C.points.filter(p => sel.has(p.topic) && (PREFS.support || p.status === 'core')).map(p => p.id) });
 }
 function viewSprint() {
-  const N = 10;
+  const N = PREFS.sprintN || 10;
   mount(`${crumbs('Sprint')}
-  <header class="phead slim"><div><h1>⏱ 10-question sprint · ${C.short}</h1><p>Mixed across the whole unit. First answer counts. Beat your time.</p></div><div class="timer" id="timer">0:00</div></header>
+  <header class="phead slim"><div><h1>⏱ ${N}-question sprint · ${C.short}</h1><p>Mixed across the whole unit. First answer counts. Beat your time.</p></div><div class="timer" id="timer">0:00</div></header>
   <section id="pane"></section>`);
   const t0 = performance.now(), tm = $('#timer'), iv = setInterval(() => { const s = Math.floor((performance.now() - t0) / 1000); tm.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }, 250);
   cleanup.push(() => clearInterval(iv));
   drillPanel($('#pane'), {
-    pool: C.points.map(p => p.id), sprint: N, onDone: log => {
+    pool: C.points.filter(p => PREFS.support || p.status === 'core').map(p => p.id), sprint: N, onDone: log => {
       clearInterval(iv); const secs = (performance.now() - t0) / 1000, score = log.filter(l => l.ok).length;
       DB.sprints.push({ d: Date.now(), score, secs, c: C.id }); save();
       const mine = DB.sprints.filter(s => (s.c || 'fm') === C.id), best = mine.reduce((b, s) => (s.score > b.score || (s.score === b.score && s.secs < b.secs)) ? s : b, mine[0]);
@@ -240,17 +243,25 @@ function viewSim(k) {
 }
 
 /* ---------- LAB (shared) ---------- */
+const LAB_GROUPS = [['both', '🔗 Both courses'], ['m1', `${COURSES.m1 ? COURSES.m1.icon : ''} Maths AS 1`], ['fm', `${COURSES.fm ? COURSES.fm.icon : ''} Further Maths A2 1`]];
+const labCourse = k => LAB[k].course || 'both';
 function viewLab(tool) {
   if (!tool || !LAB[tool]) {
+    let pick = PREFS.labCourse || 'all';
+    const tile = ([k, L]) => `<a class="card simtile" href="#/lab/${k}"><h3>${L.icon} ${L.title}</h3><p>${L.desc}</p></a>`;
     mount(`<nav class="crumbs"><a href="#/">Courses</a> / Lab</nav>
-    <header class="phead slim"><div><h1>🧪 The Lab</h1><p>Open-ended tools to check your working, explore ideas and test conjectures. Everything accepts full expressions: <code>2sqrt(3)</code>, <code>arsinh(x)</code>, <code>e^(i pi/3)</code>.</p></div></header>
-    <section class="grid sims">${Object.entries(LAB).map(([k, L]) => `<a class="card simtile" href="#/lab/${k}"><h3>${L.icon} ${L.title}</h3><p>${L.desc}</p></a>`).join('')}<a class="card simtile" href="#/calc"><h3>🧮 Scientific calculator</h3><p>Full-page calculator with SHIFT/HYP, degrees/radians, complex numbers and exact-value recognition.</p></a></section>`);
+    <header class="phead slim"><div><h1>🧪 The Lab</h1><p>Tools to check your working, explore ideas and test conjectures — sorted by course. Everything accepts full expressions: <code>2sqrt(3)</code>, <code>arsinh(x)</code>, <code>e^(i pi/3)</code>.</p></div></header>
+    <div class="seg" id="labseg">${[['all', 'All tools'], ...LAB_GROUPS.slice(1)].map(([k, l]) => `<button data-c="${k}" class="${k === pick ? 'on' : ''}">${l}</button>`).join('')}</div>
+    ${LAB_GROUPS.map(([g, label]) => `<section class="labgroup" data-g="${g}"><h2>${label}</h2><div class="grid sims">${Object.entries(LAB).filter(([k]) => labCourse(k) === g).map(tile).join('')}${g === 'both' ? `<a class="card simtile" href="#/calc"><h3>🧮 Scientific calculator</h3><p>Full-page calculator with SHIFT/HYP, degrees/radians, complex numbers and exact answers.</p></a>` : ''}</div></section>`).join('')}`);
+    const apply = () => app().querySelectorAll('.labgroup').forEach(s => (s.style.display = pick === 'all' || s.dataset.g === 'both' || s.dataset.g === pick ? '' : 'none'));
+    $('#labseg').onclick = e => { const b = e.target.closest('button'); if (!b) return; pick = b.dataset.c; PREFS.labCourse = pick; savePrefs(); $('#labseg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); apply(); };
+    apply();
     return;
   }
-  const L = LAB[tool];
+  const L = LAB[tool], g = labCourse(tool), sib = Object.entries(LAB).filter(([k]) => labCourse(k) === g || labCourse(k) === 'both');
   mount(`<nav class="crumbs"><a href="#/">Courses</a> / <a href="#/lab">Lab</a> / ${L.title}</nav>
-  <div class="labtabs">${Object.entries(LAB).map(([k, x]) => `<a class="tab ${k === tool ? 'on' : ''}" href="#/lab/${k}">${x.icon} ${x.title}</a>`).join('')}</div>
-  <div class="card"><h3>${L.icon} ${L.title}</h3><p class="muted">${L.desc}</p><div id="labroot"></div></div>`);
+  <div class="labtabs">${sib.map(([k, x]) => `<a class="tab ${k === tool ? 'on' : ''}" href="#/lab/${k}">${x.icon} ${x.title}</a>`).join('')}</div>
+  <div class="card"><h3>${L.icon} ${L.title} <span class="sref">${g === 'both' ? 'Both courses' : COURSES[g].short}</span></h3><p class="muted">${L.desc}</p><div id="labroot"></div></div>`);
   cleanup.push(L.mount($('#labroot')));
 }
 
@@ -272,12 +283,18 @@ function viewCalc() {
 
 /* ---------- FORMULAE ---------- */
 function viewFormulae() {
-  const F = C.formulae();
+  const F = C.formulae(), BK = (typeof BOOKLET !== 'undefined' && BOOKLET[C.id]) || new Set();
+  const items = sec => sec.f.filter(([, , , pid]) => !pid || (PT[pid] && PT[pid].status !== 'beyond'));
+  const all = F.flatMap(items), nB = all.filter(([n]) => BK.has(n)).length;
   mount(`${crumbs('Formula book')}
-  <header class="phead slim"><div><h1>∑ Formula book · ${C.short}</h1><p>Every key result in ${C.unit}. Click a formula's link to jump to the chapter that proves it.</p></div><input class="search" id="fsearch" placeholder="Search formulae…"></header>
-  <div class="box notice">CCEA provides a <a href="${C.sources[2].url}" target="_blank" rel="noopener">Mathematical Formulae and Tables</a> booklet in the exam. Check which of these are given there and <b>learn the rest by heart</b>.</div>
-  <div id="flist">${F.map(sec => `<section class="card fsec" style="--tc:${sec.c}"><h2>${sec.t}</h2><div class="fgrid">${sec.f.filter(([, , , pid]) => !pid || (PT[pid] && PT[pid].status !== 'beyond')).map(([n, tex, note, pid]) => `<div class="fitem" data-s="${esc((sec.t + ' ' + n + ' ' + note + ' ' + tex).toLowerCase())}"><div class="fn">${esc(n)}${note ? ` <span class="muted small">· ${esc(note)}</span>` : ''}${pid && PT[pid] ? ` <a class="small" href="${cr('point/' + pid)}?tab=learn">${PT[pid].code} →</a>` : ''}</div><div class="ftex">$$${tex}$$</div></div>`).join('')}</div></section>`).join('')}</div>`);
-  $('#fsearch').addEventListener('input', e => { const q = e.target.value.toLowerCase().trim(); app().querySelectorAll('.fitem').forEach(f => f.style.display = !q || f.dataset.s.includes(q) ? '' : 'none'); app().querySelectorAll('.fsec').forEach(s => s.style.display = [...s.querySelectorAll('.fitem')].some(f => f.style.display !== 'none') ? '' : 'none'); });
+  <header class="phead slim"><div><h1>∑ Formula book · ${C.short}</h1><p>Every key result in ${C.unit}, tagged against CCEA's <a href="${C.sources[2].url}" target="_blank" rel="noopener">Mathematical Formulae and Tables</a> booklet. Click a formula's link to jump to the chapter that proves it.</p></div><input class="search" id="fsearch" placeholder="Search formulae…"></header>
+  <div class="box notice"><b>${nB} of ${all.length}</b> results here are <span class="fbk b">📘 In booklet</span> — printed in the booklet you get in the exam. The other ${all.length - nB} are <span class="fbk l">🧠 Learn it</span> — you must know them by heart.</div>
+  <div class="seg" id="fseg"><button class="on" data-f="all">All</button><button data-f="l">🧠 Must learn (${all.length - nB})</button><button data-f="b">📘 In booklet (${nB})</button></div>
+  <div id="flist">${F.map(sec => items(sec).length ? `<section class="card fsec" style="--tc:${sec.c}"><h2>${sec.t}</h2><div class="fgrid">${items(sec).map(([n, tex, note, pid]) => { const inB = BK.has(n); return `<div class="fitem" data-k="${inB ? 'b' : 'l'}" data-s="${esc((sec.t + ' ' + n + ' ' + note + ' ' + tex).toLowerCase())}"><div class="fn">${esc(n)} <span class="fbk ${inB ? 'b' : 'l'}">${inB ? '📘 In booklet' : '🧠 Learn it'}</span>${note ? ` <span class="muted small">· ${esc(note)}</span>` : ''}${pid && PT[pid] ? ` <a class="small" href="${cr('point/' + pid)}?tab=learn">${PT[pid].code} →</a>` : ''}</div><div class="ftex">$$${tex}$$</div></div>`; }).join('')}</div></section>` : '').join('')}</div>`);
+  let kind = 'all';
+  const apply = () => { const q = $('#fsearch').value.toLowerCase().trim(); app().querySelectorAll('.fitem').forEach(f => f.style.display = (!q || f.dataset.s.includes(q)) && (kind === 'all' || f.dataset.k === kind) ? '' : 'none'); app().querySelectorAll('.fsec').forEach(s => s.style.display = [...s.querySelectorAll('.fitem')].some(f => f.style.display !== 'none') ? '' : 'none'); };
+  $('#fsearch').addEventListener('input', apply);
+  $('#fseg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; kind = b.dataset.f; $('#fseg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); apply(); });
 }
 
 /* ---------- PAST PAPERS ---------- */
@@ -320,7 +337,7 @@ function viewPapers() {
   const bank = DB.bank.filter(b => mine.has(b.pid)).sort((a, b) => C.points.indexOf(PT[a.pid]) - C.points.indexOf(PT[b.pid])), notes = DB.notes.filter(n => mine.has(n.pid));
   mount(`${crumbs('Past papers')}
   <header class="phead slim"><div><h1>📝 Past papers & examiner reports · ${C.short}</h1><p>Real CCEA papers, your scores, your bank of real questions by spec point, and examiner comments with their sources.</p></div>
-  <div class="cta"><button class="btn" id="exp">⬇ Export backup</button><label class="btn ghost">⬆ Import<input type="file" id="imp" accept="application/json" hidden></label></div></header>
+  <div class="cta"><button class="btn" id="exp">⬇ Download progress file</button><label class="btn ghost">⬆ Load progress file<input type="file" id="imp" accept=".json,application/json" hidden></label><a class="btn ghost" href="#/settings">⚙ More</a></div></header>
   <div class="box notice"><b>Why aren't the papers built in?</b> CCEA past papers and Chief Examiner's Reports are CCEA's copyright, so no question or quote here is invented. Use the official links, then add questions and quotes yourself. They're stored in this browser; use <b>Export backup</b> to keep a copy.</div>
   <div class="grid two">
     <section class="card"><h2>Official sources</h2><ul class="links">${C.official.map(([l, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a></li>`).join('')}</ul>${C.known ? `<p class="muted small">${esc(C.known)}</p>` : ''}</section>
@@ -335,8 +352,8 @@ function viewPapers() {
   root.querySelectorAll('.ptrack input').forEach(i => i.onchange = () => { const r = papers.find(x => x.id === i.closest('tr').dataset.r); r[i.dataset.k] = i.value; save(); viewPapers(); });
   $('#addp').onclick = () => { papers.push({ id: uid(), name: 'New paper', score: '', out: '', date: '', notes: '' }); save(); viewPapers(); };
   bindCards(root, viewPapers); bindForms(root, viewPapers);
-  $('#exp').onclick = () => { const blob = new Blob([JSON.stringify(DB, null, 1)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bcsfm-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
-  $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const d = JSON.parse(t); if (typeof d !== 'object' || !d.stats) throw 0; if (confirm('Replace all progress on this device with the backup?')) { DB = d; normDB(); save(); viewPapers(); } } catch { alert('That file is not a BCSFM backup.'); } }); };
+  $('#exp').onclick = downloadProgress;
+  $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const pl = readPayload(JSON.parse(t)); if (confirm('Merge this progress file with the progress on this device? (Cancel to stop. To replace instead, use ⚙ Settings.)')) { applyPayload(pl, 'merge'); viewPapers(); } } catch { alert('That file is not a BCSFM progress file.'); } }); };
 }
 
 /* ---------- PROGRESS ---------- */
@@ -379,6 +396,7 @@ function route() {
   if (r === 'sim') return viewSim(parts[1]);
   if (r === 'lab') return viewLab(parts[1]);
   if (r === 'calc') return viewCalc();
+  if (r === 'settings') return viewSettings();
   viewChooser();
 }
 function highlight(key) { document.querySelectorAll('#nav a[data-r]').forEach(a => a.classList.toggle('on', a.dataset.r === key)); }
@@ -393,5 +411,6 @@ function toggleTheme() {
 }
 
 window.toggleCalc = setupCalcDrawer();
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', route); else route();
+function boot() { if (!location.hash || location.hash === '#' || location.hash === '#/') { const s = PREFS.start === 'last' ? DB.lastCourse : PREFS.start; if (s && COURSES[s]) { location.replace('#/' + s); return; } } route(); }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 window.addEventListener('load', () => renderMath(app()));

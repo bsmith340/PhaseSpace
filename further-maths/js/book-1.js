@@ -13,6 +13,7 @@ const B = {
   warn: items => `<div class="box warn"><div class="lbl">Common mistakes</div><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`,
   exam: items => `<div class="box exam"><div class="lbl">Exam technique</div><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`,
   tip: h => `<div class="box tipb"><div class="lbl">Insight</div>${h}</div>`,
+  beyond: h => `<div class="box beyond"><div class="lbl">Beyond the specification · not examined in this unit</div>${h}</div>`,
   check: (q, a) => `<details class="check"><summary>${q}</summary><div>${a}</div></details>`,
   checks: list => `<h3>Check yourself</h3>${list.map(([q, a], i) => B.check(`<b>Q${i + 1}.</b> ${q}`, a)).join('')}`,
   examq: (marks, q, sol) => `<h3>Exam-style question</h3><div class="box examq"><div class="lbl">BCSFM original · not a CCEA past paper · ${marks} marks</div>${q}<details class="ms"><summary>Model solution with mark-scheme style annotations</summary>${sol}</details></div>`,

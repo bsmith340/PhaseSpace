@@ -30,6 +30,10 @@ const FORMULAE = [
     ['sinh, cosh', T`\sinh x=x+\frac{x^3}{3!}+\cdots,\quad\cosh x=1+\frac{x^2}{2!}+\cdots`, 'all x', 'sr1'],
     ['Taylor', T`f(a+h)=f(a)+hf'(a)+\frac{h^2}{2!}f''(a)+\cdots`, 'extension', 'sr3'],
   ] },
+  { t: 'Small angle approximations', c: '#9d7bff', f: [
+    ['Small angles', T`\sin x\approx x,\quad\cos x\approx1-\frac{x^2}2,\quad\tan x\approx x`, 'x in radians', 'sa1'],
+    ['Consequence', T`1-\cos kx\approx\frac{k^2x^2}{2}`, '', 'sa1'],
+  ] },
   { t: 'Complex numbers', c: '#7c9cff', f: [
     ['Forms', T`z=x+iy=r(\cos\theta+i\sin\theta)=re^{i\theta}`, 'r = |z|, θ = arg z ∈ (−π, π]', 'cx1'],
     ["Euler", T`e^{i\theta}=\cos\theta+i\sin\theta`, '', 'cx1'],
@@ -65,16 +69,19 @@ const FORMULAE = [
     ['Log rule', T`\int\frac{f'(x)}{f(x)}dx=\ln|f(x)|+c`, '', 'ca6'],
     ['arctan form', T`\int\frac{dx}{a^2+x^2}=\frac1a\arctan\frac xa+c`, '', 'ca2'],
     ['arcsin form', T`\int\frac{dx}{\sqrt{a^2-x^2}}=\arcsin\frac xa+c`, '', 'ca2'],
-    ['arsinh form', T`\int\frac{dx}{\sqrt{x^2+a^2}}=\operatorname{arsinh}\frac xa+c`, '', 'ca2'],
-    ['arcosh form', T`\int\frac{dx}{\sqrt{x^2-a^2}}=\operatorname{arcosh}\frac xa+c`, 'x > a', 'ca2'],
-    ['artanh form', T`\int\frac{dx}{a^2-x^2}=\frac1{2a}\ln\left|\frac{a+x}{a-x}\right|+c`, '', 'ca2'],
+    ['arsinh form', T`\int\frac{dx}{\sqrt{x^2+a^2}}=\operatorname{arsinh}\frac xa+c`, '', 'hy5'],
+    ['arcosh form', T`\int\frac{dx}{\sqrt{x^2-a^2}}=\operatorname{arcosh}\frac xa+c`, 'x > a', 'hy5'],
+    ['artanh form', T`\int\frac{dx}{a^2-x^2}=\frac1{2a}\ln\left|\frac{a+x}{a-x}\right|+c`, '', 'hy5'],
     ['Inverse trig derivatives', T`(\arcsin x)'=\frac1{\sqrt{1-x^2}},\ (\arccos x)'=-\frac1{\sqrt{1-x^2}},\ (\arctan x)'=\frac1{1+x^2}`, '', 'ca1'],
     ['Wallis', T`\int_0^{\pi/2}\sin^nx\,dx=\frac{n-1}{n}I_{n-2}`, 'same for cosⁿ', 'ca3'],
     ['Cyclic', T`\int e^{ax}\cos bx\,dx=\frac{e^{ax}(a\cos bx+b\sin bx)}{a^2+b^2}+c`, '', 'ca7'],
     ['p-test', T`\int_1^\infty x^{-p}dx=\frac1{p-1}\ (p\gt1)`, 'diverges for p ≤ 1', 'ca5'],
-    ['Volume', T`V=\pi\int_a^by^2\,dx`, 'about x-axis', 'ca5'],
     ['Arc length', T`s=\int\sqrt{1+y'^2}\,dx=\int\sqrt{\dot x^2+\dot y^2}\,dt`, 'extension', 'ca4'],
     ['Surface area', T`S=2\pi\int y\,ds`, 'extension', 'ca4'],
+  ] },
+  { t: 'Substitutions', c: '#ffd166', f: [
+    ['Trig substitutions', T`\sqrt{a^2-x^2}:\ x=a\sin\theta;\qquad a^2+x^2:\ x=a\tan\theta`, '', 'ca2'],
+    ['Hyperbolic substitutions', T`\sqrt{x^2+a^2}:\ x=a\sinh u;\qquad\sqrt{x^2-a^2}:\ x=a\cosh u`, '', 'hy5'],
   ] },
   { t: 'Differential equations', c: '#7ee081', f: [
     ['Separable', T`\frac{dy}{dx}=f(x)g(y)\Rightarrow\int\frac{dy}{g(y)}=\int f(x)\,dx`, '', 'de1'],
@@ -95,3 +102,11 @@ const FORMULAE = [
     ['Roots of a quadratic', T`\alpha+\beta=-\tfrac ba,\ \alpha\beta=\tfrac ca`, '', null],
   ] },
 ];
+
+// Which formulae are printed in CCEA's Mathematical Formulae and Tables booklet (checked against the booklet's
+// Pure Mathematics pages). Everything else must be learnt.
+const BOOKLET = {
+  fm: new Set(['Sum of squares', 'Sum of cubes', 'Maclaurin', 'Exponential', 'Sine', 'Cosine', 'Log', 'Binomial', 'arctan', 'sinh, cosh', 'Small angles', 'Euler', 'De Moivre', 'Roots of unity', 'Area',
+    'Fundamental', 'Double', 'arsinh', 'arcosh', 'artanh', 'Derivatives', 'Inverse derivatives', 'Parts', 'arctan form', 'arcsin form', 'arsinh form', 'arcosh form', 'artanh form', 'Inverse trig derivatives', 'Compound angles']),
+  m1: new Set(['Binomial theorem', 'Combinations', 'Cosine rule', 'aˣ via e']),
+};

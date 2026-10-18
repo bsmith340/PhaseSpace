@@ -291,3 +291,25 @@ SIMS.polar = {
 /* ---------- Argand: add [r, θ] readouts ---------- */
 const OLD_ARGAND = SIMS.argand;
 SIMS.argand.desc = 'Drag z and w. Moduli multiply and arguments add — the product zw = [|z||w|, arg z + arg w] in CCEA notation.';
+
+/* ---------- Small angle approximations (A7) ---------- */
+SIMS.smallangle = {
+  title: 'Small angle approximations', desc: 'Compare sin x, cos x and tan x with their small-angle approximations. The error grows quickly once x is no longer small — and x must be in radians.',
+  mount(el) {
+    const S = simShell(el), P = makeCanvas(S.stage, 1.3);
+    let f = 'sin', x0 = 0.3;
+    select(S.ctrls, 'Function', [['sin', 'sin x ≈ x'], ['cos', 'cos x ≈ 1 − x²/2'], ['tan', 'tan x ≈ x']], v => { f = v; draw(); });
+    slider(S.ctrls, 'x (radians)', -1.4, 1.4, 0.01, x0, v => { x0 = v; draw(); }, v => (+v).toFixed(2));
+    const ex = { sin: Math.sin, cos: Math.cos, tan: Math.tan }, ap = { sin: x => x, cos: x => 1 - x * x / 2, tan: x => x }, apT = { sin: 'x', cos: '1-\\tfrac{x^2}{2}', tan: 'x' };
+    function draw() {
+      const C = COL(); P.view(0, f === 'cos' ? 0.5 : 0, 1.6); P.clear(); P.grid(0.5, true);
+      const ctx = P.ctx; ctx.fillStyle = C.fill; for (let px = 0; px < P.w; px += 2) { const x = P.ix(px), e = Math.abs(ex[f](x) - ap[f](x)) / Math.max(Math.abs(ex[f](x)), 1e-9); if (e < 0.01) ctx.fillRect(px, 0, 2, P.h); }
+      P.curve(ex[f], C.a, 3); P.curve(ap[f], C.c, 2.2);
+      P.line(x0, P.ymin, x0, P.ymax, C.grid, 1, [4, 4]); P.dot(x0, ex[f](x0), C.a, 6); P.dot(x0, ap[f](x0), C.c, 6);
+      const e = ex[f](x0), a = ap[f](x0), pct = Math.abs(e) > 1e-12 ? Math.abs((a - e) / e) * 100 : 0;
+      tex(S.read, `<p>$x=${x0.toFixed(2)}$ rad $=${(x0 * 180 / Math.PI).toFixed(1)}^\\circ$</p><p>$\\${f} x=${e.toFixed(5)}$</p><p class="hl">$${apT[f]}=${a.toFixed(5)}$ — error ${pct.toFixed(2)}%</p>${legend([[C.a, `${f} x`], [C.c, 'approximation'], [C.fill, 'error under 1%']])}<p class="muted">The approximations are the first terms of the Maclaurin series. In degrees they fail completely: $\\sin 10\\ne10$.</p>`);
+    }
+    P.onresize = draw; draw();
+    return () => P.destroy();
+  },
+};

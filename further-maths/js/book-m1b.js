@@ -332,7 +332,7 @@ BOOK.m_exp = [
   B.def('exponential function', T`<p>$y=a^x$ with $a\gt0$, $a\ne1$. Every such graph passes through $(0,1)$, lies above the $x$-axis, and has the $x$-axis ($y=0$) as an asymptote. If $a\gt1$ it increases (growth); if $0\lt a\lt1$ it decreases (decay). $y=a^{-x}$ is the reflection of $y=a^x$ in the $y$-axis.</p>`),
   T`<h3>Where does $e$ come from?</h3>
 <p>The gradient of $y=a^x$ at any point is proportional to the value there: $$\frac{a^{x+h}-a^x}{h}=a^x\cdot\frac{a^h-1}{h}.$$ For small $h$, $\frac{2^h-1}{h}\approx0.693$ and $\frac{3^h-1}{h}\approx1.099$. So for $y=2^x$ the gradient is about $0.69\times$ the value, and for $y=3^x$ about $1.10\times$ the value. Somewhere between 2 and 3 there is a base whose multiplier is exactly 1: that base is $e=2.71828\ldots$</p>`,
-  B.thm('Defining property of e', T`<p>$\dfrac{d}{dx}\left(e^x\right)=e^x$: the gradient of $y=e^x$ equals its $y$-value at every point. More generally, the gradient of $e^{kx}$ is $ke^{kx}$.</p>`),
+  B.thm('The number e', T`<p>$e=\displaystyle\lim_{n\to\infty}\left(1+\frac1n\right)^n=2.71828\ldots$ — the result of continuously compounding 100% interest for one year (see chapter 6.3). It is also exactly the base whose gradient multiplier is 1: the gradient of $y=e^x$ equals its height. (Differentiating $e^x$ is A2 content.)</p>`),
   B.def('natural logarithm', T`<p>$\ln x$ is the inverse of $e^x$: $\ y=e^x\iff x=\ln y$. So $e^{\ln x}=x$ $(x\gt0)$ and $\ln(e^x)=x$. The graph of $y=\ln x$ is the reflection of $y=e^x$ in $y=x$.</p>`),
   B.ex(1, T`Sketch $y=e^{-x}+2$.`, [
     T`$y=e^{-x}$ is decay (reflection of $e^x$ in the $y$-axis); then translate up 2.`,
@@ -364,5 +364,5 @@ BOOK.m_exp = [
 <p>(b) $18000e^{-0.6}$ <span class="mk">M1</span> $=£9879$. <span class="mk">A1</span></p>
 <p>(c) $18000e^{-0.15t}\lt5000\Rightarrow e^{-0.15t}\lt\frac5{18}$ <span class="mk">M1</span> $\Rightarrow t\gt\frac{\ln3.6}{0.15}=8.54$ <span class="mk">M1 A1</span>: during the 9th year.</p>
 <p>(d) e.g. the model never reaches zero / a very old car may become a classic and gain value / scrap value sets a minimum. <span class="mk">B1</span></p>`),
-  B.key([T`$y=a^x$: through $(0,1)$, asymptote $y=0$.`, T`$\frac d{dx}e^x=e^x$; $\frac d{dx}e^{kx}=ke^{kx}$.`, T`$\ln$ undoes $e$: $e^{kx}=c\Rightarrow x=\frac{\ln c}k$.`, T`$N=N_0e^{kt}$: growth $k\gt0$, decay $k\lt0$.`]),
+  B.key([T`$y=a^x$: through $(0,1)$, asymptote $y=0$.`, T`$e=\lim(1+\frac1n)^n\approx2.718$; $y=e^x$ and $y=\ln x$ are reflections in $y=x$.`, T`$\ln$ undoes $e$: $e^{kx}=c\Rightarrow x=\frac{\ln c}k$.`, T`$N=N_0e^{kt}$: growth $k\gt0$, decay $k\lt0$.`]),
 ].join('');

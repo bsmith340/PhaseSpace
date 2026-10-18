@@ -172,15 +172,15 @@ topic({
   blurb: 'Inverse trig/hyperbolic derivatives & integrals, reduction formulae, arc length, surface area, improper integrals.',
   points: [
     {
-      id: 'ca1', code: '5.1', title: 'Differentiating inverse trig & hyperbolic functions',
-      sims: ['maclaurin'],
+      id: 'ca1', code: '5.1', title: 'Differentiating inverse trigonometric functions',
+      sims: [],
       notes: T`
 $$\frac{d}{dx}\arcsin\frac xa=\frac1{\sqrt{a^2-x^2}},\quad\frac{d}{dx}\arccos\frac xa=-\frac1{\sqrt{a^2-x^2}},\quad\frac{d}{dx}\arctan\frac xa=\frac a{a^2+x^2}$$
 <ul><li>Method: $y=\arcsin x\Rightarrow\sin y=x\Rightarrow\cos y\,\frac{dy}{dx}=1\Rightarrow\frac{dy}{dx}=\frac1{\sqrt{1-x^2}}$ (positive root because $-\tfrac\pi2\le y\le\tfrac\pi2$).</li>
 <li>Combine with product/chain/quotient rules — e.g. $\frac d{dx}(x\arctan x)=\arctan x+\frac{x}{1+x^2}$.</li></ul>`,
       drills: [
         () => {
-          const t = ri(0, 5);
+          const t = pick([0, 1, 2, 3, 5]);
           if (t === 0) { const a = ri(2, 6), x = ri(1, a - 1); return { q: T`Differentiate $\arcsin\dfrac x{${a}}$ and evaluate at $x=${x}$.`, fields: [{ label: 'value', ans: 1 / Math.sqrt(a * a - x * x) }], sol: T`$\dfrac1{\sqrt{${a * a}-x^2}}$ at $x=${x}$: $\dfrac1{\sqrt{${a * a - x * x}}}=\dfrac1{${surd(a * a - x * x)}}\approx${num(1 / Math.sqrt(a * a - x * x))}$.` }; }
           if (t === 1) { const b = ri(2, 5), x = pick([1, 2, 1 / 2]); const v = b / (1 + b * b * x * x); return { q: T`Find $\dfrac{dy}{dx}$ at $x=${nice(x)}$ for $y=\arctan(${b}x)$.`, fields: [{ label: 'value', ans: v }], sol: T`$y'=\dfrac{${b}}{1+${b * b}x^2}=${nice(v)}$.` }; }
           if (t === 2) { const k = ri(1, 4); const v = Math.atan(k) + k / (1 + k * k); return { q: T`Find the gradient of $y=x\arctan x$ at $x=${k}$.`, fields: [{ label: 'value', ans: v }], sol: T`Product rule: $y'=\arctan x+\dfrac{x}{1+x^2}$. At $x=${k}$: $\arctan${k}+${fr(k, 1 + k * k)}\approx${num(v)}$.` }; }
@@ -192,20 +192,19 @@ $$\frac{d}{dx}\arcsin\frac xa=\frac1{\sqrt{a^2-x^2}},\quad\frac{d}{dx}\arccos\fr
       ],
     },
     {
-      id: 'ca2', code: '5.2', title: 'Integration using inverse trig & hyperbolic forms',
-      sims: ['arclength'],
+      id: 'ca2', code: '5.2', title: 'Integrating (a² − x²)^−½ and (a² + x²)^−1; trigonometric substitutions',
+      sims: [],
       notes: T`
-<table class="tbl"><tr><th>Integrand</th><th>Integral</th></tr>
-<tr><td>$\dfrac1{a^2+x^2}$</td><td>$\dfrac1a\arctan\dfrac xa$</td></tr>
-<tr><td>$\dfrac1{\sqrt{a^2-x^2}}$</td><td>$\arcsin\dfrac xa\quad(|x|\lt a)$</td></tr>
-<tr><td>$\dfrac1{\sqrt{x^2+a^2}}$</td><td>$\operatorname{arsinh}\dfrac xa=\ln\left(x+\sqrt{x^2+a^2}\right)+c$</td></tr>
-<tr><td>$\dfrac1{\sqrt{x^2-a^2}}$</td><td>$\operatorname{arcosh}\dfrac xa=\ln\left(x+\sqrt{x^2-a^2}\right)+c\quad(x\gt a)$</td></tr></table>
+<table class="tbl"><tr><th>Integrand</th><th>Integral (formula booklet)</th><th>Substitution behind it</th></tr>
+<tr><td>$\dfrac1{a^2+x^2}$</td><td>$\dfrac1a\arctan\dfrac xa+c$</td><td>$x=a\tan\theta$</td></tr>
+<tr><td>$\dfrac1{\sqrt{a^2-x^2}}$</td><td>$\arcsin\dfrac xa+c\quad(|x|\lt a)$</td><td>$x=a\sin\theta$</td></tr></table>
 <ul><li><b>Complete the square</b> first: $x^2+6x+13=(x+3)^2+4$.</li>
 <li><b>Split the numerator</b>: $\dfrac{px+q}{x^2+a^2}=\dfrac{p}2\cdot\dfrac{2x}{x^2+a^2}+\dfrac{q}{x^2+a^2}$ → a log plus an arctan.</li>
-<li>With a coefficient: $\displaystyle\int\frac{dx}{\sqrt{a^2-b^2x^2}}=\frac1b\arcsin\frac{bx}a$.</li></ul>`,
+<li>With a coefficient: $\displaystyle\int\frac{dx}{\sqrt{a^2-b^2x^2}}=\frac1b\arcsin\frac{bx}a$.</li>
+<li><b>Associated functions</b>: $\sqrt{a^2-x^2}$ → $x=a\sin\theta$; $(a^2+x^2)^{-n}$ → $x=a\tan\theta$. Change the limits too, and use $\cos^2\theta=\frac12(1+\cos2\theta)$.</li></ul>`,
       drills: [
         () => {
-          const a = ri(1, 6), [k, lab, ang] = pick([[1, `${a}`, 4], [Math.sqrt(3), `${a}\\sqrt3`, 3], [1 / Math.sqrt(3), `\\frac{${a}}{\\sqrt3}`, 6]]);
+          const a = ri(1, 6), [k, lab, ang] = pick([[1, `${a}`, 4], [Math.sqrt(3), `${a === 1 ? '' : a}\\sqrt3`, 3], [1 / Math.sqrt(3), `\\frac{${a}}{\\sqrt3}`, 6]]);
           return { q: T`Evaluate $\displaystyle\int_0^{${lab}}\frac{dx}{${a * a}+x^2}$ exactly.`, fields: [{ label: 'value', ans: Math.PI / (ang * a) }], sol: T`$\left[\tfrac1{${a}}\arctan\tfrac x{${a}}\right]_0^{${lab}}=\tfrac1{${a}}\cdot\tfrac\pi{${ang}}=${pf(1, ang * a)}$.` };
         },
         () => {
@@ -215,9 +214,10 @@ $$\frac{d}{dx}\arcsin\frac xa=\frac1{\sqrt{a^2-x^2}},\quad\frac{d}{dx}\arccos\fr
           return { q: T`Evaluate $\displaystyle\int_0^{${upTeX}}\frac{dx}{\sqrt{${a * a}-${b * b === 1 ? '' : b * b}x^2}}$.`, fields: [{ label: 'value', ans: Math.asin(b * up / a) / b }], sol: T`$=\left[\tfrac1{${b}}\arcsin\tfrac{${b}x}{${a}}\right]_0^{${upTeX}}=\tfrac1{${b}}\arcsin${s}=${pf(1, ang * b)}$.` };
         },
         () => {
-          const [p, q, h] = pick([[3, 4, 5], [4, 3, 5], [5, 12, 13], [12, 5, 13], [8, 15, 17], [15, 8, 17]]), up = pick([true, false]);
-          if (up) return { q: T`Evaluate $\displaystyle\int_0^{${p}}\frac{dx}{\sqrt{x^2+${q * q}}}$ as an exact logarithm.`, fields: [{ label: 'value', ans: Math.log((p + h) / q) }], sol: T`$\left[\ln\left(x+\sqrt{x^2+${q * q}}\right)\right]_0^{${p}}=\ln(${p}+${h})-\ln${q}=${lnTeX(p + h, q)}$.` };
-          return { q: T`Evaluate $\displaystyle\int_{${q}}^{${h}}\frac{dx}{\sqrt{x^2-${q * q}}}$ as an exact logarithm.`, fields: [{ label: 'value', ans: Math.log((h + p) / q) }], sol: T`$\left[\operatorname{arcosh}\tfrac x{${q}}\right]_{${q}}^{${h}}=\ln\left(\tfrac{${h}}{${q}}+\sqrt{\tfrac{${h * h}}{${q * q}}-1}\right)-0=${lnTeX(h + p, q)}$.` };
+          const a = ri(1, 5), t = ri(0, 2);
+          if (t === 0) return { q: T`Use the substitution $x=${a === 1 ? '' : a}\sin\theta$ to evaluate $\displaystyle\int_0^{${a}}\sqrt{${a * a}-x^2}\,dx$.`, fields: [{ label: 'value', ans: Math.PI * a * a / 4 }], sol: T`$dx=${a}\cos\theta\,d\theta$, $\sqrt{${a * a}-x^2}=${a}\cos\theta$, limits $0\to\frac\pi2$.<br>$${a * a}\int_0^{\pi/2}\cos^2\theta\,d\theta=\tfrac{${a * a}}{2}\left[\theta+\tfrac12\sin2\theta\right]_0^{\pi/2}=${pf(a * a, 4)}$ — a quarter of the circle's area, as it should be.` };
+          if (t === 1) return { q: T`Use the substitution $x=${a === 1 ? '' : a}\tan\theta$ to evaluate $\displaystyle\int_0^{${a}}\frac{dx}{(x^2+${a * a})^{3/2}}$.`, fields: [{ label: 'value', ans: 1 / (a * a * Math.SQRT2) }], sol: T`$dx=${a}\sec^2\theta\,d\theta$, $(x^2+${a * a})^{3/2}=${a ** 3}\sec^3\theta$, limits $0\to\frac\pi4$.<br>$\tfrac1{${a * a}}\int_0^{\pi/4}\cos\theta\,d\theta=\tfrac1{${a * a}}\sin\tfrac\pi4=\dfrac{1}{${a * a === 1 ? '' : a * a}\sqrt2}$.` };
+          return { q: T`Use the substitution $x=${a === 1 ? '' : a}\sin\theta$ to evaluate $\displaystyle\int_0^{${nice(a / 2)}}\frac{x^2}{\sqrt{${a * a}-x^2}}\,dx$.`, fields: [{ label: 'value', ans: a * a * (Math.PI / 12 - Math.sqrt(3) / 8) }], sol: T`Integral $=${a * a}\int_0^{\pi/6}\sin^2\theta\,d\theta=\tfrac{${a * a}}2\left[\theta-\tfrac12\sin2\theta\right]_0^{\pi/6}=${a * a}\left(\tfrac{\pi}{12}-\tfrac{\sqrt3}{8}\right)$.` };
         },
         () => {
           const p = rnz(-4, 4), q = ri(1, 5);
@@ -303,13 +303,13 @@ $$S_x=2\pi\int y\,ds=2\pi\int_a^b y\sqrt{1+y'^2}\,dx\qquad(\text{about the }x\te
       ],
     },
     {
-      id: 'ca5', code: '5.5', title: 'Improper integrals & volumes',
-      sims: ['arclength'],
+      id: 'ca5', code: '5.5', title: 'Improper integrals',
+      sims: ['improper'],
       notes: T`
 <p>An integral is <b>improper</b> if a limit is infinite or the integrand is unbounded. Replace the problem limit with a variable and take a limit:</p>
 $$\int_1^\infty x^{-p}\,dx=\lim_{t\to\infty}\left[\frac{x^{1-p}}{1-p}\right]_1^t=\frac1{p-1}\ (p\gt1),\quad\text{diverges for }p\le1$$
-<ul><li>Key limits: $x^ke^{-x}\to0$ as $x\to\infty$; $x^k\ln x\to0$ as $x\to0^+$ ($k\gt0$). State them.</li>
-<li>Volume of revolution: $V=\pi\int y^2\,dx$ (about $x$-axis), $\pi\int x^2\,dy$ (about $y$-axis).</li></ul>`,
+<ul><li>Two kinds (both on the spec): an <b>infinite limit</b> ($\int_1^\infty$), or an integrand <b>undefined at a value in the range</b> ($\int_0^1\frac{dx}{\sqrt x}$) — including one inside the interval, where you must split.</li>
+<li>Key limits: $x^ke^{-x}\to0$ as $x\to\infty$; $x^k\ln x\to0$ as $x\to0^+$ ($k\gt0$). State them.</li></ul>`,
       drills: [
         () => {
           const t = ri(0, 4), a = ri(2, 5);
@@ -318,10 +318,6 @@ $$\int_1^\infty x^{-p}\,dx=\lim_{t\to\infty}\left[\frac{x^{1-p}}{1-p}\right]_1^t
           if (t === 2) return { q: T`Evaluate $\displaystyle\int_0^\infty\frac{dx}{x^2+${a * a}}$.`, fields: [{ label: 'value', ans: Math.PI / (2 * a) }], sol: T`$\lim_{t\to\infty}\tfrac1{${a}}\arctan\tfrac t{${a}}=\tfrac1{${a}}\cdot\tfrac\pi2=${pf(1, 2 * a)}$.` };
           if (t === 3) { const q = pick([[1, 2], [1, 3], [2, 3], [3, 4]]); return { q: T`Evaluate $\displaystyle\int_0^1x^{-${fr(...q)}}dx$.`, fields: [{ label: 'value', ans: q[1] / (q[1] - q[0]) }], sol: T`$\left[${fr(q[1], q[1] - q[0])}x^{${fr(q[1] - q[0], q[1])}}\right]_{0^+}^1=${fr(q[1], q[1] - q[0])}$ (the lower limit term $\to0$).` }; }
           return { q: T`Evaluate $\displaystyle\int_0^1x^{${a - 1}}\ln x\,dx$.`, fields: [{ label: 'value', ans: -1 / (a * a) }], sol: T`Parts: $\left[\tfrac{x^{${a}}}{${a}}\ln x\right]_{0^+}^1-\int_0^1\tfrac{x^{${a - 1}}}{${a}}dx=0-\tfrac1{${a * a}}$ (since $x^{${a}}\ln x\to0$).` };
-        },
-        () => {
-          const k = ri(2, 4), v = Math.PI * simpson(x => Math.cosh(x) ** 2, 0, Math.log(k));
-          return { q: T`The region under $y=\cosh x$ for $0\le x\le\ln${k}$ is rotated $2\pi$ about the $x$-axis. Find the volume.`, fields: [{ label: 'V', ans: v }], sol: T`$V=\pi\int_0^{\ln${k}}\cosh^2x\,dx=\pi\left[\tfrac14\sinh2x+\tfrac x2\right]_0^{\ln${k}}=\pi\left(${fr(k ** 4 - 1, 8 * k * k)}+\tfrac12\ln${k}\right)\approx${num(v)}$.` };
         },
       ],
     },
@@ -589,7 +585,7 @@ $$\text{IF}=e^{\int P\,dx},\qquad \frac{d}{dx}\big(y\cdot\text{IF}\big)=Q\cdot\t
 <tr><td>$ax+b$</td><td>$\lambda x+\mu$</td></tr>
 <tr><td>$ke^{px}$</td><td>$\lambda e^{px}$</td></tr>
 <tr><td>$k\cos\omega x$ or $k\sin\omega x$</td><td>$\lambda\cos\omega x+\mu\sin\omega x$ (both!)</td></tr></table>
-<ul><li><b>If the trial is already in the CF</b>, multiply by $x$ (by $x^2$ if the root is repeated). E.g. $y''+\omega^2y=\cos\omega x$ → PI $=\frac{x}{2\omega}\sin\omega x$ (resonance).</li>
+<ul><li>On the A2 1 specification $f(x)$ is a polynomial, exponential or trig function that is <b>not</b> a solution of the homogeneous equation, so these trials always work. (When the trial is already in the CF you multiply by $x$ — that case is beyond the specification.)</li>
 <li>Apply initial conditions to the <b>general</b> solution (CF + PI), never to the CF alone.</li></ul>`,
       drills: [
         () => {

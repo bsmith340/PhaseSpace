@@ -26,7 +26,14 @@ BOOK.m_log = [
   B.ex(6, T`Solve (a) $e^{2x}=7$ (b) $\ln(3x-1)=2$, exactly.`, [
     T`(a) $2x=\ln7\Rightarrow x=\tfrac12\ln7$.`,
     T`(b) $3x-1=e^2\Rightarrow x=\dfrac{e^2+1}{3}$.`]),
+  T`<h3>Inequalities involving exponentials</h3><p>To solve $a^x\lt b$, take logs of both sides (log is an increasing function, so the inequality keeps its direction): $x\ln a\lt\ln b$. Now divide by $\ln a$ — and if $0\lt a\lt1$ then $\ln a\lt0$, so the inequality <b>reverses</b>.</p>`,
+  B.ex(7, T`Solve $3^x\gt20$.`, [T`$x\ln3\gt\ln20$; $\ln3\gt0$, so $x\gt\dfrac{\ln20}{\ln3}=2.73$ (3 s.f.).`]),
+  B.ex(8, T`Find the smallest integer $n$ for which $0.8^n\lt0.01$.`, [
+    T`$n\ln0.8\lt\ln0.01$.`,
+    T`$\ln0.8\lt0$, so dividing reverses the sign: $n\gt\dfrac{\ln0.01}{\ln0.8}=20.6$.`,
+    T`Smallest integer $n=21$. (Check: $0.8^{20}=0.0115$, $0.8^{21}=0.0092$ ✓.)`], T`This is the classic "how many years until it falls below …" question.`),
   B.warn([
+    T`Forgetting to reverse an inequality after dividing by the log of a number between 0 and 1.`,
     T`$\log(x+y)\ne\log x+\log y$. The product law needs a <i>product</i> inside.`,
     T`$\dfrac{\log x}{\log y}\ne\log\dfrac xy$. (The left side is $\log_yx$.)`,
     T`$\log x^2=2\log x$ only for $x\gt0$ — check solutions in the original equation.`,
@@ -42,7 +49,7 @@ BOOK.m_log = [
   B.examq(8, T`<p>(a) Given that $\log_a2=p$ and $\log_a3=q$, express in terms of $p$ and $q$: (i) $\log_a12$ (ii) $\log_a\dfrac9a$. <span class="mk">[4]</span></p><p>(b) Solve $2\log_3x-\log_3(x-2)=2$. <span class="mk">[4]</span></p>`,
     T`<p>(a)(i) $\log_a(2^2\cdot3)=2p+q$. <span class="mk">M1 A1</span> (ii) $\log_a9-\log_aa=2q-1$. <span class="mk">M1 A1</span></p>
 <p>(b) $\log_3\dfrac{x^2}{x-2}=2$ <span class="mk">M1</span> $\Rightarrow x^2=9(x-2)$ <span class="mk">M1</span> $\Rightarrow x^2-9x+18=0\Rightarrow x=3$ or $6$ <span class="mk">A1</span>; both satisfy $x\gt2$, so both are valid. <span class="mk">A1</span></p>`),
-  B.key([T`$\log_ax=y\iff a^y=x$.`, T`Product → sum, quotient → difference, power → multiple.`, T`$a^x=b\Rightarrow x=\frac{\log b}{\log a}$.`, T`Always check arguments stay positive.`]),
+  B.key([T`$\log_ax=y\iff a^y=x$.`, T`Product → sum, quotient → difference, power → multiple.`, T`$a^x=b\Rightarrow x=\frac{\log b}{\log a}$; for $a^x\lt b$ reverse if $0\lt a\lt1$.`, T`Always check arguments stay positive.`]),
 ].join('');
 
 /* ===================================================================== */
@@ -271,17 +278,17 @@ BOOK.m_area = [
     T`$F(x)=\dfrac{x^3}3-2x^2+3x$. $\int_0^1=F(1)-F(0)=\tfrac43$.`,
     T`$\int_1^3=F(3)-F(1)=0-\tfrac43=-\tfrac43$ (below the axis).`,
     T`Total area $=\tfrac43+\tfrac43=\tfrac83$. (The plain integral $\int_0^3$ is $0$ — not the area!)`]),
-  B.ex(3, T`Find the area enclosed between $y=4x-x^2$ and $y=x$.`, [
-    T`Intersections: $4x-x^2=x\Rightarrow x(3-x)=0\Rightarrow x=0,3$.`,
-    T`On $(0,3)$ the curve is above the line (test $x=1$: $3\gt1$).`,
-    T`Area $=\displaystyle\int_0^3\big[(4x-x^2)-x\big]dx=\left[\tfrac32x^2-\tfrac13x^3\right]_0^3=\tfrac{27}2-9=\tfrac92$.`]),
+  T`<h3>Area between a curve and the $y$-axis</h3><p>The specification says "the area defined by a curve and <b>either</b> axis". For the $y$-axis, slice horizontally: strips of width $x$ and height $\delta y$, so $$\text{Area}=\int_c^d x\,dy,$$ with $x$ written in terms of $y$ and the limits as $y$-values.</p>`,
+  B.ex(3, T`Find the area between $y=x^2$ ($x\ge0$), the $y$-axis and the lines $y=1$ and $y=4$.`, [
+    T`Write $x$ in terms of $y$: $x=\sqrt y=y^{1/2}$.`,
+    T`Area $=\displaystyle\int_1^4y^{1/2}\,dy=\left[\tfrac23y^{3/2}\right]_1^4=\tfrac23(8-1)=\tfrac{14}{3}$.`], T`Sketch first: the region sits to the <i>left</i> of the curve, against the $y$-axis.`),
   B.ex(4, T`Evaluate $\displaystyle\int_1^4\frac1{\sqrt x}\,dx$.`, [
     T`$\int x^{-1/2}dx=2x^{1/2}$.`,
     T`$\big[2\sqrt x\big]_1^4=4-2=2$.`]),
   B.warn([
     T`Integrating straight across a root and calling the answer "the area".`,
     T`Bracket errors in $F(b)-F(a)$ — always bracket $F(a)$ before subtracting.`,
-    T`Area between curves: "top minus bottom" — check which is on top with a test value.`,
+    T`For the $y$-axis, integrating with respect to $x$ (and $x$-limits) instead of $\int x\,dy$ with $y$-limits.`,
     T`Adding $+c$ to a definite integral (harmless but untidy).`]),
   B.exam([
     T`Show the square-bracket line $\big[F(x)\big]_a^b$ and the substitution of both limits — those are method marks.`,
@@ -290,11 +297,12 @@ BOOK.m_area = [
   B.checks([
     [T`$\int_0^2 3x^2\,dx$?`, T`$\big[x^3\big]_0^2=8$.`],
     [T`$\int_{-1}^{1}x^3\,dx$ — and what is the area?`, T`$0$; area $=\tfrac14+\tfrac14=\tfrac12$.`],
-    [T`Area between $y=x^2$ and $y=4$?`, T`$\int_{-2}^{2}(4-x^2)dx=\tfrac{32}{3}$.`]]),
-  B.examq(8, T`<p>The line $y=x+3$ meets the curve $y=x^2+1$ at the points $A$ and $B$.</p><p>(a) Find the coordinates of $A$ and $B$. <span class="mk">[3]</span></p><p>(b) Find the area of the region enclosed between the line and the curve. <span class="mk">[5]</span></p>`,
-    T`<p>(a) $x^2+1=x+3\Rightarrow x^2-x-2=0\Rightarrow(x-2)(x+1)=0$ <span class="mk">M1 A1</span>; $A(-1,2)$, $B(2,5)$. <span class="mk">A1</span></p>
-<p>(b) Area $=\displaystyle\int_{-1}^{2}\big[(x+3)-(x^2+1)\big]dx$ <span class="mk">M1</span> $=\left[\tfrac{x^2}{2}+2x-\tfrac{x^3}{3}\right]_{-1}^{2}$ <span class="mk">M1 A1</span> $=\left(2+4-\tfrac83\right)-\left(\tfrac12-2+\tfrac13\right)$ <span class="mk">M1</span> $=\tfrac{10}3+\tfrac76=\tfrac92$. <span class="mk">A1</span></p>`),
-  B.key([T`$\int_a^bf\,dx=F(b)-F(a)$.`, T`Below the axis is negative: split at roots for total area.`, T`Between curves: $\int(\text{top}-\text{bottom})\,dx$ between intersections.`]),
+    [T`Area between $y=x^2$ ($x\ge0$), the $y$-axis and $y=4$?`, T`$\int_0^4y^{1/2}dy=\tfrac{16}{3}$.`]]),
+  B.examq(8, T`<p>The curve $C$ has equation $y=x^3-4x$.</p><p>(a) Find the points where $C$ meets the $x$-axis. <span class="mk">[2]</span></p><p>(b) Find the total area enclosed between $C$ and the $x$-axis. <span class="mk">[5]</span></p><p>(c) Explain why $\displaystyle\int_{-2}^{2}(x^3-4x)\,dx$ does not give this area. <span class="mk">[1]</span></p>`,
+    T`<p>(a) $x(x-2)(x+2)=0$ <span class="mk">M1</span>: $(-2,0)$, $(0,0)$, $(2,0)$. <span class="mk">A1</span></p>
+<p>(b) $F(x)=\tfrac{x^4}{4}-2x^2$ <span class="mk">M1 A1</span>. $\int_{-2}^{0}=0-(4-8)=4$ <span class="mk">M1</span>; $\int_0^2=(4-8)-0=-4$ <span class="mk">A1</span>; total area $4+4=8$. <span class="mk">A1</span></p>
+<p>(c) The region for $0\lt x\lt2$ is below the axis, so its integral is negative and cancels the positive part (the integral is $0$). <span class="mk">B1</span></p>`),
+  B.key([T`$\int_a^bf\,dx=F(b)-F(a)$.`, T`Below the axis is negative: split at roots for total area.`, T`With the $y$-axis: $\int_c^dx\,dy$.`]),
 ].join('');
 
 /* ===================================================================== */

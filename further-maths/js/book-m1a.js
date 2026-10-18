@@ -212,8 +212,15 @@ BOOK.m_sim = [
     T`Substitute: $x^2-4x+10=2x+k\Rightarrow x^2-6x+(10-k)=0$.`,
     T`Tangent $\iff\Delta=0$: $36-4(10-k)=0\Rightarrow k=1$.`,
     T`Repeated root: $x^2-6x+9=0\Rightarrow x=3$, $y=2(3)+1=7$. Point of contact $(3,7)$.`]),
+  T`<h3>4. Three equations in three unknowns</h3><p>Label the equations (1), (2), (3). Use <b>two different pairs</b> to eliminate the <b>same</b> variable, giving two equations in two unknowns. Solve those, then substitute back. Finally check in all three originals.</p>`,
+  B.ex(5, T`Solve $x+y+z=6$, $2x-y+z=3$, $x+2y-z=2$.`, [
+    T`Eliminate $z$: (1) − (2): $-x+2y=3$ … (4). (1) + (3): $2x+3y=8$ … (5).`,
+    T`From (4), $x=2y-3$. Substitute into (5): $4y-6+3y=8\Rightarrow y=2$, so $x=1$.`,
+    T`From (1): $z=6-1-2=3$. Check (2): $2-2+3=3$ ✓; (3): $1+4-3=2$ ✓.`,
+    T`Solution $x=1$, $y=2$, $z=3$.`], T`Geometrically each equation is a plane in 3D; a unique solution is the single point where all three meet.`),
   B.warn([
     T`Substituting the linear equation back into the quadratic to find the partner value — it can create extra (wrong) pairs. Use the linear one.`,
+    T`With three variables, eliminating <i>different</i> variables from the two pairs — you end up with three unknowns again.`,
     T`Listing $x$-values and $y$-values separately instead of as matched pairs.`,
     T`Sign errors when expanding $(5-2y)^2$ or $-(5-2y)y$. Bracket everything first.`,
     T`Dividing an equation by a variable (losing the solution where it is zero).`]),
@@ -228,7 +235,7 @@ BOOK.m_sim = [
   B.examq(9, T`<p>(a) Solve the simultaneous equations $y=x-1$ and $x^2+2y^2=22$. <span class="mk">[6]</span></p><p>(b) Find the exact values of $c$ for which the line $y=x+c$ is a tangent to the curve $x^2+2y^2=22$. <span class="mk">[3]</span></p>`,
     T`<p>(a) $x^2+2(x-1)^2=22$ <span class="mk">M1</span> $\Rightarrow3x^2-4x-20=0$ <span class="mk">A1</span> $\Rightarrow(3x-10)(x+2)=0$ <span class="mk">M1</span>; $x=-2$ or $\tfrac{10}3$ <span class="mk">A1</span>. $y=x-1$: $(-2,-3)$ and $\left(\tfrac{10}3,\tfrac73\right)$. <span class="mk">M1 A1</span></p>
 <p>(b) $x^2+2(x+c)^2=22\Rightarrow3x^2+4cx+2c^2-22=0$. <span class="mk">M1</span> Tangent: $16c^2-12(2c^2-22)=0$ <span class="mk">M1</span> $\Rightarrow8c^2=264$, $c=\pm\sqrt{33}$. <span class="mk">A1</span></p>`),
-  B.key([T`Linear–linear: elimination or substitution.`, T`Linear–quadratic: substitute the linear into the quadratic; partner values from the linear.`, T`Discriminant of the resulting quadratic: $\gt0$ chord, $=0$ tangent, $\lt0$ miss.`]),
+  B.key([T`Linear–linear: elimination or substitution. Three variables: eliminate the same variable twice.`, T`Linear–quadratic: substitute the linear into the quadratic; partner values from the linear.`, T`Discriminant of the resulting quadratic: $\gt0$ chord, $=0$ tangent, $\lt0$ miss.`]),
 ].join('');
 
 /* ===================================================================== */
@@ -256,6 +263,14 @@ BOOK.m_ineq = [
   B.ex(5, T`Find the values of $k$ for which $x^2+kx+4=0$ has no real roots.`, [
     T`No real roots: $\Delta\lt0\Rightarrow k^2-16\lt0$.`,
     T`$(k-4)(k+4)\lt0\Rightarrow-4\lt k\lt4$.`]),
+  T`<h3>3. Inequalities with brackets and fractions</h3><p>The specification says "including inequalities with brackets and fractions". Clear fractions by multiplying <b>every term</b> by the positive common denominator; expand brackets; then collect everything on one side.</p>`,
+  B.ex(6, T`Solve $\dfrac{x+1}{3}-\dfrac{x-2}{4}\lt1$.`, [
+    T`Multiply every term by $12$ (positive, so no flip): $4(x+1)-3(x-2)\lt12$.`,
+    T`$4x+4-3x+6\lt12\Rightarrow x+10\lt12\Rightarrow x\lt2$.`]),
+  B.ex(7, T`Solve $(x-2)(x+3)\ge2x+6$.`, [
+    T`Don't divide by $(x+3)$ — its sign is unknown. Collect on one side: $(x-2)(x+3)-2(x+3)\ge0$.`,
+    T`Factorise: $(x+3)(x-4)\ge0$; critical values $-3$ and $4$.`,
+    T`∪-shape, so $x\le-3$ or $x\ge4$, i.e. $\{x:x\le-3\}\cup\{x:x\ge4\}$.`], T`Dividing by $(x+3)$ would have given only $x\ge4$ — losing half the answer.`),
   B.def('notation', T`<ul><li>"or" / union $\cup$: either piece is allowed (two separate intervals).</li><li>"and" / intersection $\cap$: both must hold at once (the overlap).</li><li>Never write $3\lt x\lt-2$ or $-2\gt x\gt3$ for two separate pieces — those mean nothing.</li></ul>`),
   B.tip(T`<p>Graphically, $f(x)\gt g(x)$ is where the graph of $f$ lies <b>above</b> the graph of $g$. Turn on "Shade where y &lt; 0" in the quadratic simulation to see the solution set appear.</p>`),
   B.warn([
