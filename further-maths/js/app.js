@@ -49,19 +49,29 @@ const courseOf = p => COURSES[p.course] || C;
 
 /* ---------- mount & nav ---------- */
 let cleanup = [];
-function mount(html) { cleanup.forEach(f => { try { f(); } catch { } }); cleanup = []; app().innerHTML = html; renderMath(app()); window.scrollTo(0, 0); }
+function unmount() { cleanup.forEach(f => { try { f(); } catch { } }); cleanup = []; }
+function mount(html) { unmount(); app().innerHTML = html; renderMath(app()); window.scrollTo(0, 0); }
 /* ---------- qualifications, units, sections & routes ---------- */
-// Two qualifications × four units. Units are courses; applied units split their topics into lettered sections.
+// Three subjects × four units. Maths units are courses (applied units split their topics into lettered sections);
+// Physics units come from the physics lab engine (js/physics.js) through the PHYS object.
 const QUALS = {
-  maths: { name: 'Mathematics', short: 'Maths', board: 'CCEA GCE Mathematics (2018)', color: '#00a896',
+  maths: { name: 'Mathematics', short: 'Maths', mini: 'Maths', board: 'CCEA GCE Mathematics (2018)', color: 'var(--m-fill)', tag: 'Pure maths, mechanics and statistics.',
     blurb: 'Pure mathematics with mechanics and statistics. AS 1 and AS 2 make the AS; add A2 1 and A2 2 for the A level.',
     structure: [['AS 1', 'Pure Mathematics', '1 h 45 min', '60% of AS · 24% of A level'], ['AS 2', 'Applied Mathematics (mechanics and statistics)', '1 h 15 min', '40% of AS · 16% of A level'],
       ['A2 1', 'Pure Mathematics', '2 h 30 min', '36% of A level'], ['A2 2', 'Applied Mathematics (mechanics and statistics)', '1 h 30 min', '24% of A level']] },
-  further: { name: 'Further Mathematics', short: 'Further Maths', board: 'CCEA GCE Further Mathematics (2018)', color: '#007aff',
+  further: { name: 'Further Mathematics', short: 'Further Maths', mini: 'Further', board: 'CCEA GCE Further Mathematics (2018)', color: 'var(--f-fill)', tag: 'Further pure, mechanics, statistics and decision maths.',
     blurb: 'Further pure, plus two applied units where you choose your sections from Mechanics, Statistics and Discrete & Decision Mathematics.',
     structure: [['AS 1', 'Pure Mathematics', '1 h 30 min', '50% of AS · 20% of A level'], ['AS 2', 'Applied Mathematics (choose two sections)', '1 h 30 min', '50% of AS · 20% of A level'],
       ['A2 1', 'Pure Mathematics', '2 h 15 min', '30% of A level'], ['A2 2', 'Applied Mathematics (choose two sections)', '2 h 15 min', '30% of A level']] },
+  physics: { name: 'Physics', short: 'Physics', mini: 'Physics', board: 'CCEA GCE Physics (2016)', color: 'var(--p-fill)', tag: 'A live lab for every section, with notes, drills and mock tests.',
+    blurb: 'Live simulations and virtual practicals for every section, with revision notes, randomised exam drills, timed mock tests and a tutor you can ask anything.',
+    structure: [['AS 1', 'Forces, Energy and Electricity', '1 h 45 min', '40% of AS · 16% of A level'], ['AS 2', 'Waves, Photons and Astronomy', '1 h 45 min', '40% of AS · 16% of A level'],
+      ['AS 3', 'Practical Techniques and Data Analysis', '2 × 1 h', '20% of AS · 8% of A level'],
+      ['A2 1', 'Deformation of Solids, Thermal Physics, Circular Motion, Oscillations and Atomic and Nuclear Physics', '2 h', '24% of A level'], ['A2 2', 'Fields, Capacitors and Particle Physics', '2 h', '24% of A level'],
+      ['A2 3', 'Practical Techniques and Data Analysis', '2 × 1 h', '12% of A level']] },
 };
+const SUBJECTS = ['maths', 'further', 'physics'];
+const SUBJ_ICON = { maths: '∫', further: 'ℂ', physics: '<svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="16" rx="12" ry="6.5" transform="rotate(-30 16 16)" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="24.6" cy="10.2" r="2.8" fill="currentColor"/><circle cx="16" cy="16" r="2.4" fill="currentColor"/></svg>' };
 const UNIT_RANK = ['AS 1', 'AS 2', 'A2 1', 'A2 2'];
 COURSE_ORDER.sort((x, y) => { const a = COURSES[x], b = COURSES[y]; return (a.qual === b.qual ? 0 : a.qual === 'maths' ? -1 : 1) || UNIT_RANK.indexOf(a.unitNo) - UNIT_RANK.indexOf(b.unitNo); });
 const unitsOf = q => COURSE_ORDER.filter(id => COURSES[id].qual === q);
@@ -84,7 +94,7 @@ const SECTION = { point: 'book', topic: '', sprint: 'drill', archive: 'spec' }; 
 function renderNav(inCourse, qual) {
   const cid = inCourse ? C.id : (COURSES[DB.lastCourse] ? DB.lastCourse : C.id), q = inCourse ? C.qual : qual;
   document.body.classList.toggle('in-course', inCourse);
-  const qs = `<div class="cswitch" role="group" aria-label="Qualification">${Object.entries(QUALS).map(([k, Q]) => `<a href="#/${k}" class="${q === k ? 'on' : ''}"><span class="q-long">${Q.short}</span><span class="q-short">${k === 'maths' ? 'Maths' : 'Further'}</span></a>`).join('')}</div>`;
+  const qs = `<div class="cswitch" role="group" aria-label="Qualification">${Object.entries(QUALS).map(([k, Q]) => `<a href="#/${k}" class="${q === k ? 'on' : ''}"><span class="q-long">${Q.short}</span><span class="q-short">${Q.mini}</span></a>`).join('')}</div>`;
   $('#nav').innerHTML = `${qs}<a href="#/lab" data-r="lab" class="g-lab">${ico('lab')}<span class="gtext">Lab</span></a><a href="#/sims" data-r="sims" title="Simulations">${ico('sims')}<span class="gtext">Simulations</span></a><a href="#/about" data-r="about" class="g-about"><span class="gtext">About</span></a><a href="#/calc" class="gico g-calc" title="Calculator (Alt+C)" aria-label="Calculator" data-r="calc">${ico('calc')}</a><a href="#/settings" class="gico" title="Settings — save and load progress" aria-label="Settings" data-r="settings">${ico('gear')}</a><button id="theme" class="icon-btn gico" title="Light or dark appearance" aria-label="Switch between light and dark appearance">${ico('theme')}</button>`;
   $('#theme').onclick = toggleTheme;
   const ln = $('#lnav'); ln.hidden = !inCourse;
@@ -95,38 +105,76 @@ function renderNav(inCourse, qual) {
   $('#tabbar').innerHTML = [[`#/${cid}`, `${cid}/`, 'overview', 'Overview'], [`#/${cid}/book`, `${cid}/book`, 'book', 'Book'], [`#/${cid}/drill`, `${cid}/drill`, 'drill', 'Drill'], ['#/lab', 'lab', 'lab', 'Lab'], ['#/calc', 'calc', 'calc', 'Calculator']]
     .map(([h, r, i, l]) => `<a href="${h}" data-r="${r}"${r === 'calc' ? ' class="tcalc"' : ''}>${ico(i)}<span>${l}</span></a>`).join('');
 }
+// Physics has its own unit bar and tab bar; everything below them is drawn by PHYS.route()
+function renderPhysNav(sub) {
+  const u = PHYS.unitFor(sub), [a, b] = sub;
+  renderNav(false, 'physics'); document.body.classList.add('in-course');
+  const key = PHYS.UNITS.some(x => x.id === a) ? `physics/${a}${b === 'spec' || b === 'equations' ? '/' + b : ''}` : a === 'practice' || a === 'tutor' ? `physics/${a}` : `physics/${u.id}`;
+  const ln = $('#lnav'); ln.hidden = false;
+  ln.innerHTML = `<div class="lnav-in"><a class="lnav-title" href="#/physics">Physics</a>
+    <div class="cswitch useg" role="group" aria-label="Unit">${PHYS.UNITS.map(x => `<a href="#/physics/${x.id}" class="${x === u ? 'on' : ''}" title="${esc(x.title)}">${x.no}</a>`).join('')}</div>
+    <div class="lnav-links">${[['', 'Overview'], ['/spec', 'Spec'], ['/equations', 'Equations']].map(([p, l]) => `<a href="#/physics/${u.id}${p}" data-r="physics/${u.id}${p}">${l}</a>`).join('')}<a href="#/physics/practice" data-r="physics/practice">Practice</a><a href="#/physics/tutor" data-r="physics/tutor">Tutor</a></div>
+    <a class="btn primary small lnav-cta" href="#/physics/practice/${u.id}">Mock test</a></div>`;
+  $('#tabbar').innerHTML = [[`#/physics/${u.id}`, `physics/${u.id}`, 'overview', 'Overview'], [`#/physics/${u.id}/spec`, `physics/${u.id}/spec`, 'spec', 'Spec'], ['#/physics/practice', 'physics/practice', 'drill', 'Practice'], ['#/physics/tutor', 'physics/tutor', 'chat', 'Tutor'], ['#/calc', 'calc', 'calc', 'Calculator']]
+    .map(([h, r, i, l]) => `<a href="${h}" data-r="${r}"${r === 'calc' ? ' class="tcalc"' : ''}>${ico(i)}<span>${l}</span></a>`).join('');
+  highlight(key);
+}
 const crumbs = (...parts) => `<nav class="crumbs"><a href="#/">Courses</a> / <a href="#/${C.qual}">${QUALS[C.qual].short}</a> / <a href="#/${C.id}">${C.unitNo}</a>${parts.map(p => ' / ' + p).join('')}</nav>`;
 
 /* ---------- COURSE CHOOSER ---------- */
 function unitCard(id) {
   const c = COURSES[id], rd = c.points.filter(p => isRead(p.id)).length, t = totals(c.points), m = courseMastery(c);
-  return `<a class="card unit" href="#/${id}" style="--cc:${c.color}"><div class="uhead"><div class="cicon sm">${c.unitNo}</div><div><p class="eyebrow">${c.level} · ${c.qual === 'maths' ? 'Mathematics' : 'Further Mathematics'}</p><h3>${c.uname}</h3></div></div>
-    <p class="utag">${esc(c.tagline)}</p><div class="cmeter">${bar(m, c.color)}<span>${Math.round(m * 100)}%</span></div>
+  return `<a class="card unit" href="#/${id}" style="--cc:${QUALS[c.qual].color}"><div class="uhead"><div class="cicon sm">${c.unitNo}</div><div><p class="eyebrow">${c.level} · ${QUALS[c.qual].name}</p><h3>${c.uname}</h3></div></div>
+    <p class="utag">${esc(c.tagline)}</p><div class="cmeter">${bar(m, QUALS[c.qual].color)}<span>${Math.round(m * 100)}%</span></div>
     <small>${c.points.length} spec points · ${rd} read · ${t.a} answered${DB.lastCourse === id ? ' · <b>last opened</b>' : ''}</small></a>`;
 }
-function viewChooser() {
-  const tool = ([h, i, c, t, d]) => `<a class="card tile" href="${h}" style="--tc:${c}"><span class="ti">${ico(i)}</span><b>${t}</b><small>${d}</small></a>`;
+function physUnitCard(u) {
+  const t = PHYS.stats().by[u.id], m = t.outs ? t.ticked / t.outs : 0;
+  return `<a class="card unit" href="#/physics/${u.id}" style="--cc:${QUALS.physics.color}"><div class="uhead"><div class="cicon sm">${u.no}</div><div><p class="eyebrow">${u.level} · Physics</p><h3 title="${esc(u.title)}">${u.short || u.title}</h3></div></div>
+    <p class="utag">${PHYS.topicsIn(u).map(x => x.short || x.title).join(' · ')}</p><div class="cmeter">${bar(m, QUALS.physics.color)}<span>${Math.round(m * 100)}%</span></div>
+    <small>${t.sections} sections · ${t.labs} labs · ${t.ticked}/${t.outs} outcomes ticked${DB.lastCourse === 'physics' && PHYS.lastUnit() === u ? ' · <b>last opened</b>' : ''}</small></a>`;
+}
+// one card per subject: its colour, its four units one tap away, and how far through you are
+function subjectCard(k) {
+  const Q = QUALS[k];
+  let units, m, line;
+  if (k === 'physics') {
+    const t = PHYS.stats(); units = PHYS.UNITS.map(u => [`#/physics/${u.id}`, u.no]); m = t.outs ? t.ticked / t.outs : 0;
+    line = `${t.sections} sections · ${t.labs} live labs · ${t.ticked}/${t.outs} outcomes ticked`;
+  } else {
+    const pts = unitsOf(k).flatMap(id => COURSES[id].points); units = unitsOf(k).map(id => [`#/${id}`, COURSES[id].unitNo]);
+    m = pts.reduce((a, p) => a + mastery(p.id), 0) / pts.length; line = `${pts.length} spec points · ${pts.filter(p => isRead(p.id)).length} chapters read`;
+  }
+  return `<article class="card subj s-${k}"><a class="subj-main" href="#/${k}"><span class="sicon">${SUBJ_ICON[k]}</span><div><h2>${Q.name}</h2><p>${Q.tag}</p></div>${ico('chevron')}</a>
+    <nav class="subj-units" aria-label="${Q.name} units">${units.map(([h, l]) => `<a href="${h}">${l}</a>`).join('')}</nav>
+    <div class="cmeter">${bar(m)}<span>${Math.round(m * 100)}%</span></div><small>${line}</small></article>`;
+}
+function continueLink() {
+  if (DB.lastCourse === 'physics') { const u = PHYS.lastUnit(); return [`#/physics/${u.id}`, `Continue Physics ${u.no}`]; }
   const last = COURSES[DB.lastCourse];
+  return last ? [`#/${last.id}`, `Continue ${last.short}`] : ['#/m1', 'Start with Maths AS 1'];
+}
+function viewChooser() {
+  const [ch, cl] = continueLink();
+  const tool = ([h, i, t]) => `<a class="tool" href="${h}">${ico(i)}<span>${t}</span></a>`;
   mount(`${backupBanner()}<section class="chooser">
-    <p class="kicker">CCEA GCE Mathematics &amp; Further Mathematics</p>
+    <p class="kicker">CCEA A level · Maths, Further Maths and Physics</p>
     <h1><span class="grad">BcsMaths</span></h1>
-    <p class="lead">All eight units, every specification point, in order. Read it, see it, drill it, then prove it on real papers.</p>
-    <div class="cta center">${last ? `<a class="btn primary" href="#/${last.id}">Continue ${last.short} ${ico('chevron')}</a>` : `<a class="btn primary" href="#/m1">Start with Maths AS 1 ${ico('chevron')}</a>`}<a class="btn" href="#/about">Why I built this ${ico('chevron')}</a></div>
+    <p class="lead">Every unit of all three subjects, every specification point, in order.</p>
+    <div class="cta center"><a class="btn primary" href="${ch}">${cl} ${ico('chevron')}</a><a class="btn" href="#/about">Why I built this ${ico('chevron')}</a></div>
   </section>
-  ${Object.entries(QUALS).map(([k, Q]) => `<section class="qual"><div class="qhead"><div><h2>${Q.name}</h2><p class="muted">${Q.blurb}</p></div><a class="btn ghost" href="#/${k}">Course structure ${ico('chevron')}</a></div>
-    <div class="grid units">${unitsOf(k).map(unitCard).join('')}</div></section>`).join('')}
-  <h2 class="sech">Tools for every unit</h2>
-  <section class="grid tiles">${[['#/lab', 'lab', '#30b0c7', 'Lab', 'Grapher, statistics, mechanics, matrices, algorithms'], ['#/calc', 'calc', '#8e8e93', 'Calculator', 'Scientific, complex and exact answers'], ['#/sims', 'sims', '#af52de', 'Simulations', `${Object.keys(SIMS).length} interactive models`], ['#/about', 'book', '#ff9500', 'About', 'Why BcsMaths exists'], ['#/settings', 'gear', '#636366', 'Settings', 'Save and load your progress']].map(tool).join('')}</section>
+  <section class="grid subjects">${SUBJECTS.map(subjectCard).join('')}</section>
+  <nav class="tools" aria-label="Tools">${[['#/lab', 'lab', 'Lab'], ['#/sims', 'sims', 'Simulations'], ['#/calc', 'calc', 'Calculator'], ['#/settings', 'gear', 'Settings']].map(tool).join('')}</nav>
   <p class="credit center">${CREDIT}</p>`);
 }
 function viewQual(k) {
   const Q = QUALS[k];
   mount(`<nav class="crumbs"><a href="#/">Courses</a> / ${Q.short}</nav>
   <section class="hero"><p class="kicker">${esc(Q.board)}</p><h1>${Q.name.replace(/^(Further )?/, m => m)}</h1><p class="lead">${Q.blurb}</p></section>
-  <div class="grid units">${unitsOf(k).map(unitCard).join('')}</div>
+  <div class="grid units">${k === 'physics' ? PHYS.UNITS.map(physUnitCard).join('') : unitsOf(k).map(unitCard).join('')}</div>
   <h2 class="sech">How it's assessed</h2>
   <div class="card"><table class="tbl"><tr><th>Unit</th><th>Content</th><th>Exam</th><th>Weighting</th></tr>${Q.structure.map(([u, c, e, w]) => `<tr><td><b>${u}</b></td><td>${c}</td><td>${e}</td><td>${w}</td></tr>`).join('')}</table>
-  <p class="muted small">From the "Specification at a glance" table of the ${esc(Q.board)} specification. ${k === 'further' ? 'In each applied unit you answer the questions from two sections: A and B, A and C, A and D, or C and D.' : 'In each applied unit you answer every question in both sections (mechanics and statistics).'}</p></div>`);
+  <p class="muted small">From the "Specification at a glance" table of the ${esc(Q.board)} specification. ${k === 'further' ? 'In each applied unit you answer the questions from two sections: A and B, A and C, A and D, or C and D.' : k === 'physics' ? 'AS 3 and A2 3 assess practical techniques and data analysis. They have no unit of their own here: the virtual practicals in each section practise those skills.' : 'In each applied unit you answer every question in both sections (mechanics and statistics).'}</p></div>`);
 }
 
 /* ---------- COURSE HOME ---------- */
@@ -294,7 +342,9 @@ function viewSims() {
   const tile = k => { const S = SIMS[k]; return `<a class="card simtile" href="#/sim/${k}"><h3>${S.title}</h3><p>${S.desc}</p><small>${[...new Set((used[k] || []).map(p => `${COURSES[p.course].short} ${p.code}`))].join(' · ')}</small></a>`; };
   mount(`<nav class="crumbs"><a href="#/">Courses</a> / Simulations</nav>
   <header class="phead slim"><div><h1>Simulations</h1><p>Interactive models, each linked to the spec points it supports. For free-form exploration use the <a href="#/lab">Lab</a> (including Desmos).</p></div></header>
-  ${groups.map(([id, ks]) => ks.length ? `<h2 class="sech">${COURSES[id].name} · ${COURSES[id].unit}</h2><section class="grid sims">${ks.map(tile).join('')}</section>` : '').join('')}`);
+  ${groups.map(([id, ks]) => ks.length ? `<h2 class="sech">${COURSES[id].name} · ${COURSES[id].unit}</h2><section class="grid sims">${ks.map(tile).join('')}</section>` : '').join('')}
+  <h2 class="sech">Physics</h2><p class="muted">Every physics section is built around its own live labs. Open a unit to see them.</p>
+  <section class="grid sims">${PHYS.UNITS.map(u => { const t = PHYS.stats().by[u.id]; return `<a class="card simtile" href="#/physics/${u.id}"><h3>Physics ${u.no}</h3><p>${u.title}</p><small>${t.labs} live labs across ${t.sections} sections</small></a>`; }).join('')}</section>`);
 }
 function viewSim(k) {
   const S = SIMS[k]; if (!S) return viewSims();
@@ -439,6 +489,10 @@ function route() {
   let r = parts[0];
   if (LEGACY.includes(r)) { location.replace('#/fm/' + parts.join('/') + (query ? '?' + query : '')); return; }
   document.body.dataset.route = r || 'home';
+  const subj = COURSES[r] ? COURSES[r].qual : QUALS[r] ? r : '';
+  if (subj) document.documentElement.dataset.subject = subj; else delete document.documentElement.dataset.subject;
+  if (r === 'physics' && parts.length > 1) { unmount(); DB.lastCourse = 'physics'; save(); const sub = parts.slice(1); renderPhysNav(sub); return PHYS.route(sub); }
+  PHYS.leave();
   if (COURSES[r]) {
     C = COURSES[r]; DB.lastCourse = r; save(); renderNav(true);
     const v = parts[1];
@@ -486,6 +540,6 @@ function toggleTheme() {
 }
 
 window.toggleCalc = setupCalcDrawer();
-function boot() { if (!location.hash || location.hash === '#' || location.hash === '#/') { const s = PREFS.start === 'last' ? DB.lastCourse : PREFS.start; if (s && COURSES[s]) { location.replace('#/' + s); return; } } route(); }
+function boot() { if (!location.hash || location.hash === '#' || location.hash === '#/') { const s = PREFS.start === 'last' ? DB.lastCourse : PREFS.start; if (s && COURSES[s]) { location.replace('#/' + s); return; } if (s === 'physics') { location.replace('#/physics/' + PHYS.lastUnit().id); return; } } route(); }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 window.addEventListener('load', () => renderMath(app()));

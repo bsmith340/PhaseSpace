@@ -15,13 +15,14 @@ const THEME_KEY = 'bcsfm-v1-theme';
 const getTheme = () => { try { return localStorage.getItem(THEME_KEY) || ''; } catch { return ''; } };
 
 /* ---------- progress payloads ---------- */
-const hasProgress = () => Object.keys(DB.stats).length + Object.keys(DB.read).length + DB.bank.length + DB.notes.length > 0;
+const hasProgress = () => Object.keys(DB.stats).length + Object.keys(DB.read).length + DB.bank.length + DB.notes.length > 0 || PHYS.hasData();
 function progressPayload() {
-  return { app: 'BcsMaths', v: 2, saved: new Date().toISOString(), db: DB, calc: typeof CALC_STATE !== 'undefined' ? CALC_STATE : {}, prefs: { ...PREFS, lastBackup: undefined }, theme: getTheme() };
+  return { app: 'BcsMaths', v: 2, saved: new Date().toISOString(), db: DB, calc: typeof CALC_STATE !== 'undefined' ? CALC_STATE : {}, prefs: { ...PREFS, lastBackup: undefined }, theme: getTheme(), physics: PHYS.exportData() };
 }
 function readPayload(obj) {
   if (obj && (obj.app === 'BcsMaths' || obj.app === 'BCSFM') && obj.db) return obj; // BCSFM = the site's earlier name
   if (obj && typeof obj === 'object' && obj.stats) return { app: 'BcsMaths', v: 1, db: obj }; // older backups were the raw DB
+  if (obj && obj.app === 'phase-space') return { app: 'BcsMaths', v: 2, saved: obj.at, physics: obj }; // an export from the stand-alone physics site
   throw new Error('not a BcsMaths progress file');
 }
 function mergeDB(cur, inc) {
@@ -38,7 +39,9 @@ function mergeDB(cur, inc) {
   return out;
 }
 function applyPayload(pl, mode) {
-  DB = mode === 'merge' ? mergeDB(DB, pl.db) : pl.db; normDB(); save();
+  if (pl.db) { DB = mode === 'merge' ? mergeDB(DB, pl.db) : pl.db; normDB(); save(); }
+  if (pl.physics) PHYS.importData(pl.physics, mode === 'merge');
+  if (!pl.db) return; // a physics-only file leaves the maths progress and preferences alone
   if (mode !== 'merge') {
     if (pl.calc && typeof CALC_STATE !== 'undefined') { Object.assign(CALC_STATE, pl.calc); saveCalc(); }
     if (pl.prefs) { const lb = PREFS.lastBackup; Object.assign(PREFS, pl.prefs, { lastBackup: lb }); savePrefs(); applyPrefs(); }
@@ -90,6 +93,7 @@ function viewSettings() {
     <h3>Load</h3>
     <div class="row">${opt('mode', 'merge', 'Merge with what is here (keeps the best of both)', 'merge')}${opt('mode', 'replace', 'Replace everything here', 'merge')}</div>
     <div class="row"><label class="btn">${ico('up')} Load progress file<input type="file" id="ul" accept=".json,application/json" hidden></label></div>
+    <p class="muted small">Physics progress is included. A progress file exported from the old stand-alone Phase Space physics site (its Settings → Export) loads here too.</p>
     <textarea id="codein" class="code-box" rows="3" placeholder="…or paste a progress code here"></textarea>
     <div class="row"><button class="btn" id="ldcode">Load code</button><span id="pmsg" class="muted small"></span></div>
     <h3>Keep it safe</h3>
@@ -103,7 +107,7 @@ function viewSettings() {
   </section>
 
   <section class="card setsec"><h2>Study</h2>
-    <div class="setrow"><b>When I open BcsMaths, go to</b><div class="row"><select id="startsel">${[['chooser', 'the course chooser'], ['last', 'the unit I used last'], ...COURSE_ORDER.map(id => [id, COURSES[id].name + ' ' + COURSES[id].unitNo])].map(([v, l]) => `<option value="${v}" ${PREFS.start === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+    <div class="setrow"><b>When I open BcsMaths, go to</b><div class="row"><select id="startsel">${[['chooser', 'the course chooser'], ['last', 'the unit I used last'], ...COURSE_ORDER.map(id => [id, COURSES[id].name + ' ' + COURSES[id].unitNo]), ['physics', 'Physics']].map(([v, l]) => `<option value="${v}" ${PREFS.start === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
     ${COURSE_ORDER.filter(id => COURSES[id].routes).map(id => { const c = COURSES[id], cur = (PREFS.routes || {})[id] || ''; return `<div class="setrow"><b>${c.short}: my sections</b><div class="row"><select data-route="${id}"><option value="">All sections</option>${c.routes.map(r => `<option value="${r}" ${cur === r ? 'selected' : ''}>${r.split('').map(x => x + ' ' + c.sections.find(s => s.id === x).title).join(' + ')}</option>`).join('')}</select></div></div>`; }).join('')}
     <div class="setrow"><b>Sprint length</b><div class="row">${[5, 10, 15, 20].map(n => opt('sprintN', n, `${n} questions`, PREFS.sprintN)).join('')}</div></div>
     <div class="setrow"><b>Drills and sprints include</b><div class="row">${opt('support', 'true', 'every spec chapter', PREFS.support)}${opt('support', 'false', `only chapters tagged "${STATUS.core[0]}" (skip "${STATUS.check[0]}")`, PREFS.support)}</div></div>
@@ -117,8 +121,10 @@ function viewSettings() {
       <p class="muted small">Desmos issues API keys to developers on request. Without one, the BcsMaths grapher is used and each preset has an "Open in Desmos" button that copies the expressions.</p></div>
   </section>
 
+  <section class="card setsec"><h2>Physics</h2><div id="physset"></div></section>
+
   <section class="card setsec danger"><h2>Reset</h2>
-    <div class="row">${COURSE_ORDER.map(id => `<button class="btn small" data-reset="${id}">Reset ${COURSES[id].short} progress</button>`).join('')}<button class="btn small bad" id="resetall">Erase everything on this device</button></div>
+    <div class="row">${COURSE_ORDER.map(id => `<button class="btn small" data-reset="${id}">Reset ${COURSES[id].short} progress</button>`).join('')}<button class="btn small" id="resetphys">Reset Physics progress</button><button class="btn small bad" id="resetall">Erase everything on this device</button></div>
     <p class="muted small">Download a progress file first if you might want it back.</p>
   </section>
   <p class="credit center">${CREDIT}</p>`);
@@ -143,5 +149,7 @@ function viewSettings() {
   $('#clrhist').onclick = () => { CALC_STATE.hist = []; saveCalc(); viewSettings(); };
   $('#dsave').onclick = () => { try { const k = $('#dkey').value.trim(); k ? localStorage.setItem(DESMOS_KEY_STORE, k) : localStorage.removeItem(DESMOS_KEY_STORE); } catch { } $('#dsave').textContent = 'Saved ✓'; };
   app().querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { const c = COURSES[b.dataset.reset]; if (!confirm(`Reset drill progress and reading for ${c.short}? (Past-paper questions and quotes are kept.)`)) return; [...c.points, ...c.archiveTopic.points].forEach(p => { delete DB.stats[p.id]; delete DB.read[p.id]; delete DB.conf[p.id]; }); DB.sprints = DB.sprints.filter(s => (s.c || 'fm') !== c.id); save(); viewSettings(); });
-  $('#resetall').onclick = () => { if (prompt('This erases ALL progress, questions and quotes on this device. Type ERASE to confirm.') !== 'ERASE') return; DB = {}; normDB(); save(); viewSettings(); };
+  $('#resetphys').onclick = () => { if (!confirm('Reset Physics scores, mock-test history and the spec checklist?')) return; PHYS.resetAll(); viewSettings(); };
+  $('#resetall').onclick = () => { if (prompt('This erases ALL progress, questions and quotes on this device. Type ERASE to confirm.') !== 'ERASE') return; DB = {}; normDB(); save(); PHYS.resetAll(); viewSettings(); };
+  PHYS.settingsInto($('#physset'));
 }

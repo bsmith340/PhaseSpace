@@ -1,4 +1,4 @@
-"""Build a single-file, Netlify-ready bundle of the BcsMaths site.
+"""Build a single-file, Netlify-ready bundle of the BcsMaths site (Maths, Further Maths and Physics).
 
 Output: dist/netlify/index.html (all CSS/JS inlined) and bcsmaths-netlify.zip
 with index.html at the zip root, ready for Netlify Drop.
@@ -11,9 +11,8 @@ OUT = ROOT / 'dist' / 'netlify'
 
 html = (SRC / 'index.html').read_text()
 
-# Inline the stylesheet
-css = (SRC / 'css' / 'app.css').read_text()
-html = html.replace('<link rel="stylesheet" href="css/app.css">', f'<style>\n{css}\n</style>')
+# Inline the local stylesheets (the design system, then the physics styles)
+html = re.sub(r'<link rel="stylesheet" href="(css/[^"]+)">', lambda m: f'<style>\n{(SRC / m.group(1)).read_text()}\n</style>', html)
 
 # KaTeX must be loaded before the app runs, so load it synchronously in <head>
 html = re.sub(r'<script defer (src="https://cdnjs[^"]+")></script>', r'<script \1></script>', html)
@@ -21,7 +20,11 @@ html = re.sub(r'<script defer (src="https://cdnjs[^"]+")></script>', r'<script \
 # Pull local scripts out of <head> and inline them at the end of <body>
 local = re.findall(r'\s*<script defer src="(js/[^"]+)"></script>', html)
 html = re.sub(r'\s*<script defer src="js/[^"]+"></script>', '', html)
-bundle = '\n'.join(f'<script>\n{(SRC / p).read_text()}\n</script>' for p in local)
+def js(p):
+    code = (SRC / p).read_text()
+    assert '</script' not in code.lower(), f'{p} contains </script and would end its inline block early'
+    return f'<script>\n{code}\n</script>'
+bundle = '\n'.join(js(p) for p in local)
 html = html.replace('</body>', bundle + '\n</body>')
 
 OUT.mkdir(parents=True, exist_ok=True)

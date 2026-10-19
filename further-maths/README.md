@@ -1,13 +1,14 @@
-# BcsMaths · CCEA Maths & Further Maths
+# BcsMaths · CCEA Maths, Further Maths & Physics
 
-A complete self-study course for **CCEA GCE Mathematics** and **CCEA GCE Further Mathematics** (2018 specifications). It covers all eight units, including every section of the applied units. It is a static site: no build step and no server. Created by Ben Smith.
+A complete self-study course for **CCEA GCE Mathematics**, **CCEA GCE Further Mathematics** (2018 specifications) and **CCEA GCE Physics** (2016 specification). It covers all twelve written units, including every section of the applied units. It is a static site: no build step and no server. Created by Ben Smith.
 
 | Qualification | AS 1 | AS 2 | A2 1 | A2 2 |
 |---|---|---|---|---|
 | Mathematics | Pure | Mechanics + Statistics | Pure | Mechanics + Statistics |
 | Further Mathematics | Pure | Mechanics 1, Mechanics 2, Statistics, Discrete & Decision | Pure | Mechanics 1, Mechanics 2, Statistics, Discrete & Decision |
+| Physics | Forces, Energy and Electricity | Waves, Photons and Astronomy | Deformation of Solids, Thermal Physics, Circular Motion, Oscillations and Atomic and Nuclear Physics | Fields, Capacitors and Particle Physics |
 
-The home page (`#/`) lists both qualifications. `#/maths` and `#/further` show each one's unit structure, exam lengths and weightings.
+The home page (`#/`) has one card per subject, each in its own colour: Mathematics blue, Further Mathematics purple, Physics orange. The colour follows you through that subject's pages (buttons, links, sims, the logo). `#/maths`, `#/further` and `#/physics` show each subject's unit structure, exam lengths and weightings.
 
 On the two Further Maths applied units you answer two of the four sections in the exam: A+B, A+C, A+D or C+D. Pick your pair on the unit's home page, and the drills, sprints and home page then focus on those sections.
 
@@ -34,6 +35,20 @@ On the two Further Maths applied units you answer two of the four sections in th
   - your own bank of real past-paper questions.
 
 BcsMaths never invents CCEA questions or examiner comments. Every exam-style question is labelled "BcsMaths original · not a CCEA past paper".
+
+## Physics
+
+Physics (`#/physics/…`) is built around live labs rather than textbook chapters. It is the Phase Space physics engine, restyled to match and running inside BcsMaths:
+
+- **36 sections, 87 labs, 159 spec outcomes** across AS 1, AS 2, A2 1 and A2 2. AS 3 and A2 3 (the practical units) have no unit of their own; the virtual practicals in each section practise those skills.
+- **Section pages** (`#/physics/<section>/<lab>`): an interactive simulation with its controls, readouts, embedded exam drills, equations, exam traps and the section's spec outcomes.
+- **Revision notes** for every section (`#/physics/<section>/notes`) with a printable layout.
+- **Unit pages** (`#/physics/as1` …): section cards with animated thumbnails, progress, and weak areas.
+- **Spec checklist** (`#/physics/<unit>/spec`) and **equations** (`#/physics/<unit>/equations`) for each unit.
+- **Practice** (`#/physics/practice`): timed mock tests and endless drills drawn from every lab's question generators, with difficulty levels and a weak-area tracker.
+- **Tutor** (`#/physics/tutor`, plus a floating chat button on physics pages): searches every section's notes offline. Optionally it can call Claude with your own Anthropic API key (set in Settings → Physics; billed to that key and stored only in your browser).
+
+Physics progress is part of the BcsMaths progress file. Settings also loads a progress file exported from the old stand-alone Phase Space site.
 
 ## Shared tools
 
@@ -93,6 +108,7 @@ Open `further-maths/index.html`, or run `cd further-maths && python3 -m http.ser
 
 | Files | Contents |
 |---|---|
+| `js/physics.js`, `css/physics.css` | Physics: the lab engine (every section's simulations, notes, drills, practice, tutor) in one scope, exposed to the shell as `PHYS` |
 | `js/content-*.js` | spec points: notes and drill generators. `m1`–`m4` are Maths AS 1–A2 2; `f1`, `f2a/b`, `f4a/b` are FM AS 1, AS 2 and A2 2; `content-1/2/3`, `content-fm2` are FM A2 1 |
 | `js/spec*.js` | course registry (`defineCourse`), the spec structure with quoted outcomes, sections and routes, sources, formula books |
 | `js/book-*.js` | textbook chapters, with the same unit naming |
