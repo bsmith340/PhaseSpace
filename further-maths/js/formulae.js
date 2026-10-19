@@ -110,4 +110,5 @@ const BOOKLET = {
     'Fundamental', 'Double', 'arsinh', 'arcosh', 'artanh', 'Derivatives', 'Inverse derivatives', 'Parts', 'arctan form', 'arcsin form', 'arsinh form', 'arcosh form', 'artanh form', 'Inverse trig derivatives', 'Compound angles']),
   m1: new Set(['Binomial theorem', 'Combinations', 'Cosine rule', 'aˣ via e']),
   m2: new Set(['Addition law', 'Binomial probability', 'PMCC', 'Sxx, Syy, Sxy']),
+  m3: new Set(['Arithmetic series', 'Geometric series', 'Sum to infinity', 'Binomial series', 'Compound angles', 'tan kx', 'Reciprocal trig derivatives', 'Quotient rule', 'Integration by parts', 'Trapezium rule', 'Newton–Raphson']),
 };

@@ -464,7 +464,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); width: 17
 .mark { position: absolute; right: 13px; top: 34px; font-weight: 700; }
 .mc { display: grid; gap: 10px; }
 .opt { text-align: left; font: inherit; padding: 13px 16px; border-radius: var(--r-md); border: 0; background: var(--ctl); color: var(--text); cursor: pointer; display: flex; gap: 12px; align-items: center; transition: background .2s var(--ease), box-shadow .2s; }
-.opt > span { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--panel); font-weight: 700; font-size: .8rem; color: var(--accent); }
+.opt > .olet { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--panel); font-weight: 700; font-size: .8rem; color: var(--accent); }
+.opt > .otx { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .opt:hover { background: var(--ctl2); }
 .opt.right { background: color-mix(in srgb, var(--c4) 16%, transparent); box-shadow: inset 0 0 0 1.5px var(--c4); }
 .opt.wrong { background: color-mix(in srgb, var(--c2) 12%, transparent); box-shadow: inset 0 0 0 1.5px var(--c2); }

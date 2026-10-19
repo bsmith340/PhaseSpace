@@ -121,7 +121,7 @@ defineCourse({
         ['V5', 'calculate the distance between two points represented by position vectors.']],
       points: [['m_vec', 'core', 'Vectors in two dimensions', '', ['V1', 'V2', 'V3', 'V4', 'V5']]] },
   ],
-  archive: ['m_rad', 'm_model'],
+  archive: ['m_model'],
 });
 
 const FORMULAE_M1 = [

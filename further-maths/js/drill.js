@@ -27,7 +27,7 @@ function drillPanel(el, { pool, sprint = 0, onDone }) {
   }
   function render() {
     const p = PT[cur.pid], t = TP[p.topic];
-    const fieldsHtml = cur.mc ? `<div class="mc">${cur.mc.options.map((o, i) => `<button class="opt" data-i="${i}"><span>${String.fromCharCode(65 + i)}</span> ${o}</button>`).join('')}</div>`
+    const fieldsHtml = cur.mc ? `<div class="mc">${cur.mc.options.map((o, i) => `<button class="opt" data-i="${i}"><span class="olet">${String.fromCharCode(65 + i)}</span><span class="otx">${o}</span></button>`).join('')}</div>`
       : `<div class="fields">${cur.fields.map((f, i) => `<label class="field"><span class="flab">${esc(f.label)}${f.set ? ' <em>(list, any order)</em>' : f.vec ? ` <em>(${f.vec.length} numbers${f.prop ? ', any multiple' : ''})</em>` : ''}</span>
           <input data-i="${i}" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" placeholder="${f.set ? 'e.g. 2, -3' : f.vec ? 'e.g. 1, -2, 3' : 'e.g. 3/4, sqrt(2), pi/3, ln(2)'}"><span class="prev" data-p="${i}"></span><span class="mark" data-m="${i}"></span></label>`).join('')}</div>`;
     box.innerHTML = `

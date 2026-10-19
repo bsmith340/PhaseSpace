@@ -1,0 +1,165 @@
+// BcsMaths textbook — Maths A2 1, part 3: Integration; Numerical methods.
+'use strict';
+
+BOOK.m3_istd = [
+  B.why(T`<p>Integration reverses differentiation. Every derivative you learned for $e^{kx}$, $\ln x$ and the trig functions gives an integral for free — plus one genuinely new result: the integral of $\frac1x$ is a logarithm.</p>`),
+  B.thm('Standard integrals', T`$$\int e^{kx}dx=\frac1ke^{kx}+c\qquad\int\frac1xdx=\ln|x|+c\qquad\int\sin kx\,dx=-\frac1k\cos kx+c$$$$\int\cos kx\,dx=\frac1k\sin kx+c\qquad\int\sec^2kx\,dx=\frac1k\tan kx+c$$`),
+  B.proof(T`<p>Differentiate each right-hand side: e.g. $\frac d{dx}\left(-\frac1k\cos kx\right)=-\frac1k(-k\sin kx)=\sin kx$ ✓. For $\frac1x$: when $x\gt0$, $\frac d{dx}\ln x=\frac1x$; when $x\lt0$, $\frac d{dx}\ln(-x)=\frac{-1}{-x}=\frac1x$ — hence $\ln|x|$.</p>`, 'Check by differentiating'),
+  B.thm('Linear substitutions and f′/f', T`$$\int f(ax+b)\,dx=\frac1aF(ax+b)+c\qquad\qquad\int\frac{f'(x)}{f(x)}dx=\ln|f(x)|+c$$`),
+  B.ex(1, T`Find $\displaystyle\int\left(4e^{2x}+\frac3x-\sin\frac x2\right)dx$.`, [T`$2e^{2x}+3\ln|x|+2\cos\frac x2+c$.`]),
+  B.ex(2, T`Evaluate $\displaystyle\int_0^2\frac{1}{3x+2}dx$.`, [T`$\left[\frac13\ln|3x+2|\right]_0^2=\frac13(\ln8-\ln2)=\frac13\ln4$.`]),
+  B.ex(3, T`Find $\displaystyle\int\tan x\,dx$.`, [T`$\tan x=\frac{\sin x}{\cos x}$; the top is $-$(derivative of the bottom).`, T`$-\ln|\cos x|+c=\ln|\sec x|+c$.`]),
+  B.ex(4, T`Evaluate $\displaystyle\int_0^{\pi/8}\sec^2 2x\,dx$.`, [T`$\int\sec^22x\,dx=\frac12\tan2x$.`, T`$\left[\frac12\tan2x\right]_0^{\pi/8}=\frac12\tan\frac\pi4-0=\frac12$.`], T`Check the integrand is continuous on the interval: $\sec^22x$ has an asymptote at $x=\frac\pi4$, so an upper limit of $\frac\pi4$ would not be allowed.`),
+  B.warn([T`Multiplying by $k$ instead of dividing: $\int e^{3x}dx=\frac13e^{3x}$.`, T`Sign of $\int\sin kx\,dx$.`, T`Integrating $\frac1x$ across $x=0$.`]),
+  B.exam([T`Differentiate your answer to check it.`, T`Exact answers: leave $\ln$, $e$ and $\pi$ in.`]),
+  B.checks([[T`$\int e^{-x}dx$?`, T`$-e^{-x}+c$.`], [T`$\int\frac{2x}{x^2+1}dx$?`, T`$\ln(x^2+1)+c$.`], [T`$\int_0^\pi\sin x\,dx$?`, T`$2$.`]]),
+  B.examq(6, T`<p>(a) Find $\displaystyle\int\left(e^{3x}+\frac{4}{2x-1}\right)dx$. <span class="mk">[3]</span> (b) Show that $\displaystyle\int_0^{\pi/6}\cos3x\,dx=\frac13$. <span class="mk">[3]</span></p>`,
+    T`<p>(a) $\frac13e^{3x}+2\ln|2x-1|+c$ <span class="mk">B1 M1 A1</span>. (b) $\left[\frac13\sin3x\right]_0^{\pi/6}=\frac13\sin\frac\pi2-0=\frac13$ <span class="mk">M1 A1 A1</span>.</p>`),
+  B.key([T`Reverse each standard derivative; divide by $k$.`, T`$\int\frac1x=\ln|x|$; $\int\frac{f'}{f}=\ln|f|$.`]),
+].join('');
+
+BOOK.m3_area2 = [
+  B.why(T`<p>Integration finds areas because an area is the limit of a sum of thin strips. The same idea gives the area <i>between</i> two curves: take (top − bottom) for every strip.</p>`),
+  B.thm('Integration as the limit of a sum', T`$$\int_a^bf(x)\,dx=\lim_{\delta x\to0}\sum_{x=a}^{b}f(x)\,\delta x$$<p>Split $[a,b]$ into strips of width $\delta x$; each strip has area about $f(x)\,\delta x$. As $\delta x\to0$ the total tends to the exact area (for $f\ge0$).</p>`),
+  B.thm('Area between two curves', T`$$A=\int_a^b\big(f(x)-g(x)\big)\,dx\qquad\text{where }f(x)\ge g(x)\text{ on }[a,b].$$<p>This works even if the curves are below the $x$-axis, since only the difference matters.</p>`),
+  B.proof(T`<p>Each strip between the curves has height $f(x)-g(x)$ and width $\delta x$. Summing and taking the limit gives the integral.</p>`),
+  FIG.plot({ x: [-0.5, 4.5], y: [-1, 9], xt: [1, 2, 3, 4], yt: [2, 4, 6, 8], lines: [{ pts: Array.from({ length: 41 }, (_, i) => [i * 0.1, i * 0.1 * 2 + 0]).map(([x, y]) => [x, y]), cls: 'fc2' }, { pts: Array.from({ length: 41 }, (_, i) => [i * 0.1, (i * 0.1) ** 2 - 2 * i * 0.1 + 0]).map(([x, y]) => [x, y + 0]), cls: 'fc1' }], labels: [[3.5, 7.5, 'y = 2x'], [3.6, 1.4, 'y = x² − 2x']] }, 'The region between y = 2x and y = x² − 2x from x = 0 to x = 4.'),
+  B.ex(1, T`Find the area enclosed by $y=2x$ and $y=x^2-2x$.`, [T`Intersect: $x^2-2x=2x\Rightarrow x=0,4$.`, T`$A=\displaystyle\int_0^4\big(2x-(x^2-2x)\big)dx=\int_0^4(4x-x^2)dx=\left[2x^2-\tfrac13x^3\right]_0^4=32-\tfrac{64}3=\tfrac{32}3$.`]),
+  B.ex(2, T`Find the area between $y=\sin x$ and $y=\cos x$ from $x=\frac\pi4$ to $x=\frac{5\pi}4$.`, [T`On this interval $\sin x\ge\cos x$.`, T`$\displaystyle\int(\sin x-\cos x)dx=\big[-\cos x-\sin x\big]_{\pi/4}^{5\pi/4}=(\tfrac{\sqrt2}2+\tfrac{\sqrt2}2)-(-\tfrac{\sqrt2}2-\tfrac{\sqrt2}2)=2\sqrt2$.`]),
+  B.ex(3, T`Find the area enclosed by $y=x^3$ and $y=x$.`, [T`Intersections at $x=-1,0,1$; the curves swap over at $0$.`, T`$\displaystyle\int_{-1}^0(x^3-x)dx+\int_0^1(x-x^3)dx=\tfrac14+\tfrac14=\tfrac12$.`], T`If the curves cross inside the region, split the integral there.`),
+  B.warn([T`Subtracting the wrong way round (giving a negative "area").`, T`Missing a crossing point and getting cancellation.`]),
+  B.exam([T`Sketch first; mark the region and the intersection points.`, T`Show the limits come from solving $f(x)=g(x)$.`]),
+  B.checks([[T`Area between $y=x^2$ and $y=4$?`, T`$\int_{-2}^2(4-x^2)dx=\frac{32}3$.`], [T`$\lim\sum_{x=0}^{1}x^2\delta x$?`, T`$\frac13$.`], [T`Does $\int_a^b(f-g)$ need both curves above the axis?`, T`No.`]]),
+  B.examq(7, T`<p>The curves $y=x^2-4x+5$ and $y=x+1$ meet at $A$ and $B$.</p><p>(a) Find the $x$-coordinates of $A$ and $B$. <span class="mk">[2]</span> (b) Find the exact area of the region enclosed by the curves. <span class="mk">[5]</span></p>`,
+    T`<p>(a) $x^2-5x+4=0\Rightarrow x=1,4$ <span class="mk">M1 A1</span>. (b) $\int_1^4\big((x+1)-(x^2-4x+5)\big)dx=\int_1^4(-x^2+5x-4)dx$ <span class="mk">M1 A1</span> $=\left[-\frac{x^3}3+\frac{5x^2}2-4x\right]_1^4=\frac83-\left(-\frac{11}6\right)=\frac92$ <span class="mk">M1 A1 A1</span>.</p>`),
+  B.key([T`Area = $\int$(top − bottom).`, T`Integral = limit of a sum of strips.`, T`Split where curves cross.`]),
+].join('');
+
+BOOK.m3_subs = [
+  B.why(T`<p>The chain rule differentiates a function of a function. Running it backwards is <b>substitution</b>: spot an "inner function" whose derivative is also present, rename it $u$, and the integral becomes simple.</p>`),
+  B.thm('Integration by substitution', T`$$\int f(g(x))\,g'(x)\,dx=\int f(u)\,du\qquad(u=g(x),\ du=g'(x)\,dx)$$<p>For definite integrals, change the limits to $u$-values — then there's no need to substitute back.</p>`),
+  B.proof(T`<p>If $F'=f$, the chain rule gives $\frac d{dx}F(g(x))=f(g(x))g'(x)$. So $\int f(g(x))g'(x)dx=F(g(x))+c=F(u)+c=\int f(u)du$.</p>`, 'Why it works'),
+  B.ex(1, T`Find $\displaystyle\int x(x^2+3)^4dx$.`, [T`$u=x^2+3$, $du=2x\,dx$, so $x\,dx=\frac12du$.`, T`$\frac12\int u^4du=\frac1{10}u^5+c=\frac1{10}(x^2+3)^5+c$.`]),
+  B.ex(2, T`Evaluate $\displaystyle\int_0^3x\sqrt{x+1}\,dx$ using $u=x+1$.`, [T`$x=u-1$, $dx=du$; $x=0\to u=1$, $x=3\to u=4$.`, T`$\displaystyle\int_1^4(u-1)u^{1/2}du=\left[\tfrac25u^{5/2}-\tfrac23u^{3/2}\right]_1^4=\left(\tfrac{64}5-\tfrac{16}3\right)-\left(\tfrac25-\tfrac23\right)=\tfrac{116}{15}$.`]),
+  B.ex(3, T`Find $\displaystyle\int\sin x\cos^3x\,dx$.`, [T`$u=\cos x$, $du=-\sin x\,dx$.`, T`$-\int u^3du=-\frac14\cos^4x+c$.`]),
+  B.ex(4, T`Use $x=2\sin\theta$ to evaluate $\displaystyle\int_0^1\frac{1}{\sqrt{4-x^2}}dx$.`, [T`$dx=2\cos\theta\,d\theta$, $\sqrt{4-4\sin^2\theta}=2\cos\theta$; limits $\theta=0$ to $\frac\pi6$.`, T`$\displaystyle\int_0^{\pi/6}\frac{2\cos\theta}{2\cos\theta}d\theta=\frac\pi6$.`], T`Questions will usually tell you the substitution.`),
+  B.warn([T`Not converting $dx$.`, T`Forgetting to change the limits (or changing them and then substituting back as well).`, T`Leaving an $x$ in the $u$-integral.`]),
+  B.exam([T`Write the substitution, $du$ in terms of $dx$, and the new limits as three separate lines.`]),
+  B.checks([[T`$\int2x e^{x^2}dx$?`, T`$e^{x^2}+c$.`], [T`$\int\frac{\ln x}{x}dx$?`, T`$\frac12(\ln x)^2+c$ ($u=\ln x$).`], [T`New limits for $u=x^2+1$, $x$ from 0 to 2?`, T`$1$ to $5$.`]]),
+  B.examq(6, T`<p>Use the substitution $u=1+e^x$ to show that $\displaystyle\int_0^{\ln3}\frac{e^x}{(1+e^x)^2}dx=\frac14$.</p>`,
+    T`<p>$du=e^xdx$ <span class="mk">B1</span>; limits $u=2$ to $4$ <span class="mk">B1</span>; $\int_2^4u^{-2}du$ <span class="mk">M1</span> $=\left[-\frac1u\right]_2^4=-\frac14+\frac12=\frac14$ <span class="mk">M1 A1 A1</span>.</p>`),
+  B.key([T`Reverse chain rule: choose $u$, convert $dx$ and limits.`, T`Common: $u$ = inside of a bracket/root, $\ln x$, $\cos x$.`]),
+].join('');
+
+BOOK.m3_parts = [
+  B.why(T`<p>There's no product rule for integration — but rearranging the product rule gives a way to turn a hard integral of a product into an easier one. That's <b>integration by parts</b>.</p>`),
+  B.thm('Integration by parts', T`$$\int u\frac{dv}{dx}\,dx=uv-\int v\frac{du}{dx}\,dx$$`),
+  B.proof(T`<p>The product rule: $\frac d{dx}(uv)=u\frac{dv}{dx}+v\frac{du}{dx}$. Integrate both sides: $uv=\int u\frac{dv}{dx}dx+\int v\frac{du}{dx}dx$. Rearrange.</p>`),
+  T`<h3>Choosing $u$</h3><p>Pick $u$ to be the factor that gets <b>simpler</b> when differentiated — usually a power of $x$. The exception: if $\ln x$ is present, let $u=\ln x$ (you can differentiate it but not easily integrate it). A memory aid: <b>L</b>ogs, <b>A</b>lgebraic (powers), <b>T</b>rig, <b>E</b>xponential — choose $u$ from earliest in "LATE".</p>`,
+  B.ex(1, T`Find $\displaystyle\int xe^{3x}dx$.`, [T`$u=x$, $\frac{dv}{dx}=e^{3x}$: $u'=1$, $v=\frac13e^{3x}$.`, T`$\frac13xe^{3x}-\int\frac13e^{3x}dx=\frac13xe^{3x}-\frac19e^{3x}+c$.`]),
+  B.ex(2, T`Evaluate $\displaystyle\int_0^{\pi/2}x\sin x\,dx$.`, [T`$u=x$, $v=-\cos x$.`, T`$\big[-x\cos x\big]_0^{\pi/2}+\int_0^{\pi/2}\cos x\,dx=0+\big[\sin x\big]_0^{\pi/2}=1$.`]),
+  B.ex(3, T`Find $\displaystyle\int x^2\ln x\,dx$.`, [T`$u=\ln x$, $\frac{dv}{dx}=x^2$: $u'=\frac1x$, $v=\frac{x^3}3$.`, T`$\frac{x^3}3\ln x-\int\frac{x^2}3dx=\frac{x^3}3\ln x-\frac{x^3}9+c$.`]),
+  B.ex(4, T`Find $\displaystyle\int x^2e^xdx$.`, [T`Parts twice. First $u=x^2$: $x^2e^x-\int2xe^xdx$.`, T`Then $\int2xe^xdx=2xe^x-2e^x$.`, T`Answer $e^x(x^2-2x+2)+c$.`]),
+  B.warn([T`Choosing $u=e^x$ in $\int xe^xdx$ — the new integral gets harder.`, T`Sign errors in the second application.`, T`Forgetting to apply the limits to the $uv$ term.`]),
+  B.exam([T`Write $u$, $\frac{dv}{dx}$, $\frac{du}{dx}$, $v$ in a little table before substituting.`, T`Differentiate your answer to check.`]),
+  B.checks([[T`$\int\ln x\,dx$?`, T`$x\ln x-x+c$.`], [T`$u$ for $\int x\cos2x\,dx$?`, T`$u=x$.`], [T`$\int_0^1xe^xdx$?`, T`$1$.`]]),
+  B.examq(7, T`<p>(a) Find $\displaystyle\int x\cos2x\,dx$. <span class="mk">[4]</span> (b) Hence find the exact value of $\displaystyle\int_0^{\pi/4}x\cos2x\,dx$. <span class="mk">[3]</span></p>`,
+    T`<p>(a) $u=x$, $v=\frac12\sin2x$ <span class="mk">M1</span>: $\frac x2\sin2x-\int\frac12\sin2x\,dx=\frac x2\sin2x+\frac14\cos2x+c$ <span class="mk">A1 M1 A1</span>.</p><p>(b) $\left(\frac\pi8\cdot1+0\right)-\left(0+\frac14\right)=\frac\pi8-\frac14$ <span class="mk">M1 A1 A1</span>.</p>`),
+  B.key([T`$\int uv'=uv-\int vu'$ (from the product rule).`, T`$u$ = what simplifies when differentiated (but $u=\ln x$ when present).`]),
+].join('');
+
+BOOK.m3_ipf = [
+  B.why(T`<p>Integrating $\frac{1}{x^2-1}$ directly is hard; integrating $\frac{1}{2(x-1)}-\frac1{2(x+1)}$ is easy. Partial fractions turn rational functions into sums of terms you can integrate with logarithms.</p>`),
+  B.thm('Integrals of the pieces', T`$$\int\frac{A}{ax+b}dx=\frac Aa\ln|ax+b|+c\qquad\int\frac{B}{(x-a)^2}dx=-\frac{B}{x-a}+c$$`),
+  B.ex(1, T`Find $\displaystyle\int\frac{5x+1}{(x-1)(x+2)}dx$.`, [T`Partial fractions: $\frac{2}{x-1}+\frac3{x+2}$.`, T`$2\ln|x-1|+3\ln|x+2|+c=\ln\big|(x-1)^2(x+2)^3\big|+c$.`]),
+  B.ex(2, T`Evaluate $\displaystyle\int_3^5\frac{4}{x^2-4}dx$ exactly.`, [T`$\frac{4}{(x-2)(x+2)}=\frac{1}{x-2}-\frac1{x+2}$.`, T`$\big[\ln|x-2|-\ln|x+2|\big]_3^5=(\ln3-\ln7)-(\ln1-\ln5)=\ln\frac{15}7$.`]),
+  B.ex(3, T`Evaluate $\displaystyle\int_1^2\frac{x+3}{x(x+1)^2}dx$.`, [T`$\frac{x+3}{x(x+1)^2}=\frac3x-\frac3{x+1}-\frac{2}{(x+1)^2}$ (check $x=1$: $\frac44=1$; $3-\frac32-\frac12=1$ ✓).`, T`$\left[3\ln x-3\ln(x+1)+\frac2{x+1}\right]_1^2=\left(3\ln2-3\ln3+\frac23\right)-\left(-3\ln2+1\right)=6\ln2-3\ln3-\frac13$.`]),
+  B.ex(4, T`Find $\displaystyle\int\frac{x^2}{x^2-1}dx$.`, [T`Improper: $\frac{x^2}{x^2-1}=1+\frac1{x^2-1}=1+\frac12\left(\frac1{x-1}-\frac1{x+1}\right)$.`, T`$x+\frac12\ln\left|\frac{x-1}{x+1}\right|+c$.`]),
+  B.warn([T`Integrating $\frac{1}{(x-a)^2}$ as a logarithm.`, T`Forgetting the $\frac1a$ for $\int\frac{1}{ax+b}$.`, T`Dropping the modulus inside logs.`]),
+  B.exam([T`Combine logs into a single log for an exact final answer.`, T`Check the partial fractions with one value before integrating.`]),
+  B.checks([[T`$\int\frac{1}{x(x+1)}dx$?`, T`$\ln\left|\frac{x}{x+1}\right|+c$.`], [T`$\int\frac{3}{2x+1}dx$?`, T`$\frac32\ln|2x+1|+c$.`], [T`$\int_2^3\frac{1}{(x-1)^2}dx$?`, T`$\frac12$.`]]),
+  B.examq(8, T`<p>(a) Express $\dfrac{5x+4}{(x-1)(x+2)}$ in partial fractions. <span class="mk">[3]</span> (b) Hence show that $\displaystyle\int_2^4\frac{5x+4}{(x-1)(x+2)}dx=\ln\frac{243}{4}$. <span class="mk">[5]</span></p>`,
+    T`<p>(a) $5x+4\equiv A(x+2)+B(x-1)$: $x=1$: $9=3A\Rightarrow A=3$; $x=-2$: $-6=-3B\Rightarrow B=2$ <span class="mk">M1 A1 A1</span>. So $\dfrac3{x-1}+\dfrac2{x+2}$.</p><p>(b) $\big[3\ln|x-1|+2\ln|x+2|\big]_2^4$ <span class="mk">M1 A1</span> $=(3\ln3+2\ln6)-(3\ln1+2\ln4)$ <span class="mk">M1</span> $=\ln\dfrac{27\times36}{16}=\ln\dfrac{243}{4}$ <span class="mk">M1 A1</span>.</p>`),
+  B.key([T`Partial fractions → logs (and $-\frac{B}{x-a}$ for squared factors).`, T`Combine logs at the end.`]),
+].join('');
+
+BOOK.m3_sde = [
+  B.why(T`<p>A differential equation tells you how something changes; solving it tells you what it actually is. When the variables can be separated — all the $y$ on one side, all the $x$ on the other — integrating both sides solves it.</p>`),
+  B.thm('Separation of variables', T`$$\frac{dy}{dx}=f(x)\,g(y)\ \Rightarrow\ \int\frac{1}{g(y)}\,dy=\int f(x)\,dx$$<p>Add one arbitrary constant. A condition such as $y=2$ when $x=0$ fixes it, giving a <b>particular solution</b>; without it you have the <b>general solution</b>.</p>`),
+  B.ex(1, T`Solve $\dfrac{dy}{dx}=\dfrac{2x}{y}$, given $y=3$ when $x=0$.`, [T`$\int y\,dy=\int2x\,dx\Rightarrow\frac12y^2=x^2+c$.`, T`$x=0$, $y=3$: $c=\frac92$. So $y^2=2x^2+9$, $y=\sqrt{2x^2+9}$ (positive root since $y=3\gt0$).`]),
+  B.ex(2, T`Solve $\dfrac{dP}{dt}=0.04P$, $P=500$ at $t=0$. When does $P$ double?`, [T`$\int\frac{dP}P=\int0.04\,dt\Rightarrow\ln P=0.04t+c\Rightarrow P=Ae^{0.04t}$, $A=500$.`, T`$1000=500e^{0.04t}\Rightarrow t=25\ln2=17.3$.`]),
+  B.ex(3, T`Solve $\dfrac{dy}{dx}=y^2\cos x$ with $y=1$ when $x=0$.`, [T`$\int y^{-2}dy=\int\cos x\,dx\Rightarrow-\frac1y=\sin x+c$; $c=-1$.`, T`$y=\dfrac{1}{1-\sin x}$ (valid while $\sin x\ne1$).`]),
+  B.ex(4, T`A tank drains so that $\frac{dh}{dt}=-0.2\sqrt h$ ($h$ m, $t$ min), with $h=4$ at $t=0$. When is it empty? Comment on the model.`, [T`$\int h^{-1/2}dh=-0.2\int dt\Rightarrow2\sqrt h=-0.2t+c$; $c=4$.`, T`$\sqrt h=2-0.1t$: empty when $t=20$ min.`, T`After $t=20$ the formula gives $\sqrt h\lt0$ — the model only applies for $0\le t\le20$.`]),
+  T`<h3>Interpreting solutions</h3><p>Ask: what happens as $t\to\infty$? Is the answer sensible (no negative masses, no populations that grow forever)? For which values of $t$ is the model valid? What did the model ignore?</p>`,
+  B.warn([T`Putting the constant on both sides.`, T`Writing $\ln y=kx+c\Rightarrow y=e^{kx}+e^c$ (it's $y=Ae^{kx}$).`, T`Dividing by $y$ without noting $y=0$ might also be a solution.`]),
+  B.exam([T`Show the separated integral explicitly.`, T`Find $c$ before rearranging if the algebra is messy.`]),
+  B.checks([[T`General solution of $\frac{dy}{dx}=3y$?`, T`$y=Ae^{3x}$.`], [T`$\frac{dy}{dx}=xy$?`, T`$y=Ae^{x^2/2}$.`], [T`Half-life if $\frac{dm}{dt}=-0.1m$?`, T`$10\ln2=6.93$.`]]),
+  B.examq(8, T`<p>The rate of decrease of the temperature $\theta$ of a liquid is proportional to $(\theta-15)$. Initially $\theta=95$, and after 10 minutes $\theta=55$.</p><p>(a) Show that $\theta=15+80e^{-kt}$ and find $k$ exactly. <span class="mk">[6]</span> (b) Find the temperature after 30 minutes. <span class="mk">[1]</span> (c) State one limitation of the model. <span class="mk">[1]</span></p>`,
+    T`<p>(a) $\frac{d\theta}{dt}=-k(\theta-15)\Rightarrow\int\frac{d\theta}{\theta-15}=-\int k\,dt$ <span class="mk">M1</span>; $\ln(\theta-15)=-kt+c$ <span class="mk">A1</span>; $\theta=15+Ae^{-kt}$, $A=80$ <span class="mk">M1 A1</span>. $55=15+80e^{-10k}\Rightarrow k=\frac{\ln2}{10}$ <span class="mk">M1 A1</span>.</p><p>(b) $15+80\cdot\frac18=25^\circ$ <span class="mk">B1</span>. (c) e.g. it assumes the surroundings stay at exactly $15^\circ$ <span class="mk">B1</span>.</p>`),
+  B.key([T`Separate, integrate both sides, one constant.`, T`$\frac{dy}{dx}=ky\Rightarrow y=Ae^{kx}$.`, T`Interpret and state validity.`]),
+].join('');
+
+BOOK.m3_vol = [
+  B.why(T`<p>Spin a curve around the $x$-axis and it sweeps out a solid — a vase, a nose cone, a wine glass. Slicing that solid into thin discs and adding them up is integration again.</p>`),
+  B.thm('Volume of revolution about the x-axis', T`$$V=\pi\int_a^by^2\,dx$$`),
+  B.proof(T`<p>At position $x$ the solid's cross-section is a circle of radius $y$, so a thin slice of thickness $\delta x$ is a disc of volume $\pi y^2\,\delta x$. The total volume is $\lim_{\delta x\to0}\sum\pi y^2\,\delta x=\pi\int_a^by^2\,dx$.</p>`),
+  B.ex(1, T`Show that rotating $y=\frac rhx$ ($0\le x\le h$) gives the volume of a cone, $\frac13\pi r^2h$.`, [T`$V=\pi\displaystyle\int_0^h\frac{r^2}{h^2}x^2dx=\pi\frac{r^2}{h^2}\cdot\frac{h^3}3=\frac13\pi r^2h$.`]),
+  B.ex(2, T`Find the volume when $y=\sqrt{x}\,e^x$ for $0\le x\le1$ is rotated about the $x$-axis.`, [T`$y^2=xe^{2x}$: $V=\pi\displaystyle\int_0^1xe^{2x}dx$.`, T`By parts: $\pi\left[\frac x2e^{2x}-\frac14e^{2x}\right]_0^1=\pi\left(\frac{e^2}4+\frac14\right)=\frac\pi4(e^2+1)$.`]),
+  B.ex(3, T`Rotate $y=\sec x$ for $0\le x\le\frac\pi4$ about the $x$-axis.`, [T`$V=\pi\displaystyle\int_0^{\pi/4}\sec^2x\,dx=\pi\big[\tan x\big]_0^{\pi/4}=\pi$.`]),
+  B.warn([T`Forgetting to square $y$ (or squaring after integrating).`, T`Forgetting the $\pi$.`, T`Rotating about the wrong axis.`]),
+  B.exam([T`Write $V=\pi\int y^2dx$ with the squared expression before integrating.`, T`Exact answers in terms of $\pi$.`]),
+  B.checks([[T`Volume from $y=x$, $0\le x\le3$?`, T`$9\pi$.`], [T`From $y=\sqrt x$, $0\le x\le4$?`, T`$8\pi$.`], [T`Why is the volume of a sphere $\frac43\pi r^3$? (Use $y=\sqrt{r^2-x^2}$.)`, T`$\pi\int_{-r}^r(r^2-x^2)dx=\frac43\pi r^3$.`]]),
+  B.examq(6, T`<p>The region bounded by $y=e^{x/2}+1$, the axes and $x=2$ is rotated through $2\pi$ about the $x$-axis. Find the exact volume.</p>`,
+    T`<p>$y^2=e^x+2e^{x/2}+1$ <span class="mk">M1 A1</span>. $V=\pi\int_0^2(e^x+2e^{x/2}+1)dx=\pi\left[e^x+4e^{x/2}+x\right]_0^2$ <span class="mk">M1 A1</span> $=\pi\big((e^2+4e+2)-(1+4)\big)=\pi(e^2+4e-3)$ <span class="mk">M1 A1</span>.</p>`),
+  B.key([T`$V=\pi\int_a^by^2dx$ — discs of radius $y$.`, T`Square first, integrate, multiply by $\pi$.`]),
+].join('');
+
+BOOK.m3_root = [
+  B.why(T`<p>Most equations — $x^3+x-5=0$, $e^x=3x$ — have no algebraic solution. Numerical methods find roots to any accuracy you like. The first step is always to <b>locate</b> a root: find an interval in which one must lie.</p>`),
+  B.thm('Change of sign', T`<p>If $f$ is <b>continuous</b> on $[a,b]$ and $f(a)$ and $f(b)$ have opposite signs, then $f(x)=0$ has at least one root in $(a,b)$.</p>`),
+  B.proof(T`<p>A continuous graph can't jump from below the $x$-axis to above it without crossing it. (This is the intermediate value theorem; at A level you may quote it.)</p>`, 'Why'),
+  B.ex(1, T`Show that $x^3+x-5=0$ has a root between $1$ and $2$.`, [T`$f(1)=-3\lt0$, $f(2)=5\gt0$.`, T`Change of sign and $f$ continuous (a polynomial), so there is a root in $(1,2)$.`]),
+  B.ex(2, T`Show that the root of $x^3+x-5=0$ is $1.516$ to 3 d.p.`, [T`Check the bounds of the interval that rounds to $1.516$: $f(1.5155)=-0.00379$, $f(1.5165)=+0.00410$.`, T`Change of sign, $f$ continuous: the root is in $(1.5155,1.5165)$, so it is $1.516$ to 3 d.p.`]),
+  T`<h3>When it fails</h3><ul><li><b>Discontinuity</b>: $f(x)=\frac1{x-2}$ changes sign on $[1,3]$ but has no root — there's an asymptote.</li><li><b>Even number of roots</b> or a <b>repeated root</b> (touching the axis): no sign change even though roots exist, e.g. $(x-1.5)^2$ on $[1,2]$.</li><li><b>Interval too wide</b>: several roots may be hiding — use a sketch.</li></ul>`,
+  B.ex(3, T`Show that $e^x=3x$ has a root between $0$ and $1$.`, [T`Let $f(x)=e^x-3x$: $f(0)=1\gt0$, $f(1)=e-3=-0.28\lt0$.`, T`Continuous, sign change: a root in $(0,1)$.`], T`Rearrange to $f(x)=0$ first.`),
+  B.warn([T`Not mentioning continuity.`, T`Showing the values but not concluding.`, T`Using the interval $[1.51,1.52]$ to justify 3 d.p. — use the half-way bounds.`]),
+  B.exam([T`Give values to enough significant figures to show the sign clearly.`, T`Standard sentence: "Change of sign and $f$ is continuous, so a root lies in …".`]),
+  B.checks([[T`$f(2)=-1$, $f(3)=4$. Conclusion?`, T`A root in $(2,3)$ if $f$ is continuous.`], [T`Bounds to check for a root of $2.35$ (2 d.p.)?`, T`$2.345$ and $2.355$.`], [T`Why does $\tan x$ on $[1,2]$ change sign without a root?`, T`Asymptote at $\frac\pi2$ — not continuous.`]]),
+  B.examq(5, T`<p>$f(x)=\ln x+x-3$. (a) Show that $f(x)=0$ has a root $\alpha$ between $2$ and $3$. <span class="mk">[2]</span> (b) Show that $\alpha=2.21$ to 2 d.p. <span class="mk">[3]</span></p>`,
+    T`<p>(a) $f(2)=-0.307$, $f(3)=1.099$; sign change, continuous for $x\gt0$ <span class="mk">M1 A1</span>. (b) $f(2.205)=-0.00427$, $f(2.215)=+0.01025$ <span class="mk">M1 A1</span>; sign change so $2.205\lt\alpha\lt2.215$, $\alpha=2.21$ <span class="mk">A1</span>.</p>`),
+  B.key([T`Continuous + sign change ⇒ root.`, T`Accuracy: test the rounding bounds.`, T`Watch for asymptotes and repeated roots.`]),
+].join('');
+
+BOOK.m3_iter = [
+  B.why(T`<p>Once a root is located, iteration homes in on it: start with a guess, apply a rule, repeat. Fixed-point iteration is simple but may diverge; Newton–Raphson uses the tangent and usually converges very fast.</p>`),
+  B.thm('Fixed-point iteration', T`<p>Rearrange $f(x)=0$ into $x=g(x)$ and iterate $x_{n+1}=g(x_n)$. If the sequence converges, it converges to a root (where $x=g(x)$). Near the root $\alpha$: it converges if $|g'(\alpha)|\lt1$ — a <b>staircase</b> diagram when $0\lt g'\lt1$, a <b>cobweb</b> when $-1\lt g'\lt0$ — and diverges if $|g'(\alpha)|\gt1$.</p>`),
+  B.ex(1, T`Show that $x^3+x-5=0$ can be written as $x=\sqrt[3]{5-x}$, and iterate from $x_0=1.5$.`, [T`$x^3=5-x\Rightarrow x=\sqrt[3]{5-x}$.`, T`$x_1=1.5183$, $x_2=1.5156$, $x_3=1.5160$, $x_4=1.5160$.`, T`$g'(x)=-\frac13(5-x)^{-2/3}\approx-0.14$: a cobweb that converges quickly.`]),
+  B.thm('Newton–Raphson', T`$$x_{n+1}=x_n-\frac{f(x_n)}{f'(x_n)}$$`),
+  B.proof(T`<p>The tangent at $(x_n,f(x_n))$ is $y-f(x_n)=f'(x_n)(x-x_n)$. It meets the $x$-axis where $y=0$: $x=x_n-\frac{f(x_n)}{f'(x_n)}$. Near a root the tangent is a good approximation to the curve, so this is a better estimate.</p>`),
+  B.ex(2, T`Use Newton–Raphson with $x_0=2$ to find a root of $x^3-2x-5=0$ to 4 d.p.`, [T`$f'(x)=3x^2-2$.`, T`$x_1=2-\frac{-1}{10}=2.1$; $x_2=2.1-\frac{0.061}{11.23}=2.094568$; $x_3=2.094551$.`, T`Root $\approx2.0946$ (and check with a sign change).`]),
+  T`<h3>When Newton–Raphson struggles</h3><ul><li>$f'(x_n)$ is zero or very small: the tangent is (nearly) horizontal and shoots off.</li><li>A starting value far from the root may converge to a different root, or oscillate.</li></ul>`,
+  B.ex(3, T`Why does Newton–Raphson fail for $f(x)=x^3-3x+1$ with $x_0=1$?`, [T`$f'(1)=3-3=0$: the formula divides by zero — the tangent at $x=1$ is horizontal.`]),
+  B.tip(T`<p>Numerical methods give answers "to any required accuracy" — but always state the accuracy and check it with a sign change. An error of $10^{-6}$ is invisible on a graph but matters in engineering.</p>`),
+  B.warn([T`Rounding each iterate (use the calculator's Ans key and full accuracy).`, T`Claiming convergence from two equal values when more decimals are needed.`, T`Choosing a rearrangement with $|g'|\gt1$.`]),
+  B.exam([T`Write iterates to at least one more decimal place than the final answer.`, T`Explain divergence using $|g'(\alpha)|$ or a diagram.`]),
+  B.checks([[T`One N–R step for $x^2-2$ from $x_0=1$?`, T`$x_1=1.5$.`], [T`$g'(\alpha)=-0.5$: what does the iteration look like?`, T`A converging cobweb.`], [T`Root of $x=\cos x$ from $x_0=1$ (3 d.p.)?`, T`$0.739$.`]]),
+  B.examq(8, T`<p>$f(x)=2x^3-5x+1$. (a) Show that $f(x)=0$ has a root $\alpha$ in $[1,2]$. <span class="mk">[2]</span> (b) Use Newton–Raphson with $x_0=1.5$ to find $\alpha$ to 3 d.p. <span class="mk">[4]</span> (c) Explain why $x_0=\sqrt{5/6}$ would be a poor choice. <span class="mk">[2]</span></p>`,
+    T`<p>(a) $f(1)=-2$, $f(2)=7$; sign change, continuous <span class="mk">M1 A1</span>. (b) $f'(x)=6x^2-5$ <span class="mk">B1</span>; $x_1=1.5-\frac{0.25}{8.5}=1.47059$, $x_2=1.46962$, $x_3=1.46962$ <span class="mk">M1 A1</span>; $\alpha=1.470$ (3 d.p.) <span class="mk">A1</span>.</p><p>(c) $f'(\sqrt{5/6})=0$: the tangent is horizontal, so the method fails <span class="mk">B1 B1</span>.</p>`),
+  B.key([T`$x_{n+1}=g(x_n)$ converges if $|g'(\alpha)|\lt1$.`, T`N–R: $x_{n+1}=x_n-\frac{f(x_n)}{f'(x_n)}$ (tangent to the axis).`, T`Fails when $f'(x_n)\approx0$.`]),
+].join('');
+
+BOOK.m3_trap = [
+  B.why(T`<p>$\int_0^1e^{-x^2}dx$ can't be done with standard functions — yet it's central to statistics (the normal distribution). The trapezium rule estimates any definite integral by replacing the curve with straight-line segments.</p>`),
+  B.thm('Trapezium rule', T`$$\int_a^by\,dx\approx\frac h2\big\{(y_0+y_n)+2(y_1+y_2+\dots+y_{n-1})\big\},\qquad h=\frac{b-a}{n}$$`),
+  B.proof(T`<p>Split $[a,b]$ into $n$ strips of width $h$. The $i$th trapezium has parallel sides $y_{i-1}$ and $y_i$, so area $\frac h2(y_{i-1}+y_i)$. Adding all $n$: the end ordinates appear once and every interior ordinate twice.</p>`),
+  B.ex(1, T`Use the trapezium rule with 4 strips to estimate $\displaystyle\int_0^1e^{-x^2}dx$.`, [T`$h=0.25$; ordinates $1,\ 0.93941,\ 0.77880,\ 0.56978,\ 0.36788$.`, T`$\frac{0.25}2\{1+0.36788+2(0.93941+0.77880+0.56978)\}=0.7430$ (true value $0.7468$).`]),
+  B.thm('Over or under?', T`<ul><li>Curve <b>concave up</b> ($f''\gt0$, "convex"): the chords lie above the curve — the rule <b>overestimates</b>.</li><li>Curve <b>concave down</b> ($f''\lt0$): underestimate.</li></ul>`),
+  B.ex(2, T`Is the estimate in Example 1 an over- or underestimate?`, [T`$e^{-x^2}$ is concave down on $[0,0.707]$ and concave up after — mixed. Here the estimate $0.7430$ is below the true $0.7468$: an underestimate overall.`], T`When the concavity changes, compare with the exact value (or more strips) instead of guessing.`),
+  B.ex(3, T`The speed of a car, $v$ m s⁻¹, is recorded every 2 s: $0, 5, 9, 12, 14$. Estimate the distance travelled in 8 s.`, [T`Distance $=\int v\,dt\approx\frac22\{0+14+2(5+9+12)\}=66$ m.`], T`The rule works directly with data — no formula needed.`),
+  B.warn([T`$n$ strips means $n+1$ ordinates.`, T`Forgetting to double the interior ordinates.`, T`Using degrees in trig functions.`]),
+  B.exam([T`Tabulate the ordinates neatly.`, T`To improve the estimate, increase the number of strips.`]),
+  B.checks([[T`$h$ for $\int_1^3$ with 4 strips?`, T`$0.5$.`], [T`Over or under for $\int_0^2x^3dx$?`, T`Over ($x^3$ is concave up on $[0,2]$).`], [T`Ordinates for 3 strips?`, T`4.`]]),
+  B.examq(6, T`<p>(a) Use the trapezium rule with 5 ordinates to estimate $\displaystyle\int_1^3\ln x\,dx$. <span class="mk">[4]</span> (b) The exact value is $3\ln3-2$. Find the percentage error. <span class="mk">[2]</span></p>`,
+    T`<p>(a) $h=0.5$; $y$: $0,\ 0.40547,\ 0.69315,\ 0.91629,\ 1.09861$ <span class="mk">B1</span>; $\frac{0.5}2\{0+1.09861+2(2.01491)\}=1.2821$ <span class="mk">M1 A1 A1</span>.</p><p>(b) Exact $1.29584$; error $\frac{1.29584-1.2821}{1.29584}\times100=1.06\%$ (an underestimate: $\ln x$ is concave down) <span class="mk">M1 A1</span>.</p>`),
+  B.key([T`$\frac h2\{\text{ends}+2(\text{middles})\}$, $h=\frac{b-a}n$.`, T`Concave up → overestimate; concave down → underestimate.`]),
+].join('');
