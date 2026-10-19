@@ -119,7 +119,7 @@ defineCourse({
         ['D6', 'demonstrate understanding of and use the relationship between the cases when the discriminant of the auxiliary equation is positive, zero and negative and the form of the solution of the differential equation.']],
       points: [['de1', 'core', 'First order: the integrating factor', '', ['D1', 'D2']], ['de2', 'core', 'Second order homogeneous: auxiliary equation & discriminant cases', '', ['D4', 'D6']], ['de3', 'core', 'Particular integrals; general & particular solutions', '', ['D5', 'D2']], ['de4', 'core', 'Modelling with differential equations', '', ['D3']]] },
   ],
-  archive: ['pl3', 'sr2', 'mx1', 'mx2', 'mx3', 'mx4', 'vc1', 'vc2', 'vc3', 'cx4', 'ca4', 'sr3'],
+  archive: ['pl3', 'sr2', 'mx2', 'mx3', 'ca4', 'sr3'],
 });
 
 // Simulation assignments for spec points (keeps every sim on-spec)

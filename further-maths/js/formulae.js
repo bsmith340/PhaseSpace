@@ -112,4 +112,5 @@ const BOOKLET = {
   m2: new Set(['Addition law', 'Binomial probability', 'PMCC', 'Sxx, Syy, Sxy']),
   m3: new Set(['Arithmetic series', 'Geometric series', 'Sum to infinity', 'Binomial series', 'Compound angles', 'tan kx', 'Reciprocal trig derivatives', 'Quotient rule', 'Integration by parts', 'Trapezium rule', 'Newton–Raphson']),
   m4: new Set(['Multiplication law', "Bayes' theorem", 'Normal distribution', 'Distribution of the mean', 'Correlation test']), // normal + PMCC tables are printed too
+  f1: new Set(['Rotation', 'Reflection', 'Line', 'Plane', 'Vector product', 'Point to plane']), // booklet p. 9: vectors, lines, planes, matrix transformations
 };

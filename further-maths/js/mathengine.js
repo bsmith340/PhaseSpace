@@ -75,8 +75,8 @@ function lex(src, vars) {
   while (i < s.length) {
     const c = s[i];
     if (/\s/.test(c)) { i++; continue; }
-    const m = /^(\d+\.?\d*|\.\d+)/.exec(s.slice(i));
-    if (m) { out.push({ t: 'n', v: parseFloat(m[1]) }); i += m[1].length; continue; }
+    const m = /^(\d+\.?\d*|\.\d+)(E[+-]?\d+)?/.exec(s.slice(i)); // capital E = scientific notation (4.2E7); lower-case e is Euler's number
+    if (m) { out.push({ t: 'n', v: parseFloat(m[0]) }); i += m[0].length; continue; }
     if ('+-*/^(),!²³°√'.includes(c)) { out.push({ t: c }); i++; continue; }
     const low = s.slice(i).toLowerCase();
     const exact = vars.filter(v => s.startsWith(v, i)).sort((a, b) => b.length - a.length)[0];
