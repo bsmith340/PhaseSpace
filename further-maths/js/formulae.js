@@ -114,4 +114,5 @@ const BOOKLET = {
   m4: new Set(['Multiplication law', "Bayes' theorem", 'Normal distribution', 'Distribution of the mean', 'Correlation test']), // normal + PMCC tables are printed too
   f1: new Set(['Rotation', 'Reflection', 'Line', 'Plane', 'Vector product', 'Point to plane']), // booklet p. 9: vectors, lines, planes, matrix transformations
   f2: new Set(['Gravitation', 'Discrete E and Var', 'Continuous E and Var', 'Linear transformation', 'Poisson', 'PMCC', 'Regression line']),
+  f4: new Set(['Laminae', 'Standard solids', 'Linear combinations', 'Distribution of the mean', 'Unbiased variance', 'χ² statistic', 'Cycle index of Cₙ']),
 };
