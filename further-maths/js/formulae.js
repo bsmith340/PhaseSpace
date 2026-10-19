@@ -111,4 +111,5 @@ const BOOKLET = {
   m1: new Set(['Binomial theorem', 'Combinations', 'Cosine rule', 'aˣ via e']),
   m2: new Set(['Addition law', 'Binomial probability', 'PMCC', 'Sxx, Syy, Sxy']),
   m3: new Set(['Arithmetic series', 'Geometric series', 'Sum to infinity', 'Binomial series', 'Compound angles', 'tan kx', 'Reciprocal trig derivatives', 'Quotient rule', 'Integration by parts', 'Trapezium rule', 'Newton–Raphson']),
+  m4: new Set(['Multiplication law', "Bayes' theorem", 'Normal distribution', 'Distribution of the mean', 'Correlation test']), // normal + PMCC tables are printed too
 };

@@ -55,7 +55,7 @@ const FIG = (() => {
     const gx = 60, gy = 200, L = 210, tx = gx + L * Math.cos(th * D), ty = gy - L * Math.sin(th * D);
     const mx = (gx + tx) / 2, my = (gy + ty) / 2;
     return wrap(320, 230, `<path class="fground" d="M10 ${gy}H${f(tx + 14)}V12H${f(tx + 30)}V${gy + 14}H10Z"/>${line(gx, gy, tx, ty, 'fladder')}${arcAngle(gx, gy, 30, 0, th, `${o.angle || th + '°'}`)}
-      ${arrow(gx, gy, 90, 60, 'fa1', o.R || 'R')}${arrow(gx, gy, 180, 50, 'fa3', o.F || 'F')}${arrow(tx, ty, 180, 56, 'fa1', o.S || 'S')}${o.Fw ? arrow(tx, ty, 90, 46, 'fa3', o.Fw) : ''}${arrow(mx, my, -90, 56, 'fa2', o.W || 'W')}`, cap);
+      ${arrow(gx, gy, 90, 60, 'fa1', o.R || 'R')}${arrow(gx, gy, 0, 50, 'fa3', o.F || 'F')}${arrow(tx, ty, 180, 56, 'fa1', o.S || 'S')}${o.Fw ? arrow(tx, ty, 90, 46, 'fa3', o.Fw) : ''}${arrow(mx, my, -90, 56, 'fa2', o.W || 'W')}`, cap);
   }
   // axes with polylines: {x:[lo,hi], y:[lo,hi], lines:[{pts:[[x,y]...], cls, fill}], xlab, ylab, ticks}
   function plot(o, cap) {
