@@ -1,4 +1,4 @@
-# BCSFM · Maths & Further Maths
+# BcsMaths · Maths & Further Maths
 
 Self-study guides for **CCEA GCE Further Mathematics, Unit A2 1 (Pure)** and **CCEA GCE Mathematics, Unit AS 1 (Pure)**. It's a static site with no build step and no server. Created by Ben Smith.
 
@@ -7,7 +7,7 @@ You pick a course on the home page (`#/`). Each course has its own spec map, tex
 ## What's inside (per course)
 
 - **Specification map** (`#/<course>/spec`): every learning outcome **quoted from the official CCEA specification** (FM: Section 3.4; Maths: Sections 3.1–3.2), with links to the chapters that cover it.
-  - Outcome codes (P1, A1–A7, C1–C4, …) are BCSFM labels; CCEA prints the bullets unnumbered.
+  - Outcome codes (P1, A1–A7, C1–C4, …) are BcsMaths labels; CCEA prints the bullets unnumbered.
   - Each chapter opens with a "The specification says" box listing the outcomes it covers.
   - Points are tagged *On spec* or *Supporting* (an example context or technique an outcome relies on).
   - Content that isn't in the unit is kept in a separate archive and never appears in drills.
@@ -44,7 +44,7 @@ The interface follows Apple's design language:
 - **Motion:** springs defined by damping and response (`js/ui.js`). The calculator sheet tracks your finger 1:1, can be caught mid-animation, rubber-bands at the top and uses the flick's momentum to decide whether to close.
 - **Accessibility:** follows reduced motion (cross-fades only), reduced transparency (solid bars) and increased contrast.
 
-BCSFM does not reproduce CCEA papers or reports. Add them yourself from the official PDFs.
+BcsMaths does not reproduce CCEA papers or reports. Add them yourself from the official PDFs.
 
 ## Progress between deploys
 

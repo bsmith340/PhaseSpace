@@ -1,4 +1,4 @@
-// BCSFM course registry. Each course arranges points from the shared pool into its specification structure.
+// BcsMaths course registry. Each course arranges points from the shared pool into its specification structure.
 // status: 'core'  = directly covers a learning outcome quoted from the CCEA specification
 //         'check' = supporting material (an example context or a technique a listed outcome needs)
 'use strict';
@@ -16,7 +16,8 @@ const COURSE_ORDER = [];
 function defineCourse(def) {
   const c = { ...def, topics: [], points: [] };
   for (const t of def.spec) {
-    const outs = t.outcomes.map(o => (Array.isArray(o) ? { code: o[0], text: o[1] } : { code: '', text: o }));
+    // applied units list plain strings: their codes are the topic code plus a letter (M2a, M2b, …)
+    const outs = t.outcomes.map((o, i) => (Array.isArray(o) ? { code: o[0], text: o[1] } : { code: t.code + 'abcdefghijklmnopqrstuvwxyz'[i], text: o }));
     const pts = t.points.map(([id, status, title, ref, covers], i) => {
       const p = POOL[id]; if (!p) throw new Error('course ' + def.id + ': missing point ' + id);
       p.code = `${t.code}.${i + 1}`; p.topic = t.id; p.status = status; p.course = def.id; if (title) p.title = title; if (ref) p.ref = ref;
@@ -38,9 +39,9 @@ function defineCourse(def) {
 
 /* ===================== Further Mathematics A2 1 ===================== */
 // Outcomes are quoted from the CCEA GCE Further Mathematics (2018) specification, Unit A2 1 (pages 20–22).
-// Each point lists the outcome codes it covers; codes are BCSFM labels (CCEA prints the bullets without numbers).
+// Each point lists the outcome codes it covers; codes are BcsMaths labels (CCEA prints the bullets without numbers).
 defineCourse({
-  id: 'fm', short: 'FM A2 1', name: 'Further Mathematics', unit: 'A2 1 Pure Mathematics', board: 'CCEA GCE Further Mathematics (2018)',
+  id: 'fm', short: 'FM A2 1', name: 'Further Mathematics', unit: 'A2 1 Pure Mathematics', qual: 'further', level: 'A2', unitNo: 'A2 1', uname: 'Pure Mathematics', board: 'CCEA GCE Further Mathematics (2018)',
   icon: '∫', color: '#007aff', paper: 'AFM11', specRef: 'CCEA GCE Further Mathematics (2018) specification, Section 3.4 (pp. 20–22)',
   exam: 'External written examination · 2 hours 15 minutes · 7–12 questions · 150 raw marks',
   assumes: 'Assumes knowledge of GCE Mathematics Units AS 1 and A2 1 and Unit AS 1 of GCE Further Mathematics.',

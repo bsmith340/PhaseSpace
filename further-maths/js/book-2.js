@@ -1,4 +1,4 @@
-// BCSFM textbook, part 2: Complex numbers; Polar coordinates.
+// BcsMaths textbook, part 2: Complex numbers; Polar coordinates.
 'use strict';
 
 /* ===================================================================== */

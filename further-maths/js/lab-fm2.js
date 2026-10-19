@@ -1,4 +1,4 @@
-// BCSFM Lab — extra Further Maths A2 1 tools: De Moivre multiple angles, polar area, and sums of series.
+// BcsMaths Lab — extra Further Maths A2 1 tools: De Moivre multiple angles, polar area, and sums of series.
 'use strict';
 
 const PolyI = {

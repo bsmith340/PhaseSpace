@@ -1,4 +1,4 @@
-// BCSFM textbook, part 3: Hyperbolic functions.
+// BcsMaths textbook, part 3: Hyperbolic functions.
 'use strict';
 
 BOOK.hy1 = [

@@ -1,4 +1,4 @@
-// BCSFM textbook — chapters for outcomes added from the official specifications:
+// BcsMaths textbook — chapters for outcomes added from the official specifications:
 // FM A2 1: small angle approximations (A7), sums of series by De Moivre (C1), (x² ± a²)^(−1/2) integrals (H5);
 // Maths AS 1: exponential growth and decay models (E9, E10).
 'use strict';

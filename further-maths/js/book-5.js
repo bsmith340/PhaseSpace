@@ -1,4 +1,4 @@
-// BCSFM textbook, part 5: Differential equations.
+// BcsMaths textbook, part 5: Differential equations.
 'use strict';
 
 BOOK.de1 = [

@@ -1,4 +1,4 @@
-// BCSFM app shell: multi-course routing, progress, and every view.
+// BcsMaths app shell: multi-course routing, progress, and every view.
 // Routes: #/ (course chooser) · #/<course>/… (home, spec, book, topic/:id, point/:id, drill, sprint, formulae, papers, progress, archive) · shared: #/lab, #/lab/:tool, #/sims, #/sim/:id, #/calc
 'use strict';
 
@@ -50,57 +50,105 @@ const courseOf = p => COURSES[p.course] || C;
 /* ---------- mount & nav ---------- */
 let cleanup = [];
 function mount(html) { cleanup.forEach(f => { try { f(); } catch { } }); cleanup = []; app().innerHTML = html; renderMath(app()); window.scrollTo(0, 0); }
-// Three layers, as on apple.com and iOS: a global bar (courses + shared tools), a local bar for the open course,
+/* ---------- qualifications, units, sections & routes ---------- */
+// Two qualifications × four units. Units are courses; applied units split their topics into lettered sections.
+const QUALS = {
+  maths: { name: 'Mathematics', short: 'Maths', board: 'CCEA GCE Mathematics (2018)', color: '#00a896',
+    blurb: 'Pure mathematics with mechanics and statistics. AS 1 and AS 2 make the AS; add A2 1 and A2 2 for the A level.',
+    structure: [['AS 1', 'Pure Mathematics', '1 h 45 min', '60% of AS · 24% of A level'], ['AS 2', 'Applied Mathematics (mechanics and statistics)', '1 h 15 min', '40% of AS · 16% of A level'],
+      ['A2 1', 'Pure Mathematics', '2 h 30 min', '36% of A level'], ['A2 2', 'Applied Mathematics (mechanics and statistics)', '1 h 30 min', '24% of A level']] },
+  further: { name: 'Further Mathematics', short: 'Further Maths', board: 'CCEA GCE Further Mathematics (2018)', color: '#007aff',
+    blurb: 'Further pure, plus two applied units where you choose your sections from Mechanics, Statistics and Discrete & Decision Mathematics.',
+    structure: [['AS 1', 'Pure Mathematics', '1 h 30 min', '50% of AS · 20% of A level'], ['AS 2', 'Applied Mathematics (choose two sections)', '1 h 30 min', '50% of AS · 20% of A level'],
+      ['A2 1', 'Pure Mathematics', '2 h 15 min', '30% of A level'], ['A2 2', 'Applied Mathematics (choose two sections)', '2 h 15 min', '30% of A level']] },
+};
+const UNIT_RANK = ['AS 1', 'AS 2', 'A2 1', 'A2 2'];
+COURSE_ORDER.sort((x, y) => { const a = COURSES[x], b = COURSES[y]; return (a.qual === b.qual ? 0 : a.qual === 'maths' ? -1 : 1) || UNIT_RANK.indexOf(a.unitNo) - UNIT_RANK.indexOf(b.unitNo); });
+const unitsOf = q => COURSE_ORDER.filter(id => COURSES[id].qual === q);
+const routeOf = c => (c.routes && PREFS.routes && PREFS.routes[c.id]) || '';
+const inRoute = (c, t) => !t || !t.section || !routeOf(c) || routeOf(c).includes(t.section);
+// the points a drill or sprint may use: on-route, and on-spec unless supporting chapters are switched on
+const drillable = c => c.points.filter(p => (PREFS.support || p.status === 'core') && inRoute(c, TP[p.topic]));
+const sectionOf = (c, id) => (c.sections || []).find(s => s.id === id);
+// render topics grouped under "Section A · Mechanics 1" headings (pure units have no sections)
+function bySection(c, topics, render, head = s => `<h2 class="sech">Section ${s.id} · ${s.title}</h2>`) {
+  if (!c.sections) return render(topics);
+  return c.sections.map(s => { const ts = topics.filter(t => t.section === s.id); return ts.length ? `<div class="secblock${inRoute(c, ts[0]) ? '' : ' offroute'}">${head(s)}${render(ts)}</div>` : ''; }).join('');
+}
+
+/* ---------- nav ---------- */
+// Three layers, as on apple.com and iOS: a global bar (qualifications + shared tools), a local bar for the open unit,
 // and on phones a bottom tab bar for the five places used most.
 const NAV_LOCAL = [['', 'Overview'], ['spec', 'Spec'], ['book', 'Book'], ['drill', 'Drill'], ['formulae', 'Formulae'], ['papers', 'Papers'], ['progress', 'Progress']];
 const SECTION = { point: 'book', topic: '', sprint: 'drill', archive: 'spec' }; // the local-nav item each page lives under
-function renderNav(inCourse) {
-  const cid = inCourse ? C.id : (COURSES[DB.lastCourse] ? DB.lastCourse : C.id);
+function renderNav(inCourse, qual) {
+  const cid = inCourse ? C.id : (COURSES[DB.lastCourse] ? DB.lastCourse : C.id), q = inCourse ? C.qual : qual;
   document.body.classList.toggle('in-course', inCourse);
-  const switcher = `<div class="cswitch" role="group" aria-label="Course">${COURSE_ORDER.map(id => `<a href="#/${id}" class="${inCourse && C.id === id ? 'on' : ''}">${COURSES[id].short}</a>`).join('')}</div>`;
-  $('#nav').innerHTML = `${switcher}<a href="#/lab" data-r="lab" class="g-lab">${ico('lab')}<span class="gtext">Lab</span></a><a href="#/sims" data-r="sims" title="Simulations">${ico('sims')}<span class="gtext">Simulations</span></a><a href="#/calc" class="gico g-calc" title="Calculator (Alt+C)" aria-label="Calculator" data-r="calc">${ico('calc')}</a><a href="#/settings" class="gico" title="Settings — save and load progress" aria-label="Settings" data-r="settings">${ico('gear')}</a><button id="theme" class="icon-btn gico" title="Light or dark appearance" aria-label="Switch between light and dark appearance">${ico('theme')}</button>`;
+  const qs = `<div class="cswitch" role="group" aria-label="Qualification">${Object.entries(QUALS).map(([k, Q]) => `<a href="#/${k}" class="${q === k ? 'on' : ''}"><span class="q-long">${Q.short}</span><span class="q-short">${k === 'maths' ? 'Maths' : 'Further'}</span></a>`).join('')}</div>`;
+  $('#nav').innerHTML = `${qs}<a href="#/lab" data-r="lab" class="g-lab">${ico('lab')}<span class="gtext">Lab</span></a><a href="#/sims" data-r="sims" title="Simulations">${ico('sims')}<span class="gtext">Simulations</span></a><a href="#/about" data-r="about" class="g-about"><span class="gtext">About</span></a><a href="#/calc" class="gico g-calc" title="Calculator (Alt+C)" aria-label="Calculator" data-r="calc">${ico('calc')}</a><a href="#/settings" class="gico" title="Settings — save and load progress" aria-label="Settings" data-r="settings">${ico('gear')}</a><button id="theme" class="icon-btn gico" title="Light or dark appearance" aria-label="Switch between light and dark appearance">${ico('theme')}</button>`;
   $('#theme').onclick = toggleTheme;
   const ln = $('#lnav'); ln.hidden = !inCourse;
-  ln.innerHTML = inCourse ? `<div class="lnav-in"><a class="lnav-title" href="#/${C.id}"><span class="lt-long">${C.name} ${C.unit.split(' ').slice(0, 2).join(' ')}</span><span class="lt-short">${C.short}</span></a>
+  ln.innerHTML = inCourse ? `<div class="lnav-in"><a class="lnav-title" href="#/${C.qual}">${QUALS[C.qual].name}</a>
+    <div class="cswitch useg" role="group" aria-label="Unit">${unitsOf(C.qual).map(id => `<a href="#/${id}" class="${id === C.id ? 'on' : ''}" title="${esc(COURSES[id].name + ' ' + COURSES[id].unit)}">${COURSES[id].unitNo}</a>`).join('')}</div>
     <div class="lnav-links">${NAV_LOCAL.map(([p, l]) => `<a href="#/${C.id}${p ? '/' + p : ''}" data-r="${C.id}/${p}">${l}</a>`).join('')}</div>
     <a class="btn primary small lnav-cta" href="#/${C.id}/sprint">Sprint</a></div>` : '';
   $('#tabbar').innerHTML = [[`#/${cid}`, `${cid}/`, 'overview', 'Overview'], [`#/${cid}/book`, `${cid}/book`, 'book', 'Book'], [`#/${cid}/drill`, `${cid}/drill`, 'drill', 'Drill'], ['#/lab', 'lab', 'lab', 'Lab'], ['#/calc', 'calc', 'calc', 'Calculator']]
     .map(([h, r, i, l]) => `<a href="${h}" data-r="${r}"${r === 'calc' ? ' class="tcalc"' : ''}>${ico(i)}<span>${l}</span></a>`).join('');
 }
-const crumbs = (...parts) => `<nav class="crumbs"><a href="#/">Courses</a> / <a href="#/${C.id}">${C.short}</a>${parts.map(p => ' / ' + p).join('')}</nav>`;
+const crumbs = (...parts) => `<nav class="crumbs"><a href="#/">Courses</a> / <a href="#/${C.qual}">${QUALS[C.qual].short}</a> / <a href="#/${C.id}">${C.unitNo}</a>${parts.map(p => ' / ' + p).join('')}</nav>`;
 
 /* ---------- COURSE CHOOSER ---------- */
+function unitCard(id) {
+  const c = COURSES[id], rd = c.points.filter(p => isRead(p.id)).length, t = totals(c.points), m = courseMastery(c);
+  return `<a class="card unit" href="#/${id}" style="--cc:${c.color}"><div class="uhead"><div class="cicon sm">${c.unitNo}</div><div><p class="eyebrow">${c.level} · ${c.qual === 'maths' ? 'Mathematics' : 'Further Mathematics'}</p><h3>${c.uname}</h3></div></div>
+    <p class="utag">${esc(c.tagline)}</p><div class="cmeter">${bar(m, c.color)}<span>${Math.round(m * 100)}%</span></div>
+    <small>${c.points.length} spec points · ${rd} read · ${t.a} answered${DB.lastCourse === id ? ' · <b>last opened</b>' : ''}</small></a>`;
+}
 function viewChooser() {
   const tool = ([h, i, c, t, d]) => `<a class="card tile" href="${h}" style="--tc:${c}"><span class="ti">${ico(i)}</span><b>${t}</b><small>${d}</small></a>`;
+  const last = COURSES[DB.lastCourse];
   mount(`${backupBanner()}<section class="chooser">
     <p class="kicker">CCEA GCE Mathematics &amp; Further Mathematics</p>
-    <h1><span class="grad">BCSFM</span></h1>
-    <p class="lead">Every specification point, in order. Read it, see it, drill it, then prove it on real papers.</p>
+    <h1><span class="grad">BcsMaths</span></h1>
+    <p class="lead">All eight units, every specification point, in order. Read it, see it, drill it, then prove it on real papers.</p>
+    <div class="cta center">${last ? `<a class="btn primary" href="#/${last.id}">Continue ${last.short} ${ico('chevron')}</a>` : `<a class="btn primary" href="#/m1">Start with Maths AS 1 ${ico('chevron')}</a>`}<a class="btn" href="#/about">Why I built this ${ico('chevron')}</a></div>
   </section>
-  <section class="grid courses">${COURSE_ORDER.map(id => { const c = COURSES[id], rd = c.points.filter(p => isRead(p.id)).length, t = totals(c.points), m = courseMastery(c); return `
-    <a class="card course" href="#/${id}" style="--cc:${c.color}"><div class="cicon">${c.icon}</div>
-      <div class="cbody"><p class="eyebrow">${esc(c.board)}</p><h2>${c.name} <span class="muted">${c.unit.split(' ').slice(0, 2).join(' ')}</span></h2><p>${esc(c.tagline)}</p>
-      <div class="cmeter">${bar(m, c.color)}<span>${Math.round(m * 100)}%</span></div>
-      <small>${c.points.length} spec points · ${rd} read · ${t.a} answered</small>
-      <span class="btn primary small cbtn">${DB.lastCourse === id ? 'Continue' : 'Open'} ${ico('chevron')}</span></div></a>`; }).join('')}
-    <div class="card course soon"><div class="cicon">${ico('plus', 'lg')}</div><div class="cbody"><h2>More units</h2><p>AS 2, A2 Maths and the Further Maths applied units can be added on the same system.</p></div></div>
-  </section>
-  <h2 class="sech">Tools for both courses</h2>
-  <section class="grid tiles">${[['#/lab', 'lab', '#30b0c7', 'Lab', 'Grapher, complex numbers, matrices, calculus, ODEs'], ['#/calc', 'calc', '#8e8e93', 'Calculator', 'Scientific, complex and exact answers'], ['#/sims', 'sims', '#af52de', 'Simulations', `${Object.keys(SIMS).length} interactive models`], ['#/settings', 'gear', '#636366', 'Settings', 'Save and load your progress']].map(tool).join('')}</section>
+  ${Object.entries(QUALS).map(([k, Q]) => `<section class="qual"><div class="qhead"><div><h2>${Q.name}</h2><p class="muted">${Q.blurb}</p></div><a class="btn ghost" href="#/${k}">Course structure ${ico('chevron')}</a></div>
+    <div class="grid units">${unitsOf(k).map(unitCard).join('')}</div></section>`).join('')}
+  <h2 class="sech">Tools for every unit</h2>
+  <section class="grid tiles">${[['#/lab', 'lab', '#30b0c7', 'Lab', 'Grapher, statistics, mechanics, matrices, algorithms'], ['#/calc', 'calc', '#8e8e93', 'Calculator', 'Scientific, complex and exact answers'], ['#/sims', 'sims', '#af52de', 'Simulations', `${Object.keys(SIMS).length} interactive models`], ['#/about', 'book', '#ff9500', 'About', 'Why BcsMaths exists'], ['#/settings', 'gear', '#636366', 'Settings', 'Save and load your progress']].map(tool).join('')}</section>
   <p class="credit center">${CREDIT}</p>`);
+}
+function viewQual(k) {
+  const Q = QUALS[k];
+  mount(`<nav class="crumbs"><a href="#/">Courses</a> / ${Q.short}</nav>
+  <section class="hero"><p class="kicker">${esc(Q.board)}</p><h1>${Q.name.replace(/^(Further )?/, m => m)}</h1><p class="lead">${Q.blurb}</p></section>
+  <div class="grid units">${unitsOf(k).map(unitCard).join('')}</div>
+  <h2 class="sech">How it's assessed</h2>
+  <div class="card"><table class="tbl"><tr><th>Unit</th><th>Content</th><th>Exam</th><th>Weighting</th></tr>${Q.structure.map(([u, c, e, w]) => `<tr><td><b>${u}</b></td><td>${c}</td><td>${e}</td><td>${w}</td></tr>`).join('')}</table>
+  <p class="muted small">From the "Specification at a glance" table of the ${esc(Q.board)} specification. ${k === 'further' ? 'In each applied unit you answer the questions from two sections: A and B, A and C, A and D, or C and D.' : 'In each applied unit you answer every question in both sections (mechanics and statistics).'}</p></div>`);
 }
 
 /* ---------- COURSE HOME ---------- */
+function routePicker() {
+  if (!C.routes) return '';
+  const cur = routeOf(C), name = r => r.split('').map(x => `${x} ${sectionOf(C, x).title}`).join(' + ');
+  return `<div class="card routecard"><div><h3>Your sections</h3><p class="muted small">In the exam you answer the questions from two of the four sections: ${C.routes.map(r => r.split('').join(' and ')).join(', ')}. Pick yours to focus the home page, drills and sprints.</p></div>
+    <div class="seg" id="routeseg"><button data-r="" class="${cur ? '' : 'on'}">All sections</button>${C.routes.map(r => `<button data-r="${r}" class="${cur === r ? 'on' : ''}" title="${esc(name(r))}">${r.split('').join(' + ')}</button>`).join('')}</div></div>`;
+}
 function viewHome() {
-  const pts = C.points, { a, c } = totals(pts);
+  const pts = C.points, { a, c } = totals(pts), route = routeOf(C), mine = drillable(C);
   const read = pts.filter(p => isRead(p.id)).length, secure = pts.filter(p => mastery(p.id) >= 0.8).length;
-  const nextRead = pts.find(p => !isRead(p.id)), weakest = pts.filter(p => st(p.id).a > 0).sort((x, y) => mastery(x.id) - mastery(y.id))[0];
-  const tiles = [['spec', 'spec', '#0a84ff', 'Specification', 'Every outcome, status and confidence'], ['book', 'book', '#ff9500', 'Textbook', `${pts.length} chapters with full proofs`], ['drill', 'drill', '#ff2d55', 'Smart drill', 'Endless questions, weakest first'],
+  const nextRead = pts.find(p => !isRead(p.id) && inRoute(C, TP[p.topic])), weakest = mine.filter(p => st(p.id).a > 0).sort((x, y) => mastery(x.id) - mastery(y.id))[0];
+  const tiles = [['spec', 'spec', '#0a84ff', 'Specification', 'Every outcome, status and confidence'], ['book', 'book', '#ff9500', 'Textbook', `${pts.length} chapters with full ${C.sections ? 'derivations' : 'proofs'}`], ['drill', 'drill', '#ff2d55', 'Smart drill', 'Endless questions, weakest first'],
     ['formulae', 'sigma', '#5e5ce6', 'Formula book', 'Every result, searchable'], ['papers', 'papers', '#34c759', 'Past papers', 'Official links, tracker, question bank'], ['sprint', 'sprint', '#ff9f0a', 'Sprint', `${PREFS.sprintN} timed mixed questions`]];
+  // on a chosen route, list its sections first
+  const order = route ? [...C.topics.filter(t => inRoute(C, t)), ...C.topics.filter(t => !inRoute(C, t))] : C.topics;
+  const secs = C.sections && route ? [...C.sections.filter(s => route.includes(s.id)), ...C.sections.filter(s => !route.includes(s.id))] : C.sections;
   mount(`${backupBanner()}
   <section class="hero">
     <p class="kicker">${esc(C.board)} · Unit ${esc(C.unit)}</p>
-    <h1>${C.name} <span class="grad">${C.unit.split(' ').slice(0, 2).join(' ')}</span></h1>
+    <h1>${C.name} <span class="grad">${C.unitNo}</span></h1>
     <p class="lead">${esc(C.tagline)}</p>
     <div class="cta center">${nextRead ? `<a class="btn primary" href="${cr('point/' + nextRead.id)}?tab=learn">${read ? 'Continue' : 'Start'} reading <span class="btn-sub">${nextRead.code} ${esc(nextRead.title)}</span></a>` : `<a class="btn primary" href="${cr('drill')}">Everything read — drill it</a>`}<a class="btn" href="${cr('sprint')}">${PREFS.sprintN}-question sprint ${ico('chevron')}</a></div>
   </section>
@@ -112,13 +160,16 @@ function viewHome() {
     ${weakest ? `<a class="stat wide" href="${cr('point/' + weakest.id)}?tab=drill"><span>Weakest attempted — drill it</span><b class="small">${weakest.code} ${esc(weakest.title)}</b>${ico('chevron')}</a>` : ''}
   </section>
   <section class="grid tiles">${tiles.map(([h, i, col, t, d]) => `<a class="card tile" href="${cr(h)}" style="--tc:${col}"><span class="ti">${ico(i)}</span><b>${t}</b><small>${d}</small></a>`).join('')}</section>
-  <h2 class="sech">Specification topics</h2>
-  <section class="grid topics">${C.topics.map(topicCard).join('')}</section>`);
+  ${routePicker()}
+  ${C.sections ? bySection({ ...C, sections: secs }, order, ts => `<section class="grid topics">${ts.map(topicCard).join('')}</section>`, s => `<h2 class="sech">Section ${s.id} <span class="muted">· ${s.title}</span></h2>`)
+    : `<h2 class="sech">Specification topics</h2><section class="grid topics">${C.topics.map(topicCard).join('')}</section>`}`);
+  const rs = $('#routeseg');
+  if (rs) rs.onclick = e => { const b = e.target.closest('button'); if (!b) return; PREFS.routes = { ...(PREFS.routes || {}), [C.id]: b.dataset.r }; savePrefs(); viewHome(); };
 }
 function topicCard(t) {
   const rd = t.points.filter(p => isRead(p.id)).length;
   return `<a class="card topic" href="${cr('topic/' + t.id)}" style="--tc:${t.color}"><div class="ticon">${t.icon}</div>
-    <div class="tbody"><h3><span class="code">${t.code}</span> ${t.title}</h3><p>${t.blurb}</p>${bar(topicMastery(t), t.color)}<small>${t.points.length} points · ${rd} read · ${Math.round(topicMastery(t) * 100)}% mastered</small></div></a>`;
+    <div class="tbody"><h3><span class="code">${t.code}</span> ${t.title}</h3><p>${t.blurb}</p>${bar(topicMastery(t), t.color)}<small>${t.points.length} point${t.points.length === 1 ? '' : 's'} · ${rd} read · ${Math.round(topicMastery(t) * 100)}% mastered</small></div></a>`;
 }
 
 /* ---------- SPEC ---------- */
@@ -127,12 +178,12 @@ function viewSpec() {
     <td><select data-conf="${p.id}">${['', 'Not started', 'Shaky', 'OK', 'Confident'].map(o => `<option ${DB.conf[p.id] === o ? 'selected' : ''}>${o}</option>`).join('')}</select></td></tr>`; };
   mount(`${crumbs('Specification')}
   <header class="phead slim"><div><h1>${C.unit} — specification map</h1><p>Every topic and learning outcome for ${esc(C.board)}, linked to its chapter, simulation and drills. Only specification content is in this course.</p></div></header>
-  <div class="box notice"><b>Official wording.</b> Every learning outcome below is quoted from the ${esc(C.specRef)}. The codes (${C.topics[0].outcomes[0].code}, …) are BCSFM labels — CCEA prints the bullets unnumbered. Next to each outcome are the chapters that cover it, so you can see that nothing is missing and nothing extra is included. Badges: ${['core', 'check'].map(k => `<span class="sbadge s-${k}">${STATUS[k][0]}</span> ${STATUS[k][1]}`).join(' · ')}.</div>
+  <div class="box notice"><b>Official wording.</b> Every learning outcome below is quoted from the ${esc(C.specRef)}. The codes (${C.topics[0].outcomes[0].code}, …) are BcsMaths labels — CCEA prints the bullets unnumbered. Next to each outcome are the chapters that cover it, so you can see that nothing is missing and nothing extra is included. Badges: ${['core', 'check'].map(k => `<span class="sbadge s-${k}">${STATUS[k][0]}</span> ${STATUS[k][1]}`).join(' · ')}.</div>
   <div class="box"><b>Assessment.</b> ${esc(C.exam)}. ${esc(C.assumes || '')} Formulae provided in the exam are in the <a href="${C.sources[2].url}" target="_blank" rel="noopener">Mathematical Formulae and Tables</a> booklet — see the <a href="${cr('formulae')}">formula book</a> for what is given and what you must learn.</div>
-  ${C.topics.map(t => `<section class="card spect" style="--tc:${t.color}"><h2><span class="code">${t.code}</span> ${t.title}</h2>
+  ${bySection(C, C.topics, ts => ts.map(t => `<section class="card spect" style="--tc:${t.color}"><h2><span class="code">${t.code}</span> ${t.title}</h2>
     <p class="muted small">Students should be able to:</p>
     <ul class="outc coded">${t.outcomes.map(o => `<li><span class="ocode">${o.code}</span><span class="otext">${esc(o.text)}</span><span class="olinks">${o.points.length ? o.points.map(p => `<a href="${cr('point/' + p.id)}?tab=learn" class="olink ${isRead(p.id) ? 'done' : ''}">${p.code}</a>`).join('') : '<span class="bad small">not covered</span>'}</span></li>`).join('')}</ul>
-    <table class="tbl"><tr><th>#</th><th>Spec point</th><th>Read</th><th>Mastery</th><th>Confidence</th></tr>${t.points.map(row).join('')}</table></section>`).join('')}
+    <table class="tbl"><tr><th>#</th><th>Spec point</th><th>Read</th><th>Mastery</th><th>Confidence</th></tr>${t.points.map(row).join('')}</table></section>`).join(''))}
   <div class="box"><b>Sources</b><ul>${C.sources.map(s => `<li><a href="${s.url}" target="_blank" rel="noopener">${esc(s.label)}</a></li>`).join('')}</ul></div>
   ${C.archiveTopic.points.length ? `<p class="muted small">Material that isn't on this unit's specification has been moved to the <a href="${cr('archive')}">archive</a> and is excluded from drills and sprints.</p>` : ''}`);
   app().querySelectorAll('[data-conf]').forEach(s => s.onchange = () => { DB.conf[s.dataset.conf] = s.value; save(); });
@@ -146,7 +197,7 @@ function viewArchive() {
 function viewBook() {
   mount(`${crumbs('Textbook')}
   <header class="phead slim"><div><h1>The ${C.short} textbook</h1><p>One chapter per spec point: the big picture, definitions, theorems with <b>full proofs and derivations</b>, worked examples, common mistakes, exam technique, check-yourself questions and an original exam-style question with a model solution.</p></div></header>
-  ${C.topics.map(t => `<section class="card booktoc" style="--tc:${t.color}"><h2><span class="code">${t.code}</span> ${t.title}</h2><ol>${t.points.map(p => `<li class="${isRead(p.id) ? 'done' : ''}"><a href="${cr('point/' + p.id)}?tab=learn"><span class="code">${p.code}</span> ${esc(p.title)}</a> ${badge(p)} <span class="muted small">· ${readMins(p)} min${isRead(p.id) ? ' · ✓ read' : ''}</span></li>`).join('')}</ol></section>`).join('')}`);
+  ${bySection(C, C.topics, ts => ts.map(t => `<section class="card booktoc" style="--tc:${t.color}"><h2><span class="code">${t.code}</span> ${t.title}</h2><ol>${t.points.map(p => `<li class="${isRead(p.id) ? 'done' : ''}"><a href="${cr('point/' + p.id)}?tab=learn"><span class="code">${p.code}</span> ${esc(p.title)}</a> ${badge(p)} <span class="muted small">· ${readMins(p)} min${isRead(p.id) ? ' · ✓ read' : ''}</span></li>`).join('')}</ol></section>`).join(''))}`);
 }
 
 /* ---------- TOPIC ---------- */
@@ -209,7 +260,7 @@ function viewPoint(id, tab = 'learn') {
 
 /* ---------- DRILL & SPRINT ---------- */
 function viewDrill(qs) {
-  const sel = new Set((qs.get('topics') || C.topics.map(t => t.id).join(',')).split(',').filter(id => TP[id] && TP[id].course === C.id));
+  const sel = new Set((qs.get('topics') || C.topics.filter(t => inRoute(C, t)).map(t => t.id).join(',')).split(',').filter(id => TP[id] && TP[id].course === C.id));
   mount(`${crumbs('Smart drill')}
   <header class="phead slim"><div><h1>Smart drill · ${C.short}</h1><p>Questions weighted toward spec points you haven't secured. Endless. Press Enter to check and continue.</p></div></header>
   <div class="filters">${C.topics.map(t => `<label class="fchip" style="--tc:${t.color}"><input type="checkbox" value="${t.id}" ${sel.has(t.id) ? 'checked' : ''}> ${t.title}</label>`).join('')}</div>
@@ -225,7 +276,7 @@ function viewSprint() {
   const t0 = performance.now(), tm = $('#timer'), iv = setInterval(() => { const s = Math.floor((performance.now() - t0) / 1000); tm.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }, 250);
   cleanup.push(() => clearInterval(iv));
   drillPanel($('#pane'), {
-    pool: C.points.filter(p => PREFS.support || p.status === 'core').map(p => p.id), sprint: N, onDone: log => {
+    pool: drillable(C).map(p => p.id), sprint: N, onDone: log => {
       clearInterval(iv); const secs = (performance.now() - t0) / 1000, score = log.filter(l => l.ok).length;
       DB.sprints.push({ d: Date.now(), score, secs, c: C.id }); save();
       const mine = DB.sprints.filter(s => (s.c || 'fm') === C.id), best = mine.reduce((b, s) => (s.score > b.score || (s.score === b.score && s.secs < b.secs)) ? s : b, mine[0]);
@@ -254,26 +305,28 @@ function viewSim(k) {
 }
 
 /* ---------- LAB (shared) ---------- */
-const LAB_GROUPS = [['both', 'Both courses'], ['m1', 'Maths AS 1'], ['fm', 'Further Maths A2 1']];
-const labCourse = k => LAB[k].course || 'both';
+// Tools are grouped by area rather than unit: most serve several units (the distribution calculator serves four).
+const LAB_AREAS = [['pure', 'Pure: graphs, algebra & calculus', '#0a84ff'], ['fpure', 'Further pure: complex numbers, matrices, vectors', '#5e5ce6'], ['mech', 'Mechanics', '#ff9500'], ['stats', 'Statistics', '#34c759'], ['dec', 'Discrete & decision', '#af52de']];
+const LAB_DEFAULT_AREA = { complex: 'fpure', matrix: 'fpure', ode: 'fpure' };
+const labArea = k => LAB[k].area || LAB_DEFAULT_AREA[k] || (LAB[k].course === 'fm' ? 'fpure' : 'pure');
 function viewLab(tool) {
   if (!tool || !LAB[tool]) {
-    let pick = PREFS.labCourse || 'all';
-    const labColor = k => ({ both: '#0a84ff', m1: COURSES.m1 ? COURSES.m1.color : '#34c759', fm: COURSES.fm ? COURSES.fm.color : '#5e5ce6' })[labCourse(k)];
-    const tile = ([k, L]) => `<a class="card simtile labtile" href="#/lab/${k}" style="--tc:${labColor(k)}"><span class="ticon sm">${L.icon}</span><h3>${L.title}</h3><p>${L.desc}</p></a>`;
+    let pick = LAB_AREAS.some(([k]) => k === PREFS.labArea) ? PREFS.labArea : 'all';
+    const col = k => LAB_AREAS.find(([a]) => a === labArea(k))[2];
+    const tile = ([k, L]) => `<a class="card simtile labtile" href="#/lab/${k}" style="--tc:${col(k)}"><span class="ticon sm">${L.icon}</span><h3>${L.title}</h3><p>${L.desc}</p></a>`;
     mount(`<nav class="crumbs"><a href="#/">Courses</a> / Lab</nav>
-    <header class="phead slim"><div><h1>The Lab</h1><p>Tools to check your working, explore ideas and test conjectures — sorted by course. Everything accepts full expressions: <code>2sqrt(3)</code>, <code>arsinh(x)</code>, <code>e^(i pi/3)</code>.</p></div></header>
-    <div class="seg" id="labseg">${[['all', 'All tools'], ...LAB_GROUPS.slice(1)].map(([k, l]) => `<button data-c="${k}" class="${k === pick ? 'on' : ''}">${l}</button>`).join('')}</div>
-    ${LAB_GROUPS.map(([g, label]) => `<section class="labgroup" data-g="${g}"><h2>${label}</h2><div class="grid sims">${Object.entries(LAB).filter(([k]) => labCourse(k) === g).map(tile).join('')}${g === 'both' ? `<a class="card simtile labtile" href="#/calc" style="--tc:#8e8e93"><span class="ticon sm">${ico('calc')}</span><h3>Scientific calculator</h3><p>Full-page calculator with SHIFT/HYP, degrees/radians, complex numbers and exact answers.</p></a>` : ''}</div></section>`).join('')}`);
-    const apply = () => app().querySelectorAll('.labgroup').forEach(s => (s.style.display = pick === 'all' || s.dataset.g === 'both' || s.dataset.g === pick ? '' : 'none'));
-    $('#labseg').onclick = e => { const b = e.target.closest('button'); if (!b) return; pick = b.dataset.c; PREFS.labCourse = pick; savePrefs(); $('#labseg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); apply(); };
+    <header class="phead slim"><div><h1>The Lab</h1><p>Tools to check your working, explore ideas and test conjectures. Everything accepts full expressions: <code>2sqrt(3)</code>, <code>arsinh(x)</code>, <code>e^(i pi/3)</code>.</p></div></header>
+    <div class="seg" id="labseg">${[['all', 'All tools'], ...LAB_AREAS.map(([k, l]) => [k, l.split(':')[0]])].map(([k, l]) => `<button data-c="${k}" class="${k === pick ? 'on' : ''}">${l}</button>`).join('')}</div>
+    ${LAB_AREAS.map(([g, label]) => { const ts = Object.entries(LAB).filter(([k]) => labArea(k) === g); return ts.length || g === 'pure' ? `<section class="labgroup" data-g="${g}"><h2>${label}</h2><div class="grid sims">${ts.map(tile).join('')}${g === 'pure' ? `<a class="card simtile labtile" href="#/calc" style="--tc:#8e8e93"><span class="ticon sm">${ico('calc')}</span><h3>Scientific calculator</h3><p>Full-page calculator with SHIFT/HYP, degrees/radians, complex numbers and exact answers.</p></a>` : ''}</div></section>` : ''; }).join('')}`);
+    const apply = () => app().querySelectorAll('.labgroup').forEach(s => (s.style.display = pick === 'all' || s.dataset.g === pick ? '' : 'none'));
+    $('#labseg').onclick = e => { const b = e.target.closest('button'); if (!b) return; pick = b.dataset.c; PREFS.labArea = pick; savePrefs(); $('#labseg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); apply(); };
     apply();
     return;
   }
-  const L = LAB[tool], g = labCourse(tool), sib = Object.entries(LAB).filter(([k]) => labCourse(k) === g || labCourse(k) === 'both');
+  const L = LAB[tool], g = labArea(tool), sib = Object.entries(LAB).filter(([k]) => labArea(k) === g);
   mount(`<nav class="crumbs"><a href="#/">Courses</a> / <a href="#/lab">Lab</a> / ${L.title}</nav>
   <div class="labtabs">${sib.map(([k, x]) => `<a class="tab ${k === tool ? 'on' : ''}" href="#/lab/${k}">${x.title}</a>`).join('')}</div>
-  <div class="card"><h3>${L.title} <span class="sref">${g === 'both' ? 'Both courses' : COURSES[g].short}</span></h3><p class="muted">${L.desc}</p><div id="labroot"></div></div>`);
+  <div class="card"><h3>${L.title} <span class="sref">${LAB_AREAS.find(([a]) => a === g)[1].split(':')[0]}</span></h3><p class="muted">${L.desc}</p><div id="labroot"></div></div>`);
   cleanup.push(L.mount($('#labroot')));
 }
 
@@ -337,7 +390,7 @@ function bindCards(root, after) {
 }
 function papersForPoint(pane, p) {
   const qs = DB.bank.filter(b => b.pid === p.id), ns = DB.notes.filter(n => n.pid === p.id);
-  pane.innerHTML = `<div class="box notice">BCSFM doesn't reproduce CCEA papers or reports (they're CCEA's copyright). Open them from the <a href="${cr('papers')}">Past papers</a> page, then save the questions and examiner comments for <b>${p.code}</b> here.</div>
+  pane.innerHTML = `<div class="box notice">BcsMaths doesn't reproduce CCEA papers or reports (they're CCEA's copyright). Open them from the <a href="${cr('papers')}">Past papers</a> page, then save the questions and examiner comments for <b>${p.code}</b> here.</div>
     <h3>Examiner comments on ${p.code}</h3>${ns.length ? ns.map(nCard).join('') : '<p class="muted">None saved yet.</p>'}
     <h3>Your past-paper questions on ${p.code}</h3>${qs.length ? qs.map(qCard).join('') : '<p class="muted">None saved yet.</p>'}
     <p class="muted">Every textbook chapter also ends with an original exam-style question with a model solution.</p>${qForm(p.id)}`;
@@ -365,7 +418,7 @@ function viewPapers() {
   $('#addp').onclick = () => { papers.push({ id: uid(), name: 'New paper', score: '', out: '', date: '', notes: '' }); save(); viewPapers(); };
   bindCards(root, viewPapers); bindForms(root, viewPapers);
   $('#exp').onclick = downloadProgress;
-  $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const pl = readPayload(JSON.parse(t)); if (confirm('Merge this progress file with the progress on this device? (Cancel to stop. To replace instead, use Settings.)')) { applyPayload(pl, 'merge'); viewPapers(); } } catch { alert('That file is not a BCSFM progress file.'); } }); };
+  $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const pl = readPayload(JSON.parse(t)); if (confirm('Merge this progress file with the progress on this device? (Cancel to stop. To replace instead, use Settings.)')) { applyPayload(pl, 'merge'); viewPapers(); } } catch { alert('That file is not a BcsMaths progress file.'); } }); };
 }
 
 /* ---------- PROGRESS ---------- */
@@ -403,7 +456,9 @@ function route() {
     if (v === 'archive') return viewArchive();
     return viewHome();
   }
-  renderNav(false); highlight(r === 'sim' ? 'sims' : r || '');
+  renderNav(false, QUALS[r] ? r : ''); highlight(r === 'sim' ? 'sims' : r || '');
+  if (QUALS[r]) return viewQual(r);
+  if (r === 'about') return viewAbout();
   if (r === 'sims') return viewSims();
   if (r === 'sim') return viewSim(parts[1]);
   if (r === 'lab') return viewLab(parts[1]);

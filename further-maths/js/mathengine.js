@@ -1,4 +1,4 @@
-// BCSFM maths engine: expression parser (real + complex), number recognition, numerics.
+// BcsMaths maths engine: expression parser (real + complex), number recognition, numerics.
 'use strict';
 
 /* ---------- complex arithmetic: numbers are [re, im] ---------- */

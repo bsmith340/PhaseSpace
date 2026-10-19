@@ -1,4 +1,4 @@
-// Ready-made interactive graphs for every specification point (BCSFM grapher syntax — see graph.js).
+// Ready-made interactive graphs for every specification point (BcsMaths grapher syntax — see graph.js).
 'use strict';
 
 const GP = (title, note, exprs, bounds, opt = {}) => ({ title, note, exprs, bounds, ...opt });

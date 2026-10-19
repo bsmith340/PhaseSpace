@@ -1,4 +1,4 @@
-// BCSFM formula book. Each entry: [name, TeX, note, pointId]
+// BcsMaths formula book. Each entry: [name, TeX, note, pointId]
 'use strict';
 
 const FORMULAE = [
@@ -109,4 +109,5 @@ const BOOKLET = {
   fm: new Set(['Sum of squares', 'Sum of cubes', 'Maclaurin', 'Exponential', 'Sine', 'Cosine', 'Log', 'Binomial', 'arctan', 'sinh, cosh', 'Small angles', 'Euler', 'De Moivre', 'Roots of unity', 'Area',
     'Fundamental', 'Double', 'arsinh', 'arcosh', 'artanh', 'Derivatives', 'Inverse derivatives', 'Parts', 'arctan form', 'arcsin form', 'arsinh form', 'arcosh form', 'artanh form', 'Inverse trig derivatives', 'Compound angles']),
   m1: new Set(['Binomial theorem', 'Combinations', 'Cosine rule', 'aˣ via e']),
+  m2: new Set(['Addition law', 'Binomial probability', 'PMCC', 'Sxx, Syy, Sxy']),
 };

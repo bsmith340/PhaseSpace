@@ -1,4 +1,4 @@
-// BCSFM Lab: open-ended tools. Each LAB[id] = { title, icon, desc, mount(el) -> cleanup }
+// BcsMaths Lab: open-ended tools. Each LAB[id] = { title, icon, desc, mount(el) -> cleanup }
 'use strict';
 
 const LAB = {};

@@ -1,4 +1,4 @@
-// BCSFM Lab — Maths AS 1 tools. Each one checks a specific kind of AS 1 working and shows the method, not just the answer.
+// BcsMaths Lab — Maths AS 1 tools. Each one checks a specific kind of AS 1 working and shows the method, not just the answer.
 'use strict';
 
 const LX = {

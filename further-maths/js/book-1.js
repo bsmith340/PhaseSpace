@@ -1,4 +1,4 @@
-// BCSFM textbook, part 1: Proof by induction; Further algebra & functions.
+// BcsMaths textbook, part 1: Proof by induction; Further algebra & functions.
 // Every chapter: big picture → definitions → theory with full proofs → worked examples → mistakes → exam technique → check yourself → exam-style question.
 'use strict';
 
@@ -16,7 +16,7 @@ const B = {
   beyond: h => `<div class="box beyond"><div class="lbl">Beyond the specification · not examined in this unit</div>${h}</div>`,
   check: (q, a) => `<details class="check"><summary>${q}</summary><div>${a}</div></details>`,
   checks: list => `<h3>Check yourself</h3>${list.map(([q, a], i) => B.check(`<b>Q${i + 1}.</b> ${q}`, a)).join('')}`,
-  examq: (marks, q, sol) => `<h3>Exam-style question</h3><div class="box examq"><div class="lbl">BCSFM original · not a CCEA past paper · ${marks} marks</div>${q}<details class="ms"><summary>Model solution with mark-scheme style annotations</summary>${sol}</details></div>`,
+  examq: (marks, q, sol) => `<h3>Exam-style question</h3><div class="box examq"><div class="lbl">BcsMaths original · not a CCEA past paper · ${marks} marks</div>${q}<details class="ms"><summary>Model solution with mark-scheme style annotations</summary>${sol}</details></div>`,
   key: items => `<h3>Key results</h3><div class="box key"><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`,
 };
 

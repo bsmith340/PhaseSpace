@@ -1,4 +1,4 @@
-// BCSFM scientific calculator: expression entry, SHIFT/HYP, DEG/RAD, complex mode, exact-value recognition, history.
+// BcsMaths scientific calculator: expression entry, SHIFT/HYP, DEG/RAD, complex mode, exact-value recognition, history.
 'use strict';
 
 const CALC_KEY = 'bcsfm-calc-v1';

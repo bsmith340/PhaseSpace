@@ -1,4 +1,4 @@
-// BCSFM textbook — Maths AS 1, part 2: Circles; Binomial expansion; Trigonometry; Exponentials.
+// BcsMaths textbook — Maths AS 1, part 2: Circles; Binomial expansion; Trigonometry; Exponentials.
 'use strict';
 
 /* ===================================================================== */

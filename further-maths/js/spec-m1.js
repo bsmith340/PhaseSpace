@@ -2,7 +2,7 @@
 'use strict';
 
 defineCourse({
-  id: 'm1', short: 'Maths AS 1', name: 'Mathematics', unit: 'AS 1 Pure Mathematics', board: 'CCEA GCE Mathematics (2018)',
+  id: 'm1', short: 'Maths AS 1', name: 'Mathematics', unit: 'AS 1 Pure Mathematics', qual: 'maths', level: 'AS', unitNo: 'AS 1', uname: 'Pure Mathematics', board: 'CCEA GCE Mathematics (2018)',
   icon: 'x²', color: '#00a896', paper: 'AS 1',
   exam: 'External written examination · 1 hour 45 minutes · 6–10 questions · 100 raw marks (60% of AS, 24% of A level)',
   specRef: 'CCEA GCE Mathematics (2018) specification, Sections 3.1 and 3.2 (pp. 7–13)',

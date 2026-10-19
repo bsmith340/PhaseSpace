@@ -1,4 +1,4 @@
-// BCSFM drill engine: weighted question selection, answer checking, sprint mode.
+// BcsMaths drill engine: weighted question selection, answer checking, sprint mode.
 'use strict';
 
 /* ---------- drill engine ---------- */
