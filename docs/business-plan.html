@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>BcsMaths Business Plan</title>
+<style>
+@page { size: A4; margin: 15mm 16mm 18mm 16mm; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font: 10pt/1.43 "Bitstream Charter", "Charter", "DejaVu Serif", serif; color: #000; }
+h1, h2, h3, h4, .sans, th, .kicker, .label, .num, .toc, .score, .tag { font-family: "Liberation Sans", Arial, Helvetica, sans-serif; }
+h1 { font-size: 22pt; line-height: 1.12; letter-spacing: -.01em; margin: 0 0 6pt; font-weight: 700; }
+h2 { font-size: 13pt; margin: 13pt 0 4pt; font-weight: 700; letter-spacing: -.005em; }
+h3 { font-size: 10.8pt; margin: 11pt 0 3pt; font-weight: 700; }
+h4 { font-size: 9.6pt; margin: 8pt 0 2pt; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+p { margin: 0 0 6pt; }
+ul, ol { margin: 0 0 7pt; padding-left: 15pt; }
+li { margin: 0 0 2.5pt; }
+b, strong { font-weight: 700; }
+.sec { break-before: page; }
+.kicker { font-size: 8.4pt; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #000; margin: 0 0 5pt; }
+.lead { font-size: 11.6pt; line-height: 1.42; margin: 0 0 10pt; }
+.muted { color: #444; }
+.small { font-size: 8.8pt; }
+.rule { border: 0; border-top: 1.2pt solid #000; margin: 10pt 0; }
+.thin { border: 0; border-top: .5pt solid #888; margin: 8pt 0; }
+.box { border: 1pt solid #000; padding: 8pt 10pt; margin: 8pt 0 10pt; break-inside: avoid; }
+.box.grey { border: 0; background: #ececec; }
+.box.heavy { border-width: 2pt; }
+.box > :last-child { margin-bottom: 0; }
+.label { font-size: 8pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 3pt; }
+table { border-collapse: collapse; width: 100%; margin: 4pt 0 9pt; font-size: 8.8pt; line-height: 1.32; break-inside: auto; }
+tr { break-inside: avoid; }
+th { text-align: left; font-size: 7.8pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: #e3e3e3; border-top: 1pt solid #000; border-bottom: 1pt solid #000; padding: 3.5pt 5pt; vertical-align: bottom; }
+td { padding: 3.3pt 5pt; border-bottom: .5pt solid #999; vertical-align: top; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+tr.total td { border-top: 1pt solid #000; border-bottom: 1.2pt solid #000; font-weight: 700; }
+.num { font-variant-numeric: tabular-nums; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16pt; }
+.cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 12pt; }
+.stat { border-top: 2pt solid #000; padding-top: 4pt; }
+.stat .n { font: 700 19pt/1.05 "Liberation Sans", Arial, sans-serif; letter-spacing: -.02em; }
+.stat .t { font-size: 8.6pt; line-height: 1.3; }
+.dont { counter-reset: d; list-style: none; padding: 0; }
+.dont li { counter-increment: d; position: relative; padding: 0 0 5pt 24pt; margin: 0 0 5pt; border-bottom: .5pt solid #bbb; break-inside: avoid; }
+.dont li::before { content: counter(d); position: absolute; left: 0; top: 0; width: 16pt; height: 16pt; border: 1.2pt solid #000; border-radius: 50%; font: 700 8pt/14pt "Liberation Sans", Arial, sans-serif; text-align: center; }
+.dont li b:first-child { display: block; }
+.check { list-style: none; padding: 0; }
+.check li { position: relative; padding-left: 17pt; margin-bottom: 4pt; break-inside: avoid; }
+.check li::before { content: ""; position: absolute; left: 0; top: 2pt; width: 9pt; height: 9pt; border: 1pt solid #000; }
+.score { display: inline-block; font-weight: 700; }
+td:has(> .bar) { white-space: nowrap; }
+.bar { display: inline-block; width: 58pt; height: 6pt; border: .8pt solid #000; vertical-align: middle; margin-right: 5pt; position: relative; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #000; }
+.tag { font-size: 7.6pt; font-weight: 700; border: .8pt solid #000; padding: 0 3pt; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.script { border-left: 2pt solid #000; padding: 2pt 0 2pt 9pt; margin: 4pt 0 10pt; font-style: italic; break-inside: avoid; }
+.script p { margin-bottom: 4pt; }
+.fill td { height: 19pt; border-left: .5pt solid #bbb; }
+.fill td:first-child { border-left: 0; }
+.toc { width: 100%; font-size: 10.4pt; }
+.toc td { border-bottom: .5pt dotted #777; padding: 5pt 2pt; }
+.toc td:first-child { width: 22pt; font-weight: 700; }
+.toc td:last-child { text-align: right; width: 30pt; font-weight: 700; }
+.cover { height: 262mm; display: flex; flex-direction: column; }
+.cover .top { border-top: 4pt solid #000; padding-top: 10pt; }
+.cover h1 { font-size: 40pt; line-height: 1.02; letter-spacing: -.025em; margin: 70pt 0 12pt; }
+.cover .sub { font: 400 15pt/1.3 "Liberation Sans", Arial, sans-serif; margin: 0 0 30pt; max-width: 120mm; }
+.cover .meta { margin-top: auto; border-top: 1pt solid #000; padding-top: 8pt; font: 9.2pt/1.5 "Liberation Sans", Arial, sans-serif; display: grid; grid-template-columns: 1fr 1fr; gap: 4pt 20pt; }
+.mark { display: inline-grid; place-items: center; width: 34pt; height: 34pt; border: 2.4pt solid #000; border-radius: 9pt; font: 700 19pt/1 "Liberation Sans", Arial, sans-serif; }
+.avoid { break-inside: avoid; }
+a { color: #000; text-decoration: none; }
+.src li { font-size: 8.6pt; word-break: break-all; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover" id="cover">
+  <div class="top"><span class="mark">B</span></div>
+  <h1>BcsMaths<br>Business Plan<br>&amp; Strategy</h1>
+  <p class="sub">How to turn a free CCEA Maths, Further Maths and Physics course into a business, without wrecking your own A levels.</p>
+  <div class="box heavy">
+    <p class="label">The plan in one sentence</p>
+    <p style="font-size:12pt;margin:0">Keep BcsMaths free so every CCEA student in Northern Ireland uses it, then charge for what people will pay for: your time first (tutoring and group courses), a Pro tier once accounts exist, and schools last.</p>
+  </div>
+  <div class="meta">
+    <div><b>Prepared for</b><br>Ben Smith, founder</div>
+    <div><b>Date</b><br>October 2026 · version 1</div>
+    <div><b>Plan period</b><br>November 2026 to October 2027</div>
+    <div><b>Assumes</b><br>You are in Year 13: AS exams May–June 2027, A2 in 2028</div>
+  </div>
+</section>
+
+<!-- ============ CONTENTS ============ -->
+<section class="sec" id="contents">
+  <p class="kicker">Contents</p>
+  <h1>What's in this plan</h1>
+  <table class="toc">
+    <tr><td>1</td><td>The plan on one page</td><td data-toc="s1"></td></tr>
+    <tr><td>2</td><td>Honest review of BcsMaths today</td><td data-toc="s2"></td></tr>
+    <tr><td>3</td><td>Market, competitors and the calendar</td><td data-toc="s3"></td></tr>
+    <tr><td>4</td><td>Customers: who pays and why</td><td data-toc="s4"></td></tr>
+    <tr><td>5</td><td>Strategy</td><td data-toc="s5"></td></tr>
+    <tr><td>6</td><td>Offers and pricing</td><td data-toc="s6"></td></tr>
+    <tr><td>7</td><td>Getting users and customers</td><td data-toc="s7"></td></tr>
+    <tr><td>8</td><td>Reviews and social proof</td><td data-toc="s8"></td></tr>
+    <tr><td>9</td><td>Product and tech roadmap</td><td data-toc="s9"></td></tr>
+    <tr><td>10</td><td>Legal and admin</td><td data-toc="s10"></td></tr>
+    <tr><td>11</td><td>Money: costs, projections, the path to £1K and £5K</td><td data-toc="s11"></td></tr>
+    <tr><td>12</td><td>12-month roadmap and the first 90 days</td><td data-toc="s12"></td></tr>
+    <tr><td>13</td><td>What not to do</td><td data-toc="s13"></td></tr>
+    <tr><td>14</td><td>Risks and how to handle them</td><td data-toc="s14"></td></tr>
+    <tr><td>15</td><td>Weekly scorecard</td><td data-toc="s15"></td></tr>
+    <tr><td>16</td><td>Scripts and templates</td><td data-toc="s16"></td></tr>
+    <tr><td>17</td><td>Launch checklist</td><td data-toc="s17"></td></tr>
+    <tr><td>18</td><td>Sources</td><td data-toc="s18"></td></tr>
+  </table>
+  <div class="box grey">
+    <p class="label">How to use this document</p>
+    <p>Read section 1 now. Pin section 12 (the 90-day plan) and section 13 (what not to do) somewhere you'll see them. Fill in the scorecard in section 15 every Sunday: ten minutes, no exceptions. Re-read the whole plan once a term and cross out what turned out to be wrong.</p>
+  </div>
+  <p class="small muted">Figures marked "estimate" are planning assumptions, not facts. Fees, rules and prices were checked in October 2026; re-check anything legal or financial before you rely on it. This is a plan, not legal or tax advice.</p>
+</section>
+
+<!-- ============ 1. ONE PAGE ============ -->
+<section class="sec" id="s1">
+  <p class="kicker">Section 1</p>
+  <h1>The plan on one page</h1>
+  <p class="lead">You've built the most complete free CCEA A level course for Maths, Further Maths and Physics. Nobody knows it exists yet, and it earns nothing. This plan fixes both, in that order.</p>
+
+  <div class="cols3">
+    <div class="stat"><div class="n">£1,000</div><div class="t">by the end of January 2027 (base case: tutoring plus one January mock course)</div></div>
+    <div class="stat"><div class="n">£5,000</div><div class="t">cumulative by the end of September 2027 (base case, section 11)</div></div>
+    <div class="stat"><div class="n">≤ 7 h</div><div class="t">per week on the business during term, tutoring included. Your grades come first.</div></div>
+  </div>
+
+  <h2>Where the money comes from, in order</h2>
+  <table>
+    <tr><th>#</th><th>Stream</th><th>Price (start)</th><th>When</th><th>Why this order</th></tr>
+    <tr><td>1</td><td><b>1:1 online tutoring</b>: GCSE and AS Maths, Further Maths, Physics</td><td>£20 / hour</td><td>From November 2026</td><td>Fastest cash. Parents already pay for this. Needs no new code.</td></tr>
+    <tr><td>2</td><td><b>Group courses</b>: January "Mock Ready", Easter "Intensive", September "Head Start"</td><td>£30–£45 per student per course</td><td>Jan, Easter, Sept</td><td>Best return on your time: 8–10 students at once.</td></tr>
+    <tr><td>3</td><td><b>BcsMaths Pro</b>: synced progress, printable packs, original mock papers</td><td>£4.99 / month or £29 / year</td><td>Launch August 2027</td><td>Only after accounts exist and people already use the free site.</td></tr>
+    <tr><td>4</td><td><b>School licences</b>: class codes and a teacher view</td><td>£149 / department / year</td><td>Pilot from September 2027</td><td>Slow sales. Needs usage proof first.</td></tr>
+  </table>
+
+  <h2>The five decisions</h2>
+  <ol>
+    <li><b>The core stays free, for good.</b> Free is how you reach students. You charge for time, convenience and extras, never for the basic course.</li>
+    <li><b>Stay CCEA-only.</b> Become the default answer for "CCEA A2 1 maths" in Northern Ireland before you think about any other board.</li>
+    <li><b>Sell to the calendar.</b> Demand spikes before January mocks, over Easter and in September. Plan launches around those dates.</li>
+    <li><b>Trust before traffic.</b> Real reviews, teacher mentions and your own results. No paid ads until people convert without them.</li>
+    <li><b>Grades protect the brand.</b> "Built by a student who got the grades" is your best marketing. A bad results day undoes it.</li>
+  </ol>
+
+  <h2>This week</h2>
+  <ul class="check">
+    <li>Deploy the new site and the bcs35 redirect (already built).</li>
+    <li>Add free, cookie-free analytics so you know your real visitor numbers.</li>
+    <li>Write a one-page tutoring offer, set up a booking link and a payment link (with a parent as account owner, see section 10).</li>
+    <li>Tell 20 people in your year and 5 teachers the site exists. Ask each one to pass it on.</li>
+    <li>Start the Sunday scorecard (section 15).</li>
+  </ul>
+</section>
+
+<!-- ============ 2. REVIEW ============ -->
+<section class="sec" id="s2">
+  <p class="kicker">Section 2</p>
+  <h1>Honest review of BcsMaths today</h1>
+  <p class="lead">The product is strong. Distribution, trust, data and payments barely exist yet. That's where the next six months go.</p>
+
+  <h2>Scorecard</h2>
+  <p class="small muted">My assessment, October 2026. Score out of 10.</p>
+  <table>
+    <tr><th style="width:30%">Area</th><th style="width:22%">Score</th><th>Why</th></tr>
+    <tr><td>Coverage</td><td><span class="bar"><i style="width:90%"></i></span><span class="score">9</span></td><td>All 12 written units: 204 maths spec points; 36 physics sections, 87 labs, 159 outcomes.</td></tr>
+    <tr><td>Design and usability</td><td><span class="bar"><i style="width:85%"></i></span><span class="score">8.5</span></td><td>Clean and consistent; works on phones and in dark mode.</td></tr>
+    <tr><td>Interactivity</td><td><span class="bar"><i style="width:90%"></i></span><span class="score">9</span></td><td>Sims, grapher, calculator, self-marking drills, mock tests, tutor.</td></tr>
+    <tr><td>Checked accuracy</td><td><span class="bar"><i style="width:50%"></i></span><span class="score">5</span></td><td>Heavily tested by code, but no teacher has reviewed it yet.</td></tr>
+    <tr><td>Being found (search)</td><td><span class="bar"><i style="width:20%"></i></span><span class="score">2</span></td><td>One page with # links: Google sees about one page, so most content is unfindable.</td></tr>
+    <tr><td>Trust and social proof</td><td><span class="bar"><i style="width:15%"></i></span><span class="score">1.5</span></td><td>No reviews, testimonials, teacher mentions or results yet.</td></tr>
+    <tr><td>Data</td><td><span class="bar"><i style="width:10%"></i></span><span class="score">1</span></td><td>No analytics. You can't tell how many people use it, or which units.</td></tr>
+    <tr><td>Ready to take money</td><td><span class="bar"><i style="width:15%"></i></span><span class="score">1.5</span></td><td>No accounts or payments; progress lives in one browser.</td></tr>
+    <tr><td>Legal footing</td><td><span class="bar"><i style="width:45%"></i></span><span class="score">4.5</span></td><td>Good notice; word-for-word spec quotes get risky once you charge (section 10).</td></tr>
+  </table>
+
+  <div class="cols">
+    <div>
+      <h3>Strengths to build on</h3>
+      <ul>
+        <li>Complete and spec-mapped. Students can see exactly what's on their paper.</li>
+        <li>Three subjects that are often taken together, all on one site.</li>
+        <li>A founder story that makes sense to students: self-taught, hard way, built the fix.</li>
+                <li>No competitor offers interactive physics labs mapped to CCEA sections.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Weaknesses to fix, in order</h3>
+      <ol>
+        <li>No analytics: fix this week.</li>
+        <li>Invisible to Google: add real landing pages (section 9).</li>
+        <li>No social proof: start collecting reviews in November.</li>
+        <li>Unchecked by a teacher: get 2–3 spot-checks.</li>
+        <li>No accounts or payments: build before Pro, not before tutoring.</li>
+        <li>"Maths" in the name, Physics inside: decide once, in October 2027.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="box">
+    <p class="label">The verdict</p>
+    <p>As a product: excellent for a solo build. As a business: not started. The gap isn't features; it's people knowing the site exists, trusting it, and having a way to pay. Fix those three before building anything new.</p>
+  </div>
+</section>
+
+<!-- ============ 3. MARKET ============ -->
+<section class="sec" id="s3">
+  <p class="kicker">Section 3</p>
+  <h1>Market, competitors and the calendar</h1>
+
+  <h2>How big is it?</h2>
+  <div class="cols3">
+    <div class="stat"><div class="n">3,655</div><div class="t">A level Maths entries in Northern Ireland, summer 2026 (CCEA provisional). Maths is NI's most popular A level subject.</div></div>
+    <div class="stat"><div class="n">33,740</div><div class="t">Total NI A level entries in summer 2026, up 4.5% on 2025.</div></div>
+    <div class="stat"><div class="n">2 years</div><div class="t">Each student needs you in Year 13 and Year 14, so the pool is about double one year's entry.</div></div>
+  </div>
+  <ul>
+    <li><b>Reading the numbers:</b> about 3,700 students finish A level Maths each year, plus a similar Year 13 group. Physics and Further Maths are smaller, and not every NI school uses CCEA, so treat these as upper limits.</li>
+    <li><b>What that means:</b> a small market you can realistically own. Being <i>the</i> resource most NI students know is what makes tutoring, courses and school deals easy to sell.</li>
+    <li><b>Tutoring market:</b> NI directory data puts A level tuition at roughly £20–£40 an hour; online is often 10–15% cheaper and student tutors charge less. Parents are the buyers.</li>
+  </ul>
+
+  <h2>Competitors</h2>
+  <table>
+    <tr><th>Who</th><th>What they offer</th><th>Their weakness for CCEA students</th><th>How you win</th></tr>
+    <tr><td>CCEA itself</td><td>Specs, past papers, mark schemes, examiner reports. Free.</td><td>Documents, not teaching</td><td>Link to them; teach around them.</td></tr>
+    <tr><td>Big UK revision sites (e.g. Save My Exams, Physics &amp; Maths Tutor, Seneca)</td><td>Notes, questions and flashcards, mainly for English boards</td><td>CCEA is small for them; in our check Save My Exams listed only past papers for CCEA Maths and Physics.</td><td>Complete CCEA coverage, mapped point by point, plus labs.</td></tr>
+    <tr><td>Maths Genie and similar</td><td>Free past papers and videos, incl. CCEA pages</td><td>No structured course</td><td>Structure, drills, progress tracking.</td></tr>
+    <tr><td>Local tutors</td><td>1:1 help, £20–£40 an hour</td><td>Expensive, limited hours</td><td>Free site plus cheaper groups.</td></tr>
+    <tr><td>School teachers</td><td>The real lessons</td><td>Not a competitor</td><td>Your best distribution channel.</td></tr>
+  </table>
+
+  <h2>The calendar: when people buy</h2>
+  <table>
+    <tr><th>When</th><th>What's happening</th><th>What you sell</th></tr>
+    <tr><td>September–October</td><td>New Year 13s start; Year 14s find A2 hard</td><td>Head Start, tutoring, Pro (from 2027)</td></tr>
+    <tr><td>November–December</td><td>Revising for mocks begins</td><td>Tutoring; "Mock Ready" bookings open</td></tr>
+    <tr><td>January</td><td>Mocks in many NI schools</td><td>"Mock Ready" group course</td></tr>
+    <tr><td>February–March</td><td>Mock results; panic peaks</td><td>Tutoring; sell Easter courses early</td></tr>
+    <tr><td>Easter holidays</td><td>Main revision window</td><td>"Easter Intensive" group courses</td></tr>
+    <tr><td>May–June</td><td>Exams, <b>yours included</b></td><td>Nothing new. Automated only. You revise.</td></tr>
+    <tr><td>Mid-August</td><td>Results day</td><td>Reviews, your results, open Pro</td></tr>
+  </table>
+</section>
+
+<!-- ============ 4. CUSTOMERS ============ -->
+<section class="sec" id="s4">
+  <p class="kicker">Section 4</p>
+  <h1>Customers: who pays and why</h1>
+  <p class="lead">Users and payers are different people. Students use BcsMaths, but parents pay for most things, and schools pay later. Write every offer for the person paying.</p>
+
+  <table>
+    <tr><th style="width:18%">Who</th><th>What they want</th><th>What they pay for</th><th>Where you reach them</th></tr>
+    <tr><td><b>The self-teacher</b><br><span class="small">Student doing Further Maths with little or no class time (you, two years ago)</span></td><td>A complete course they can trust, in order</td><td>Pro, help with specific topics</td><td>Search, TikTok, word of mouth</td></tr>
+    <tr><td><b>The worried Year 13 or 14</b><br><span class="small">Has a teacher, but is falling behind</span></td><td>To catch up fast and see they're improving</td><td>Group courses, tutoring</td><td>School group chats, friends, short videos</td></tr>
+    <tr><td><b>The parent</b><br><span class="small">Pays, rarely uses the site</span></td><td>Proof their child is improving; someone safe and reliable</td><td>Tutoring and courses: the main source of money</td><td>Their child, local parent groups, word of mouth</td></tr>
+    <tr><td><b>The GCSE student</b><br><span class="small">Year 11–12, Maths, Further Maths or Physics</span></td><td>A good grade and a head start on A level</td><td>1:1 tutoring (parents pay)</td><td>Parents, your school's younger years</td></tr>
+    <tr><td><b>The teacher or head of department</b></td><td>Free, accurate homework and revision material that saves them time</td><td>Nothing at first; a school licence later</td><td>A short, polite email (section 16), and staff-room word of mouth</td></tr>
+  </table>
+
+  <h2>What each one needs to hear</h2>
+  <div class="cols">
+    <div>
+      <h3>To students</h3>
+      <ul>
+        <li>"Every CCEA spec point, in order, free."</li>
+        <li>"See it move": the physics labs and maths sims.</li>
+        <li>"Built by a student who self-taught Further Maths."</li>
+      </ul>
+      <h3>To parents</h3>
+      <ul>
+        <li>"Your child gets a structured plan, not just an hour of chat."</li>
+        <li>"Progress you can see: drill scores and spec ticks."</li>
+        <li>"Lessons on a parent-approved channel; AccessNI checked."</li>
+      </ul>
+    </div>
+    <div>
+      <h3>To teachers</h3>
+      <ul>
+        <li>"Free, CCEA-mapped practice you can set as homework."</li>
+        <li>"Independent. It links to CCEA's own papers and doesn't copy them."</li>
+        <li>"Spot an error? Tell me and I'll fix it within a day."</li>
+      </ul>
+      <h3>To schools (later)</h3>
+      <ul>
+        <li>"Class codes and a teacher view of who's practising what."</li>
+        <li>"Less than the price of one textbook per class."</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. STRATEGY ============ -->
+<section class="sec" id="s5">
+  <p class="kicker">Section 5</p>
+  <h1>Strategy</h1>
+  <p class="lead">Win one small market completely, make money from people first and software second, and let your own results do the selling.</p>
+
+  <h2>Positioning</h2>
+  <div class="box heavy">
+    <p style="font-size:11.5pt;margin:0"><b>For CCEA A level students in Northern Ireland</b> who need to understand Maths, Further Maths or Physics properly, <b>BcsMaths is the complete free course</b> that follows the specification point by point, with explanations, live labs and self-marking practice. <b>Unlike general UK revision sites</b>, it's built for CCEA and nothing else, by a student who learned it the hard way.</p>
+  </div>
+
+  <h2>The five pillars</h2>
+  <table>
+    <tr><th style="width:23%">Pillar</th><th>What it means in practice</th><th style="width:28%">You'll know it's working when</th></tr>
+    <tr><td><b>1. Own CCEA</b></td><td>Every unit page ranks for its own search ("CCEA A2 2 physics revision"). Teachers mention you. Students say "just use BcsMaths".</td><td>Most of your traffic comes from search and word of mouth, not your own posts.</td></tr>
+    <tr><td><b>2. Free as the engine</b></td><td>The whole course stays free. Paid offers add time, convenience or extras on top.</td><td>Free users grow every month, and 1–3% of active users buy something.</td></tr>
+    <tr><td><b>3. People first, software second</b></td><td>Tutoring and group courses pay now. Pro and school licences come once you have users and accounts.</td><td>£1K from tutoring and courses before you write any payment code.</td></tr>
+    <tr><td><b>4. Trust engine</b></td><td>Real reviews, teacher spot-checks, a public error log, and your results.</td><td>10 genuine reviews by Easter; 2 teachers recommending you.</td></tr>
+    <tr><td><b>5. Calendar discipline</b></td><td>Three selling seasons (January, Easter, September). Exam season is closed.</td><td>Courses are announced 4–6 weeks before each season and sell out.</td></tr>
+  </table>
+
+  <h2>Your unfair advantages</h2>
+  <ul>
+    <li><b>Focus.</b> The big sites can't justify building CCEA-specific labs. You can, and already have.</li>
+    <li><b>Cost.</b> Your running costs are close to £0, so you can stay free for longer than anyone.</li>
+    <li><b>Story.</b> A student building the thing they needed is easy to trust and easy to share.</li>
+    <li><b>Peers.</b> You're in the same year group as your customers, so you can see what's hard and what's coming up in real time.</li>
+  </ul>
+
+</section>
+
+<!-- ============ 6. OFFERS ============ -->
+<section class="sec" id="s6">
+  <p class="kicker">Section 6</p>
+  <h1>Offers and pricing</h1>
+
+  <h2>The product ladder</h2>
+  <table>
+    <tr><th style="width:17%">Offer</th><th>What's in it</th><th class="r" style="width:16%">Price</th><th style="width:22%">Rules</th></tr>
+    <tr><td><b>BcsMaths Free</b></td><td>Everything on the site today: all 12 units, textbook, drills, labs, mock tests, tutor</td><td class="r">£0</td><td>Never paywall anything that is free today.</td></tr>
+    <tr><td><b>1:1 tutoring</b></td><td>60 minutes online. A goal set at the start, homework set on BcsMaths, and a short progress note to the parent after each session.</td><td class="r">£20 / hour<br>5 hours £90</td><td>Raise to £22–£25 once you're fully booked for 3 weeks running or have 10 reviews.</td></tr>
+    <tr><td><b>Mock Ready</b> (January)</td><td>4 × 75-minute online group sessions on one unit's most-examined topics, plus a timed mock in the last session</td><td class="r">£30 / student</td><td>Max 8 students. Run only if 5 or more sign up.</td></tr>
+    <tr><td><b>Easter Intensive</b></td><td>5 × 90-minute sessions over the Easter break: one AS unit, start to finish, with exam technique</td><td class="r">£45 / student</td><td>Max 10. Two courses only, in units you're sitting yourself.</td></tr>
+    <tr><td><b>Head Start</b> (September)</td><td>4 sessions for new Year 13s: how A level differs from GCSE, and how to use BcsMaths</td><td class="r">£35 / student</td><td>Run after results day. Your results are the advert.</td></tr>
+    <tr><td><b>BcsMaths Pro</b></td><td>Progress synced across devices, printable topic packs, original full-length mock papers with mark schemes, an exam countdown planner</td><td class="r">£4.99 / month<br>£29 / year</td><td>Only once accounts work. The free course stays complete.</td></tr>
+    <tr><td><b>School licence</b></td><td>Class codes, a teacher view, printable homework sets</td><td class="r">£149 / dept / year</td><td>Pilot free with 2 schools first. Sell from September 2027 at the earliest.</td></tr>
+  </table>
+
+  <h2>Pricing logic</h2>
+  <ul>
+    <li><b>Groups beat 1:1 on your time.</b> 8 students × £30 over 5 hours is £48 per hour of your time; 1:1 is £20. Use 1:1 to fill gaps and get reviews, and put your effort into groups.</li>
+    <li><b>Start low, raise on proof.</b> You're a sixth-former competing with graduates. £20 is fair now. Results and reviews let you charge more later.</li>
+    <li><b>Annual Pro is the main option.</b> £29 a year is about 6 months of the monthly price. Students think in school years, so sell "the year until your exams".</li>
+    <li><b>No discounts without a reason:</b> siblings, a 5-hour block or early Easter booking only.</li>
+    <li><b>Refunds:</b> full refund before a course starts; after that, a credit for the next course. Put this in writing before anyone pays.</li>
+  </ul>
+
+  <h2>What a good session or course must deliver</h2>
+  <ol>
+    <li>A clear goal for that session ("You can do any CCEA SHM question by the end").</li>
+    <li>Practice that marks itself, set on BcsMaths, with scores you can see.</li>
+    <li>A two-line progress note to the parent: what was covered, what's next, the drill score.</li>
+    <li>At the end of a course, one timed mock and a before-and-after score. That's your review material (section 8).</li>
+  </ol>
+</section>
+
+<!-- ============ 7. GO TO MARKET ============ -->
+<section class="sec" id="s7">
+  <p class="kicker">Section 7</p>
+  <h1>Getting users and customers</h1>
+  <p class="lead">Two channels every week beat seven done badly: your school network and short videos. Everything else supports them.</p>
+
+  <h2>Channels, ranked by return on your time</h2>
+  <table>
+    <tr><th>#</th><th style="width:22%">Channel</th><th>What to do</th><th style="width:20%">Weekly effort</th></tr>
+    <tr><td>1</td><td><b>Your school and friends' schools</b></td><td>Share the link in year group chats and with friends at other schools. Ask each person to pass it on.</td><td>30 min</td></tr>
+    <tr><td>2</td><td><b>Short video</b> (TikTok first; cross-post the same clip to Instagram Reels and YouTube Shorts)</td><td>3 clips a week, 20–40 s each: a sim solving an exam-style question, "the one CCEA mistake everyone makes", a 30-second derivation. Every clip ends with the URL on screen.</td><td>2 h (batch on one day)</td></tr>
+    <tr><td>3</td><td><b>Teachers</b></td><td>Email 5 heads of Maths or Physics a week (section 16). Offer free use; ask for error reports.</td><td>30 min</td></tr>
+    <tr><td>4</td><td><b>Email list</b></td><td>A sign-up box: "Get the free printable CCEA A2 1 checklist". Send one useful email a fortnight, and announce courses here first.</td><td>30 min</td></tr>
+    <tr><td>5</td><td><b>Parents</b> (for tutoring)</td><td>Local community or parent groups, only where the group rules allow it. One honest post per term with the offer and a review.</td><td>15 min</td></tr>
+    <tr><td>6</td><td><b>Search</b> (long term)</td><td>Landing pages for each unit and topic (section 9). It compounds slowly and then pays for years.</td><td>Build once in summer</td></tr>
+  </table>
+
+  <h2>Content that works</h2>
+  <div class="cols">
+    <div>
+      <h3>Formats</h3>
+      <ul>
+        <li><b>"Watch it move"</b>: screen-record a physics lab (SHM, projectiles, capacitors) for 20 seconds, then the exam question it answers.</li>
+        <li><b>"The trap"</b>: one common mistake per unit, shown and fixed.</li>
+        <li><b>"60-second proof"</b>: a Further Maths derivation done fast.</li>
+              </ul>
+    </div>
+    <div>
+      <h3>Rules</h3>
+      <ul>
+        <li>First 2 seconds: the answer or the sim moving.</li>
+        <li>One idea per clip.</li>
+        <li>Subtitles always. Most people watch muted.</li>
+                <li>Never show other students' faces or names without permission.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>The funnel and the numbers to watch</h2>
+  <table>
+    <tr><th>Step</th><th>What happens</th><th class="r">Target (estimate)</th></tr>
+        <tr><td>Visit</td><td>Weekly unique visitors to the site</td><td class="r">500 / week by Easter</td></tr>
+    <tr><td>Capture</td><td>Join the email list</td><td class="r">5% of visitors</td></tr>
+    <tr><td>Buy</td><td>Book tutoring or a course seat</td><td class="r">3–5% of the email list per season</td></tr>
+    <tr><td>Return</td><td>Re-book, buy the next course, refer a friend</td><td class="r">1 in 3 customers</td></tr>
+  </table>
+
+  <h2>Referrals</h2>
+  <p>After a course, give each student a code: a friend who books gets £5 off, and so does the referrer's next course. Never tie the reward to writing a review (section 8).</p>
+</section>
+
+<!-- ============ 8. REVIEWS ============ -->
+<section class="sec" id="s8">
+  <p class="kicker">Section 8</p>
+  <h1>Reviews and social proof</h1>
+  <p class="lead">Parents buy on trust, and reviews are how you earn it. UK law now governs how you collect them, so do it properly from the first one.</p>
+
+  <div class="box heavy">
+    <p class="label">The law, in short</p>
+    <p>Since <b>6 April 2025</b>, the Digital Markets, Competition and Consumers Act 2024 bans fake reviews outright. That includes writing them, paying or rewarding someone for a review without making that clear, and presenting reviews in a misleading way (for example, hiding the bad ones). Businesses that show reviews must take reasonable steps to stop fake ones. Penalties can reach 10% of global turnover. The CMA's guidance is CMA208.</p>
+  </div>
+
+  <h2>How to get real reviews</h2>
+  <ol>
+    <li><b>Ask at the high point.</b> Right after a course's final mock, when the before-and-after score is on screen, or right after results day.</li>
+    <li><b>Ask everyone, not just the happy ones.</b> Asking only satisfied customers counts as cherry-picking.</li>
+    <li><b>Make it 60 seconds.</b> Three questions: what was hard before, what changed, would you recommend it and to whom.</li>
+    <li><b>Get permission to publish,</b> and how they want to be named: first name and school year, or anonymous. Parents give permission for under-18s.</li>
+    <li><b>Keep the evidence:</b> every review saved with its date and source.</li>
+    <li><b>Show the average honestly.</b> If you show a rating, show the number of reviews next to it, and don't remove fair negatives.</li>
+  </ol>
+
+  <h2>Where to put them</h2>
+  <p>Three short quotes on the home and tutoring pages; a before-and-after mock score on course pages (with permission); a Google Business Profile so parents searching locally see real reviews.</p>
+
+  <h2>Other proof that counts as much</h2>
+  <table>
+    <tr><th>Proof</th><th>How to get it</th></tr>
+    <tr><td>Teacher spot-check</td><td>Ask 2–3 teachers to review one unit each for accuracy. With permission: "Unit checked by a Head of Maths."</td></tr>
+    <tr><td>Public error log</td><td>A short "Fixed this week" list. Shows you care about accuracy and makes reporting errors normal.</td></tr>
+    <tr><td>Usage numbers</td><td>Once analytics run: "Used by 1,200 CCEA students this term". Only real, current numbers.</td></tr>
+    <tr><td>Your results</td><td>After results day, only if you're comfortable sharing, and only what's true.</td></tr>
+  </table>
+
+  <h2>Never</h2>
+  <ul>
+    <li>Write reviews yourself, or get friends or family to write ones that aren't based on real use.</li>
+    <li>Offer discounts, freebies or entry into a prize draw in return for a <i>positive</i> review. Any incentive must be disclosed, and no incentive should depend on the rating.</li>
+    <li>Swap reviews with other tutors or sites.</li>
+    <li>Show only the five-star ones, or invent a rating.</li>
+  </ul>
+</section>
+
+<!-- ============ 9. PRODUCT ROADMAP ============ -->
+<section class="sec" id="s9">
+  <p class="kicker">Section 9</p>
+  <h1>Product and tech roadmap</h1>
+  <p class="lead">Build only what unlocks users or money. Everything else waits.</p>
+
+  <h2>Build list, in order</h2>
+  <table>
+    <tr><th>#</th><th style="width:25%">Build</th><th>Why</th><th style="width:16%">When</th></tr>
+    <tr><td>1</td><td><b>Analytics</b> (cookie-free)</td><td>You can't grow what you can't measure. Use a free, privacy-friendly tool such as Cloudflare Web Analytics, which needs no cookie banner.</td><td>This week</td></tr>
+    <tr><td>2</td><td><b>Custom domain</b></td><td>Looks real, is easy to say out loud, and survives a host change. About £10–£15 a year (estimate).</td><td>November</td></tr>
+    <tr><td>3</td><td><b>Tutoring and courses page</b>: booking link and payment links</td><td>Lets you take money without writing payment code. Use a booking tool with a free plan and Stripe Payment Links.</td><td>November</td></tr>
+    <tr><td>4</td><td><b>Email sign-up</b> plus a free printable checklist</td><td>Builds your own audience, so you're not dependent on any one app.</td><td>November</td></tr>
+    <tr><td>5</td><td><b>"Report an error" button</b> on every chapter and lab</td><td>Accuracy, trust and free quality control.</td><td>December</td></tr>
+    <tr><td>6</td><td><b>Landing pages</b>, one real page per unit and per major topic</td><td>The app's # links are mostly invisible to Google. Real pages (for example /ccea-a2-1-maths/) with titles, text and a sitemap make the content findable.</td><td>July 2027</td></tr>
+    <tr><td>7</td><td><b>Accounts</b> with cloud sync</td><td>Needed for Pro and schools. Use a hosted login service with a free tier rather than building your own.</td><td>July 2027</td></tr>
+    <tr><td>8</td><td><b>Pro features</b>: printable packs, original mock papers, sync</td><td>The paid tier.</td><td>August 2027</td></tr>
+    <tr><td>9</td><td><b>Teacher view</b> and class codes</td><td>School licences.</td><td>Autumn 2027</td></tr>
+  </table>
+
+  <h2>Running costs</h2>
+  <table>
+    <tr><th>Item</th><th class="r">Cost</th><th>Note</th></tr>
+    <tr><td>Hosting (Netlify)</td><td class="r">£0</td><td>Fine at this scale</td></tr>
+    <tr><td>Domain</td><td class="r">≈ £10–£15 / year</td><td>Estimate. Varies by registrar.</td></tr>
+    <tr><td>Card payments (Stripe, UK cards)</td><td class="r">1.5% + 20p each</td><td>On a £30 course: about 65p</td></tr>
+    <tr><td>ICO data protection fee</td><td class="r">£52 / year</td><td>Tier 1, if it applies (section 10)</td></tr>
+    <tr><td>AccessNI basic check</td><td class="r">£16 once</td><td>Recommended for tutoring</td></tr>
+    <tr><td>Analytics, booking, email (free plans)</td><td class="r">£0</td><td>Upgrade only when a limit actually stops you</td></tr>
+    <tr class="total"><td>Total fixed for year one</td><td class="r">≈ £78–£83</td><td>Plus card fees on each sale</td></tr>
+  </table>
+
+  <h2>Don't build (yet)</h2>
+  <ul>
+    <li>Other exam boards or GCSE content: focus is your edge.</li>
+    <li>An app-store app: the website already works on phones.</li>
+    <li>AI features that cost money per use, before anyone pays you.</li>
+  </ul>
+</section>
+
+<!-- ============ 10. LEGAL ============ -->
+<section class="sec" id="s10">
+  <p class="kicker">Section 10</p>
+  <h1>Legal and admin</h1>
+  <p class="lead">None of this is hard, but skipping it can sink a small business. Do the top five before taking your first payment.</p>
+
+  <table>
+    <tr><th style="width:19%">Area</th><th>What to do</th><th style="width:15%">When</th></tr>
+    <tr><td><b>Taking card payments</b></td><td>If you're under 18, Stripe requires a parent or legal guardian to be added as the account owner before the account can accept charges or pay out. Set it up with a parent from day one.</td><td>Before the first sale</td></tr>
+    <tr><td><b>Tax (HMRC)</b></td><td>Your first £1,000 of trading income in a tax year (6 April to 5 April) is covered by the trading allowance. Go over £1,000 and you must register for Self Assessment by 5 October after that tax year. Profit under your Personal Allowance usually means no income tax, but you still have to register and file. Keep a record of every payment and expense from the start.</td><td>Start records now; register when you pass £1,000</td></tr>
+    <tr><td><b>Data protection</b></td><td>Write a plain-English privacy notice: what you collect (email, booking details), why, and for how long. Collect the minimum. Use the ICO's online self-assessment to see whether you must pay the data protection fee (Tier 1 is £52 a year).</td><td>Before collecting emails</td></tr>
+    <tr><td><b>Children's privacy</b></td><td>Your users are mostly under 18, so the ICO's Children's Code (Age Appropriate Design Code) applies to the site. In practice: high privacy by default, no tracking cookies, no nudges to share data, clear wording.</td><td>With the privacy notice</td></tr>
+    <tr><td><b>Copyright: CCEA material</b></td><td>Never host past papers or mark schemes; link to CCEA's site. The site quotes specification outcomes word for word, which is fine for a free resource but riskier once you charge. Before launching Pro, email CCEA asking permission to quote the specification, or reword the outcomes in your own words.</td><td>Before Pro (summer 2027)</td></tr>
+    <tr><td><b>CCEA name and logo</b></td><td>"For CCEA A level" is fine as a description. No logo, no implied endorsement; keep the "not affiliated" notice.</td><td>Already done; keep it</td></tr>
+    <tr><td><b>Terms and refunds</b></td><td>One page: what's included, cancellation, the refund rule (section 6) and the session rules. UK distance-selling rules give buyers a 14-day cancellation right unless they ask you to start sooner; ask for and record that request at checkout.</td><td>Before the first sale</td></tr>
+    <tr><td><b>Safeguarding</b> (tutoring under-18s)</td><td>Get a parent's OK before the first session. Run sessions online on a platform the parent knows about, and keep messages where a parent can see them. Never meet alone in private. Get an AccessNI basic check (£16) and say so on your tutoring page.</td><td>Before the first session</td></tr>
+    <tr><td><b>Claims you make</b></td><td>Don't promise grades. "Students improved their mock scores by X" is fine only if it's true and you can show it.</td><td>Always</td></tr>
+    <tr><td><b>Fake reviews</b></td><td>Banned since 6 April 2025 (section 8).</td><td>Always</td></tr>
+  </table>
+
+  <div class="box grey">
+    <p class="label">Admin habits that save you later</p>
+    <ul style="margin:0">
+      <li>A separate bank account (with a parent if needed) used only for BcsMaths money.</li>
+      <li>A simple spreadsheet: date, customer (initials), what, amount, fee, method. Update it the same day.</li>
+            <li>One folder for permissions: review consents, parent OKs, teacher quote approvals.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 11. MONEY ============ -->
+<section class="sec" id="s11">
+  <p class="kicker">Section 11</p>
+  <h1>Money: costs, projections, the path to £1K and £5K</h1>
+  <p class="lead">These are estimates built from the prices in section 6 and hours that fit around school. Change the inputs and you change the outcome. The structure is what matters.</p>
+
+  <h2>Base case, November 2026 to October 2027</h2>
+  <table>
+    <tr><th>Stream</th><th>Assumptions</th><th class="r">Revenue</th></tr>
+    <tr><td>1:1 tutoring, term time</td><td>Nov–Apr: 22 weeks × 3 h × £20</td><td class="r">£1,320</td></tr>
+    <tr><td>1:1 tutoring, summer and autumn</td><td>Jul–Oct: 17 weeks × 5 h × £22</td><td class="r">£1,870</td></tr>
+    <tr><td>Mock Ready (January)</td><td>2 groups × 8 students × £30</td><td class="r">£480</td></tr>
+    <tr><td>Easter Intensive</td><td>2 courses × 10 students × £45</td><td class="r">£900</td></tr>
+    <tr><td>Head Start (September)</td><td>2 groups × 10 students × £35</td><td class="r">£700</td></tr>
+    <tr><td>BcsMaths Pro</td><td>Aug–Oct: about 25 subscribers on average × £4.99 × 3 months</td><td class="r">£374</td></tr>
+    <tr class="total"><td>Total revenue</td><td></td><td class="r">£5,644</td></tr>
+    <tr><td>Less card fees</td><td>About 2–2.5% of sales</td><td class="r">−£130</td></tr>
+    <tr><td>Less fixed costs</td><td>Domain, ICO fee, AccessNI check</td><td class="r">−£85</td></tr>
+    <tr class="total"><td>Profit before tax (estimate)</td><td></td><td class="r">≈ £5,430</td></tr>
+  </table>
+
+  <h2>Three scenarios</h2>
+  <table>
+    <tr><th>Scenario</th><th>What's different</th><th class="r">Revenue (12 months)</th></tr>
+    <tr><td>Conservative</td><td>Half the course seats, 2 h a week of tutoring, 10 Pro subscribers</td><td class="r">≈ £2,800</td></tr>
+    <tr><td><b>Base</b></td><td>As above</td><td class="r"><b>≈ £5,640</b></td></tr>
+    <tr><td>Strong</td><td>One extra course each season, 5 h a week of tutoring in term and 8 h from summer at £25, 60 Pro subscribers. Breaks the time cap, so only if your study is on track.</td><td class="r">≈ £9,600</td></tr>
+  </table>
+
+  <h2>The path to £1K and £5K (base case, cumulative)</h2>
+  <table>
+    <tr><th>By the end of</th><th>Where it came from</th><th class="r">Cumulative</th></tr>
+    <tr><td>December 2026</td><td>Tutoring, ~8 weeks</td><td class="r">£480</td></tr>
+    <tr><td><b>January 2027</b></td><td>Tutoring plus Mock Ready</td><td class="r"><b>£1,200 ✓ £1K</b></td></tr>
+    <tr><td>April 2027</td><td>Tutoring plus Easter Intensive</td><td class="r">£2,700</td></tr>
+    <tr><td>June 2027</td><td>Exams: business paused</td><td class="r">£2,700</td></tr>
+    <tr><td>August 2027</td><td>Summer tutoring, Pro launch</td><td class="r">£3,740</td></tr>
+    <tr><td><b>September 2027</b></td><td>Head Start, tutoring, Pro</td><td class="r"><b>£5,040 ✓ £5K</b></td></tr>
+  </table>
+  <div class="box">
+    <p class="label">The honest bit</p>
+    <p>You could reach £5K before summer by adding more Easter courses and tutoring hours, but those hours would come out of your own AS revision in the most important weeks of the year. This plan deliberately doesn't do that. A strong AS result is worth more to BcsMaths than £1,500 earned in April.</p>
+  </div>
+
+  <h2>Unit economics</h2>
+  <ul>
+    <li><b>Tutoring hour:</b> £20 − 50p fee = £19.50 for about 1.25 h including prep: <b>≈ £15.60 an hour</b>.</li>
+    <li><b>Mock Ready group of 8:</b> £240 − £5.20 fees = £234.80 for about 7 h including prep: <b>≈ £33 an hour</b>.</li>
+    <li><b>Easter Intensive group of 10:</b> £450 − £8.75 fees = £441.25 for about 10 h including prep: <b>≈ £44 an hour</b>.</li>
+    <li><b>Pro subscriber:</b> no extra time per user. Every new subscriber is close to pure profit once it's built.</li>
+  </ul>
+</section>
+
+<!-- ============ 12. ROADMAP ============ -->
+<section class="sec" id="s12">
+  <p class="kicker">Section 12</p>
+  <h1>12-month roadmap and the first 90 days</h1>
+
+  <h2>Time budget: protect your grades</h2>
+  <table>
+    <tr><th>Period</th><th class="r">Business hours a week (max)</th><th>Rule</th></tr>
+    <tr><td>Term time, Nov–Mar</td><td class="r">7 h (tutoring included)</td><td>Business never goes in your study blocks</td></tr>
+    <tr><td>Easter holidays</td><td class="r">10 h</td><td>Teach only units you're sitting; it doubles as revision</td></tr>
+    <tr><td>April to end of exams</td><td class="r">0–1 h</td><td>Reply to messages, nothing new</td></tr>
+    <tr><td>Summer, Jul–Aug</td><td class="r">20–25 h</td><td>Build sprint: landing pages, accounts, Pro</td></tr>
+    <tr><td>Year 14 term time</td><td class="r">5 h</td><td>Mostly courses; keep 1:1 to a few slots</td></tr>
+  </table>
+
+  <h2>Month by month</h2>
+  <table>
+    <tr><th style="width:17%">Month</th><th>Focus</th><th style="width:28%">Done when</th></tr>
+    <tr><td>Nov 2026</td><td>Deploy; analytics; domain; tutoring page, booking and payments; privacy notice and terms; first 3 tutoring students</td><td>3 paying tutoring students</td></tr>
+    <tr><td>Dec 2026</td><td>Video habit (3 a week); email sign-up and checklist; announce Mock Ready; "report an error" button</td><td>Mock Ready has 10 or more sign-ups</td></tr>
+    <tr><td>Jan 2027</td><td>Run Mock Ready; first reviews; teacher emails start</td><td>£1K cumulative; 5 reviews</td></tr>
+    <tr><td>Feb 2027</td><td>Mock results bring demand: open Easter bookings early; teacher spot-checks</td><td>Easter courses 50% booked</td></tr>
+    <tr><td>Mar 2027</td><td>Fill Easter courses; keep tutoring steady</td><td>Easter courses full</td></tr>
+    <tr><td>Apr 2027</td><td>Run Easter Intensive; collect reviews; then stop</td><td>10 reviews in total</td></tr>
+    <tr><td>May–Jun 2027</td><td><b>Your AS exams.</b> Business on autopilot.</td><td>You did your best</td></tr>
+    <tr><td>Jul 2027</td><td>Build sprint: landing pages, sitemap, accounts</td><td>Unit pages indexed by Google</td></tr>
+    <tr><td>Aug 2027</td><td>Pro launch; results-day content; Head Start bookings</td><td>First 10 Pro subscribers</td></tr>
+    <tr><td>Sep 2027</td><td>Head Start courses; reach new Year 13s; school pilots</td><td>£5K cumulative</td></tr>
+    <tr><td>Oct 2027</td><td>Review this plan; set year-two targets; decide on the name</td><td>Plan v2 written</td></tr>
+  </table>
+
+  <h2 style="break-before: page; margin-top: 0">The first 90 days, week by week</h2>
+  <table>
+    <tr><th style="width:13%">Week</th><th>Do</th></tr>
+    <tr><td>1</td><td>Deploy the site and the bcs35 redirect. Add analytics. Note your starting visitor number.</td></tr>
+    <tr><td>2</td><td>Domain. Tutoring page (offer, price, safeguarding line, booking link). Stripe set up with a parent. Privacy notice and terms.</td></tr>
+    <tr><td>3</td><td>AccessNI check applied for. Tell 20 students and 5 teachers. Film your first 3 videos.</td></tr>
+    <tr><td>4</td><td>First tutoring sessions. Post 3 videos. Email sign-up box and checklist PDF live.</td></tr>
+    <tr><td>5</td><td>Announce Mock Ready (email, school chats, videos). Add the "report an error" button.</td></tr>
+    <tr><td>6</td><td>Teacher emails (5). Follow up anyone interested in Mock Ready. Videos.</td></tr>
+    <tr><td>7</td><td>Lock in the Mock Ready groups and dates; take payments. Prepare session 1.</td></tr>
+    <tr><td>8</td><td>Christmas break: write Mock Ready materials; batch-film 6 videos for January.</td></tr>
+    <tr><td>9</td><td>Run Mock Ready sessions 1–2. Tutoring continues.</td></tr>
+    <tr><td>10</td><td>Run sessions 3–4, final mock, before-and-after scores. Ask everyone for reviews.</td></tr>
+    <tr><td>11</td><td>Publish reviews (with permission). Open Easter bookings with an early-booking price.</td></tr>
+    <tr><td>12</td><td>Review the scorecard: what worked? Cut the weakest channel and double the best.</td></tr>
+    <tr><td>13</td><td>Write a one-page "90-day review" and update this plan.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 13. WHAT NOT TO DO ============ -->
+<section class="sec" id="s13">
+  <p class="kicker">Section 13</p>
+  <h1>What not to do</h1>
+  <p class="lead">Most small businesses don't fail from doing too little. They fail from doing the wrong things with confidence. Read this list before every big decision.</p>
+  <ol class="dont">
+    <li><b>Don't let the business cost you your grades.</b> Your results are the brand. Stick to the time budget in section 12, especially from April to June.</li>
+    <li><b>Don't build features before you sell.</b> The site already has more than enough. The next £1K comes from people and promotion, not code.</li>
+    <li><b>Don't put the free course behind a paywall.</b> Free is how students find you. Charge for extras, never for what's free today.</li>
+    <li><b>Don't fake, buy, swap or reward reviews.</b> It's been illegal since 6 April 2025, and one exposed fake review destroys trust in a small community where everyone talks.</li>
+    <li><b>Don't host CCEA past papers or mark schemes.</b> Link to CCEA's site. Their papers are their copyright.</li>
+    <li><b>Don't use the CCEA logo or imply they endorse you.</b> Keep the "not affiliated" notice.</li>
+    <li><b>Don't charge for Pro before accounts and sync exist.</b> Selling a subscription whose progress can vanish when someone clears their browser means refunds and anger.</li>
+    <li><b>Don't take payments in your own name if you're under 18.</b> Set up Stripe with a parent as account owner, and keep records from day one.</li>
+    <li><b>Don't promise grades.</b> "Guaranteed A*" is misleading and you can't control it. Promise structure, practice and honest feedback.</li>
+    <li><b>Don't spend money on ads yet.</b> No paid ads until you have 10 paying customers who found you for free, and know which message made them buy.</li>
+    <li><b>Don't be on every platform.</b> Your school network plus one short-video app, done every week, beats seven apps done badly.</li>
+    <li><b>Don't underprice or give everything away in DMs.</b> Free help that turns into hours of unpaid tutoring by message burns your time. Point people to the site or a session.</li>
+    <li><b>Don't expand to other exam boards or GCSE content.</b> Win CCEA A level first. Focus is your edge against the big sites.</li>
+    <li><b>Don't collect data you don't need, or track without a privacy notice.</b> Your users are children, so the bar is higher.</li>
+    <li><b>Don't publish AI-written or unchecked content.</b> One confident wrong answer in front of a teacher costs more than ten new pages gain.</li>
+    <li><b>Don't rebrand in the middle of the school year.</b> Keep "BcsMaths" through June 2027 and decide once, in October 2027, whether a wider name is worth the cost.</li>
+    <li><b>Don't sell to schools without proof.</b> Teachers buy evidence: usage numbers, accuracy checks, other teachers' opinions. Pilot free first.</li>
+    <li><b>Don't run a course that hasn't filled.</b> Set a minimum (5 students). Below it, refund, or turn it into 1:1 sessions.</li>
+    <li><b>Don't host chat or forums for under-18s.</b> Moderating them is a safeguarding responsibility you can't cover alone.</li>
+    <li><b>Don't measure vanity.</b> Views and followers don't pay. Track visitors, sign-ups, bookings and revenue.</li>
+    <li><b>Don't let the old bcs35 site die without the redirect.</b> Existing users and their progress need a path across. It's already built: deploy it.</li>
+  </ol>
+</section>
+
+<!-- ============ 14. RISKS ============ -->
+<section class="sec" id="s14">
+  <p class="kicker">Section 14</p>
+  <h1>Risks and how to handle them</h1>
+  <table>
+    <tr><th style="width:24%">Risk</th><th class="r" style="width:9%">Chance</th><th class="r" style="width:9%">Impact</th><th>What you do about it</th></tr>
+    <tr><td>Business time eats into revision</td><td class="r">High</td><td class="r">High</td><td>Hard weekly cap (section 12). Track study hours on the scorecard. Pause everything in exam season.</td></tr>
+    <tr><td>Nobody finds the site</td><td class="r">High</td><td class="r">High</td><td>Two channels done every week; landing pages in summer; teachers as multipliers.</td></tr>
+    <tr><td>An error in the content embarrasses you</td><td class="r">Medium</td><td class="r">High</td><td>"Report an error" button, teacher spot-checks, a public fix log, fixes within 24 hours.</td></tr>
+    <tr><td>Copyright complaint over spec quotes</td><td class="r">Low</td><td class="r">High</td><td>Ask CCEA for permission or reword before charging. Never host papers.</td></tr>
+    <tr><td>A course doesn't fill</td><td class="r">Medium</td><td class="r">Low</td><td>Minimum 5 students; announce 4–6 weeks early; refund or move to 1:1.</td></tr>
+    <tr><td>Safeguarding concern in tutoring</td><td class="r">Low</td><td class="r">Very high</td><td>Parent consent, transparent channels, AccessNI check, no private in-person meetings, written session rules.</td></tr>
+    <tr><td>Payment or tax mistakes</td><td class="r">Medium</td><td class="r">Medium</td><td>Parent on the account; same-day record keeping; register with HMRC once past £1,000.</td></tr>
+    <tr><td>A big site launches CCEA content</td><td class="r">Low</td><td class="r">Medium</td><td>Your edges stay: labs, focus, community and price. Move faster on landing pages and reviews.</td></tr>
+    <tr><td>Losing the site or code</td><td class="r">Low</td><td class="r">High</td><td>Fix GitHub access so the code is backed up off your laptop; keep the deploy zips.</td></tr>
+    <tr><td>Burnout (around 70-hour weeks)</td><td class="r">Medium</td><td class="r">High</td><td>Sunday is the only planning slot; batch content; drop the weakest channel every quarter.</td></tr>
+  </table>
+
+  <h2>Early warning signs</h2>
+  <ul>
+    <li>Two weeks in a row over your business-hours cap: cut tutoring slots first.</li>
+    <li>Visitors flat for four weeks: change the content format, not the volume.</li>
+    <li>A course below 50% booked two weeks out: message past customers and teachers directly, or postpone.</li>
+    <li>Any message from a parent about safety or conduct: reply the same day, calmly, in writing, and get advice if needed.</li>
+  </ul>
+
+  <h2>Decision rules</h2>
+  <div class="box">
+    <ul style="margin:0">
+      <li><b>Build or sell?</b> If it doesn't bring in users or money within 8 weeks, sell instead.</li>
+      <li><b>Say yes to a new idea?</b> Only if you drop something of equal size.</li>
+      <li><b>Raise prices?</b> When you're fully booked for 3 weeks running, or a course sells out in under a week.</li>
+      <li><b>Spend money?</b> Only if it's under £20 and saves an hour a week, or a customer is already waiting for it.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 15. SCORECARD ============ -->
+<section class="sec" id="s15">
+  <p class="kicker">Section 15</p>
+  <h1>Weekly scorecard</h1>
+  <p>Fill in every Sunday. Ten minutes. What gets measured gets done. Copy this page when it's full.</p>
+  <table class="fill">
+    <tr><th style="width:9%">Week of</th><th class="r">Visitors</th><th class="r">Email sign-ups</th><th class="r">Videos posted</th><th class="r">Tutoring hours</th><th class="r">Course seats sold</th><th class="r">Revenue (£)</th><th class="r">Reviews (total)</th><th class="r">Business hours</th><th class="r">Study hours</th></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <div class="cols">
+    <div>
+      <h3>Targets to beat</h3>
+      <ul>
+        <li>Visitors: up every 4 weeks</li>
+        <li>Sign-ups: 5% of visitors</li>
+        <li>Videos: 3 a week</li>
+        <li>Business hours: within the cap</li>
+        <li>Study hours: never below your plan</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Every Sunday, ask</h3>
+      <ol>
+        <li>What brought the most visitors this week?</li>
+        <li>What did a customer say that I can use?</li>
+        <li>What will I stop doing?</li>
+        <li>The one thing that matters most next week is: ____________</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 16. SCRIPTS ============ -->
+<section class="sec" id="s16">
+  <p class="kicker">Section 16</p>
+  <h1>Scripts and templates</h1>
+  <p>Adjust the words to sound like you. Keep them short.</p>
+
+  <h3>Email to a Head of Maths or Physics</h3>
+  <div class="script">
+    <p>Subject: Free CCEA A level resource. Would you check one unit?</p>
+    <p>Dear Mr/Ms ____,</p>
+    <p>I'm a Year 13 student at ____. I've built BcsMaths, a free site covering every CCEA A level Maths, Further Maths and Physics unit, point by point, with worked explanations, self-marking practice and interactive physics labs: [link].</p>
+    <p>It's independent of CCEA and links to their papers rather than copying them. I'd be grateful if you'd look at one unit and tell me anything that's wrong or unclear. I fix errors within a day. If you think it would help your students, you're welcome to share it.</p>
+    <p>Thank you for your time,<br>Ben Smith</p>
+  </div>
+
+  <h3>Message to a parent about tutoring</h3>
+  <div class="script">
+    <p>Hi ____, I'm Ben. I built BcsMaths, a free CCEA revision site, and I tutor GCSE and AS Maths, Further Maths and Physics online for £20 an hour. Each session has a set goal, homework on the site with scores you can see, and a short progress note to you afterwards. I'm AccessNI checked. Would a free 15-minute call to see if it's a good fit help?</p>
+  </div>
+
+  <h3>Course announcement (school chat or email)</h3>
+  <div class="script">
+    <p>Mocks in January? I'm running Mock Ready: 4 online sessions on [unit], covering the most-examined topics and finishing with a timed mock. Max 8 people, £30. Uses BcsMaths for practice between sessions. Book here: [link]. Closes [date].</p>
+  </div>
+
+  <h3>Review request (send to everyone after a course)</h3>
+  <div class="script">
+    <p>Thanks for doing Mock Ready. Could you answer three quick questions? 1) What did you find hard before? 2) What changed? 3) Would you recommend it, and to whom? Honest answers help most, including what I should improve. Can I quote you as "[first name], Year 13"? Just say if you'd rather stay anonymous.</p>
+  </div>
+
+  <h3>Short video structure (30 seconds)</h3>
+  <table>
+    <tr><th style="width:18%">Seconds</th><th>What's on screen</th></tr>
+    <tr><td>0–2</td><td>The answer or the sim moving. A big caption: "The CCEA SHM question everyone gets wrong".</td></tr>
+    <tr><td>2–20</td><td>The method in 3 steps, with the lab or the drill on screen.</td></tr>
+    <tr><td>20–27</td><td>The trap, and how to avoid it.</td></tr>
+    <tr><td>27–30</td><td>"Free, every CCEA unit:" plus the URL on screen.</td></tr>
+  </table>
+
+  <h3>Tutoring session rules (send before the first session)</h3>
+  <div class="script">
+    <p>Sessions are online on [platform]; a parent can join at any time. Messages go through [channel], visible to a parent. 24 hours' notice to reschedule, otherwise the session is charged.</p>
+  </div>
+</section>
+
+<!-- ============ 17. CHECKLIST ============ -->
+<section class="sec" id="s17">
+  <p class="kicker">Section 17</p>
+  <h1>Launch checklist</h1>
+  <div class="cols">
+    <div>
+      <h3>Site</h3>
+      <ul class="check">
+        <li>New BcsMaths zip deployed on Netlify</li>
+        <li>bcs35 redirect deployed</li>
+        <li>Old physics progress exported (yours)</li>
+        <li>Cookie-free analytics live</li>
+        <li>Custom domain connected</li>
+        <li>Email sign-up box plus free checklist PDF</li>
+        <li>"Report an error" button</li>
+        <li>Tutoring and courses page</li>
+        <li>Privacy notice page</li>
+        <li>Terms and refunds page</li>
+        <li>GitHub access fixed, code backed up</li>
+      </ul>
+      <h3>Money and admin</h3>
+      <ul class="check">
+        <li>Stripe set up with a parent as account owner</li>
+        <li>Payment links for tutoring and each course</li>
+        <li>Booking link (free plan)</li>
+        <li>Separate bank account</li>
+        <li>Income and expenses spreadsheet</li>
+        <li>ICO self-assessment done (pay £52 if required)</li>
+        <li>AccessNI basic check (£16)</li>
+        <li>HMRC: register when you pass £1,000 in a tax year</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Trust</h3>
+      <ul class="check">
+        <li>Review request message saved</li>
+        <li>Consent wording for quoting reviews</li>
+        <li>Permissions folder set up</li>
+        <li>2–3 teachers asked to spot-check a unit</li>
+        <li>Public "fixed this week" log</li>
+        <li>Google Business Profile for tutoring</li>
+      </ul>
+      <h3>Marketing</h3>
+      <ul class="check">
+        <li>Short-video account set up with the URL in the bio</li>
+        <li>First 9 videos filmed (3 weeks' worth)</li>
+        <li>Posting days fixed in your calendar</li>
+        <li>20 students and 5 teachers told</li>
+        <li>Mock Ready dates, price and booking link</li>
+        <li>Easter Intensive dates set before February</li>
+        <li>Referral code wording</li>
+      </ul>
+      <h3>Before Pro (summer 2027)</h3>
+      <ul class="check">
+        <li>CCEA asked about quoting spec text, or outcomes reworded</li>
+        <li>Accounts and cloud sync working</li>
+        <li>Landing pages and sitemap live</li>
+        <li>Pro features tested by 5 real students</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 18. SOURCES ============ -->
+<section class="sec" id="s18">
+  <p class="kicker">Section 18</p>
+  <h1>Sources</h1>
+  <p class="small">Checked in October 2026. Rules and prices change: confirm anything legal, tax or financial before relying on it.</p>
+  <ul class="src">
+    <li>CCEA, Provisional Entries by Year Group, Summer 2026, key headlines (A level Maths 3,655 entries; total A level entries 33,740, up 4.5% from 32,270): ccea.org.uk/downloads/docs/regulation/statistics/general/Provisional Entries by Year Group/2026/Summer/</li>
+    <li>JCQ, Northern Ireland GCE Results 2026 press release: jcq.org.uk/wp-content/uploads/sites/2/2026/08/JCQ-Northern-Ireland-GCE-Results-2026-Press-Release.pdf</li>
+    <li>CCEA GCE Physics (2016) specification: ccea.org.uk/downloads/docs/Specifications/GCE/GCE Physics (2016)/</li>
+    <li>Stripe UK card pricing, 1.5% + 20p for standard UK cards (via Airwallex, February 2026, and Wise guides): airwallex.com/en-uk/blog/stripe-payment-fees-explained · wise.com/gb/blog/stripe-payments-charges-uk</li>
+    <li>Stripe, age requirement to create an account (under-18s need a legal guardian as account owner): support.stripe.com/questions/age-requirement-to-create-a-stripe-account</li>
+    <li>ICO data protection fee rise to £52 for Tier 1 (February 2025): lewissilkin.com/insights/2025/02/06/fee-payable-to-the-ico-to-increase-in-february-102jzb9</li>
+    <li>DMCC Act 2024 fake-review ban, in force 6 April 2025; CMA guidance CMA208: cms.law/en/gbr/legal-updates/no-more-faux-five-stars-the-dmcc-act-bans-fake-reviews · rpclegal.com/snapshots/consumer/spring-2025/cma-guidance-on-unfair-commercial-practices-under-the-dmcca/</li>
+    <li>HMRC £1,000 trading allowance and 5 October registration deadline (summaries): which.co.uk/news/article/could-your-christmas-side-hustle-land-you-with-a-tax-bill-aGK607i5p4qO · bytestart.co.uk/self-employed-tax/trading-allowance/ (confirm on GOV.UK)</li>
+    <li>AccessNI basic check, £16: nidirect.gov.uk/articles/costs-and-turnaround-times</li>
+    <li>NI tutoring price ranges (directory estimates, not verified rates): bizhub365.com/find/private-tutor/belfast/cost/ and the equivalent pages for other NI towns</li>
+    <li>Save My Exams CCEA listings (past papers only for CCEA Maths and Physics in our check): savemyexams.com</li>
+    <li>Maths Genie, CCEA A level Further Maths pages: mathsgenie.co.uk/a-level/further-maths/ccea</li>
+  </ul>
+  <hr class="rule">
+  <p class="small muted">BcsMaths is an independent study resource and is not affiliated with or endorsed by CCEA. This plan is for planning only and is not legal, tax or financial advice.</p>
+</section>
+
+</body>
+</html>
