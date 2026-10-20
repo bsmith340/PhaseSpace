@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Phase Space has moved to BcsMaths</title>
+<meta name="description" content="Phase Space is now part of BcsMaths: every CCEA Physics lab, note, drill and mock test, alongside Maths and Further Maths.">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://bcsmath.netlify.app/#/physics">
+<noscript><meta http-equiv="refresh" content="0; url=https://bcsmath.netlify.app/#/physics"></noscript>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='.4' y2='1'%3E%3Cstop offset='0' stop-color='%23ffa53a'/%3E%3Cstop offset='1' stop-color='%23e8590c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Ctext x='16' y='22.5' font-family='-apple-system,Helvetica,Arial' font-weight='700' font-size='18' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<style>
+/* Old Phase Space address: tells visitors where the physics went, keeps deep links, and lets them take their progress with them. */
+:root {
+  --bg: #f5f5f7; --panel: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --ctl: rgba(118, 118, 128, .12); --ctl2: rgba(118, 118, 128, .2);
+  --accent: #b8520a; --fill: #b8520a; --on: #ffffff; --good: #248a3d;
+  --grad: linear-gradient(100deg, #d9480f 0%, #ff8a00 55%, #ff375f 100%);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 6px 20px rgba(0, 0, 0, .05);
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Inter, system-ui, "Segoe UI", sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #000000; --panel: #1c1c1e; --text: #f5f5f7; --muted: #a1a1a6; --ctl: rgba(118, 118, 128, .24); --ctl2: rgba(118, 118, 128, .36); --accent: #ff9f0a; --fill: #ff9f0a; --on: #1d1d1f; --good: #30d158; --shadow: 0 0 0 1px rgba(255, 255, 255, .06); color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--text); font: 400 1.0625rem/1.5 var(--sans); letter-spacing: -.012em; -webkit-font-smoothing: antialiased; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; }
+main { width: 100%; max-width: 600px; padding-block: max(40px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px)); padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 18px; text-align: center; }
+.logo { width: 72px; height: 72px; margin: 0 auto 6px; border-radius: 18px; display: grid; place-items: center; color: #fff; font: 700 2.2rem/1 var(--sans); background: linear-gradient(150deg, #2997ff, #7a3fd8 55%, #ff8a00); box-shadow: 0 10px 30px rgba(122, 63, 216, .25); }
+.kicker { margin: 0; color: var(--muted); font-weight: 600; font-size: .92rem; }
+h1 { margin: 0; font-size: clamp(2.1rem, 7.5vw, 3.2rem); line-height: 1.06; letter-spacing: -.035em; text-wrap: balance; }
+h1 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { margin: 0 auto; color: var(--muted); font-size: clamp(1.05rem, 2.6vw, 1.22rem); line-height: 1.42; max-width: 34ch; }
+.go { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin: 8px auto 0; padding: 14px 30px; border-radius: 980px; background: var(--fill); color: var(--on); font: 600 1.08rem var(--sans); letter-spacing: -.015em; text-decoration: none; transition: transform .1s ease-out, filter .2s; }
+.go:hover { filter: brightness(1.06); }
+.go:active { transform: scale(.97); }
+.go svg { width: 18px; height: 18px; }
+.addr { margin: 0; font: .9rem var(--mono); color: var(--muted); letter-spacing: 0; user-select: all; }
+#auto { margin: 0; font-size: .88rem; color: var(--muted); min-height: 1.4em; }
+#auto button { border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; padding: 0 2px; text-decoration: underline; text-underline-offset: .15em; }
+.card { background: var(--panel); border-radius: 18px; box-shadow: var(--shadow); padding: 22px; text-align: left; display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.card h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.02em; }
+.card p { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.5; }
+.card b { color: var(--text); font-weight: 600; }
+.card ol { margin: 0; padding-left: 1.25em; color: var(--muted); font-size: .95rem; display: flex; flex-direction: column; gap: 4px; }
+.save { align-self: flex-start; border: 0; border-radius: 980px; padding: 10px 20px; background: var(--ctl); color: var(--accent); font: 600 .98rem var(--sans); cursor: pointer; transition: background .2s, transform .1s ease-out; }
+.save:hover { background: var(--ctl2); }
+.save:active { transform: scale(.97); }
+.save.done { color: var(--good); }
+.foot { margin: 6px 0 0; font-size: .78rem; color: var(--muted); }
+a:focus-visible, button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .go, .save { transition: none; } .go:active, .save:active { transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="logo" aria-hidden="true">B</div>
+  <p class="kicker">Phase Space has moved</p>
+  <h1>Physics now lives on <span>BcsMaths</span></h1>
+  <p class="lead">Every lab, note, drill and mock test, in a new design, alongside Maths and Further Maths.</p>
+  <a class="go" id="go" href="https://bcsmath.netlify.app/#/physics">Go to BcsMaths <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <p class="addr">bcsmath.netlify.app</p>
+  <p id="auto" role="status"></p>
+
+  <section class="card" id="progress" hidden aria-labelledby="pg-h">
+    <h2 id="pg-h">Bring your progress with you</h2>
+    <p id="pg-sum">This browser has physics progress saved from Phase Space.</p>
+    <button class="save" id="save" type="button">Download my progress</button>
+    <ol>
+      <li>Download your progress file here.</li>
+      <li>On BcsMaths, open <b>Settings</b> and choose <b>Load progress file</b>.</li>
+    </ol>
+  </section>
+  <p class="foot">BcsMaths is an independent study resource, not affiliated with CCEA.</p>
+</main>
+<script>
+(() => {
+  const SITE = 'https://bcsmath.netlify.app/';
+  // old links keep working: #/waves/types → #/physics/waves/types, #/practice → #/physics/practice
+  const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  const first = parts[0] || '';
+  const route = !first ? 'physics' : first === 'settings' ? 'settings' : 'physics/' + parts.map(encodeURIComponent).join('/');
+  const target = SITE + '#/' + route;
+  const go = document.getElementById('go');
+  go.href = target;
+
+  // physics progress from the old site lives in this address's storage under ps:*
+  const read = k => { try { const v = localStorage.getItem('ps:' + k); return v == null ? null : JSON.parse(v); } catch (e) { return null; } };
+  const ticks = read('ticks') || {}, scores = read('scores') || {}, tests = read('tests') || [], set = read('set');
+  const nTicks = Object.values(ticks).filter(Boolean).length, nSecs = Object.keys(scores).length, nTests = Array.isArray(tests) ? tests.length : 0;
+  const hasProgress = nTicks + nSecs + nTests > 0;
+
+  if (hasProgress) {
+    const bits = [nSecs && `${nSecs} section${nSecs === 1 ? '' : 's'} practised`, nTicks && `${nTicks} spec outcome${nTicks === 1 ? '' : 's'} ticked`, nTests && `${nTests} mock test${nTests === 1 ? '' : 's'}`].filter(Boolean);
+    document.getElementById('pg-sum').innerHTML = `This browser has your Phase Space progress: <b>${bits.join(' · ')}</b>. It stays on this old address, so take a copy before you go.`;
+    document.getElementById('progress').hidden = false;
+    const btn = document.getElementById('save');
+    btn.addEventListener('click', () => {
+      // the same shape the old site's Settings → Export made, which BcsMaths loads
+      const data = { app: 'phase-space', at: new Date().toISOString(), ticks, scores, tests, set: set ? Object.assign({}, set, { apiKey: '' }) : {} };
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
+      a.download = `phase-space-progress-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      btn.textContent = 'Downloaded ✓ Now load it in BcsMaths Settings'; btn.classList.add('done');
+    });
+    return; // no automatic jump while there is progress to save
+  }
+
+  // nothing to save: send them on after a short pause, with a way to stay
+  const auto = document.getElementById('auto');
+  let n = 5, timer = 0;
+  const tick = () => { if (n <= 0) { location.replace(target); return; } auto.innerHTML = `Taking you there in ${n} s · <button type="button" id="stay">Stay here</button>`; document.getElementById('stay').onclick = () => { clearTimeout(timer); auto.textContent = ''; }; n--; timer = setTimeout(tick, 1000); };
+  tick();
+})();
+// a Phase Space install that cached the old site gets released, so the page above is what opens
+if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {});
+</script>
+</body>
+</html>
