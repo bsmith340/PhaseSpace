@@ -6,7 +6,7 @@ BOOK.m_log = [
   B.why(T`<p>To solve $2^x=10$ you need to bring $x$ down from the index. Logarithms do exactly that: a logarithm <i>is</i> an index. The three laws of logs are just the laws of indices read backwards.</p>`),
   B.def('logarithm', T`<p>For $a\gt0$, $a\ne1$ and $x\gt0$: $$\log_ax=y\iff a^y=x.$$ "$\log_ax$ is the power you raise $a$ to, to get $x$." So $\log_2 8=3$, $\log_{10}0.01=-2$, $\log_a a=1$, $\log_a1=0$. $\ln x$ means $\log_ex$.</p>`),
   B.thm('Laws of logarithms', T`$$\log_a(xy)=\log_ax+\log_ay,\qquad\log_a\!\left(\frac xy\right)=\log_ax-\log_ay,\qquad\log_a\!\left(x^k\right)=k\log_ax.$$`),
-  B.proof(T`<p>Let $p=\log_ax$ and $q=\log_ay$, so $x=a^p$ and $y=a^q$.</p><ul><li>$xy=a^pa^q=a^{p+q}$, so $\log_a(xy)=p+q$.</li><li>$\frac xy=a^{p-q}$, so $\log_a\frac xy=p-q$.</li><li>$x^k=(a^p)^k=a^{kp}$, so $\log_a x^k=kp$.</li></ul>`),
+  B.proofReq(T`<p>Let $p=\log_ax$ and $q=\log_ay$, so $x=a^p$ and $y=a^q$.</p><ul><li>$xy=a^pa^q=a^{p+q}$, so $\log_a(xy)=p+q$.</li><li>$\frac xy=a^{p-q}$, so $\log_a\frac xy=p-q$.</li><li>$x^k=(a^p)^k=a^{kp}$, so $\log_a x^k=kp$.</li></ul>`, 'Proof of the laws of logarithms'),
   B.tip(T`<p>Special cases: $\log_a\frac1x=-\log_ax$; $\log_a\sqrt x=\frac12\log_ax$. To solve $a^x=b$, take logs (any base) of both sides: $x\log a=\log b$, so $x=\dfrac{\log b}{\log a}$.</p>`),
   B.ex(1, T`Write $2\log3+\log4-\log6$ as a single logarithm.`, [
     T`$2\log3=\log9$.`,
@@ -58,7 +58,7 @@ BOOK.m_model = [
   B.thm('Linearising the two models', T`<table class="tbl"><tr><th>Model</th><th>Take logs</th><th>Plot</th><th>Gradient</th><th>Intercept</th></tr>
 <tr><td>$y=ax^n$</td><td>$\log y=\log a+n\log x$</td><td>$\log y$ against $\log x$</td><td>$n$</td><td>$\log a$</td></tr>
 <tr><td>$y=kb^x$</td><td>$\log y=\log k+x\log b$</td><td>$\log y$ against $x$</td><td>$\log b$</td><td>$\log k$</td></tr></table>`),
-  B.proof(T`<p>Apply the log laws: $\log(ax^n)=\log a+\log x^n=\log a+n\log x$. With $Y=\log y$ and $X=\log x$ this is $Y=nX+\log a$ — a straight line, gradient $n$, intercept $\log a$. Similarly $\log(kb^x)=\log k+x\log b$, a straight line in $x$ with gradient $\log b$.</p>`),
+  B.opt(T`<p>Apply the log laws: $\log(ax^n)=\log a+\log x^n=\log a+n\log x$. With $Y=\log y$ and $X=\log x$ this is $Y=nX+\log a$ — a straight line, gradient $n$, intercept $\log a$. Similarly $\log(kb^x)=\log k+x\log b$, a straight line in $x$ with gradient $\log b$.</p>`),
   B.tip(T`<p><b>Which model?</b> If $\log y$ against $x$ is straight, the model is exponential ($y=kb^x$). If $\log y$ against $\log x$ is straight, it's a power law ($y=ax^n$). Use the same base (10 or $e$) throughout, and remember to undo the log at the end: $a=10^{\text{intercept}}$ (or $e^{\text{intercept}}$).</p>`),
   B.ex(1, T`A graph of $\log_{10}y$ against $\log_{10}x$ is a straight line through $(1,1.3)$ and $(3,2.5)$. Find $y$ in terms of $x$.`, [
     T`Gradient $n=\frac{2.5-1.3}{3-1}=0.6$.`,
@@ -101,9 +101,9 @@ BOOK.m_dfp = [
     T`$h=0.01$: $\dfrac{3.01^2-9}{0.01}=\dfrac{0.0601}{0.01}=6.01$.`,
     T`The chord gradients approach $6$: the gradient at $x=3$ is $6$.`]),
   B.thm('Derivative of x²', T`<p>$\dfrac{d}{dx}(x^2)=2x$.</p>`),
-  B.proof(T`<p>$\dfrac{(x+h)^2-x^2}{h}=\dfrac{x^2+2xh+h^2-x^2}{h}=\dfrac{2xh+h^2}{h}=2x+h$. As $h\to0$, $2x+h\to2x$.</p>`),
+  B.proofReq(T`<p>$\dfrac{(x+h)^2-x^2}{h}=\dfrac{x^2+2xh+h^2-x^2}{h}=\dfrac{2xh+h^2}{h}=2x+h$. As $h\to0$, $2x+h\to2x$.</p>`, 'The gradient as a limit: x²'),
   B.thm('Derivative of x³', T`<p>$\dfrac{d}{dx}(x^3)=3x^2$.</p>`),
-  B.proof(T`<p>$(x+h)^3=x^3+3x^2h+3xh^2+h^3$, so $\dfrac{(x+h)^3-x^3}{h}=3x^2+3xh+h^2\to3x^2$ as $h\to0$.</p>`),
+  B.proofReq(T`<p>$(x+h)^3=x^3+3x^2h+3xh^2+h^3$, so $\dfrac{(x+h)^3-x^3}{h}=3x^2+3xh+h^2\to3x^2$ as $h\to0$.</p>`, 'The gradient as a limit: x³'),
   B.ex(2, T`Differentiate $f(x)=3x^2-4x$ from first principles.`, [
     T`$f(x+h)=3(x+h)^2-4(x+h)=3x^2+6xh+3h^2-4x-4h$.`,
     T`$f(x+h)-f(x)=6xh+3h^2-4h$.`,
@@ -136,7 +136,7 @@ BOOK.m_dfp = [
 BOOK.m_dx = [
   B.why(T`<p>First principles is the foundation; the power rule is the tool. Once every term is written as $ax^n$, differentiating is instant — and with the gradient in hand you can write down the tangent and normal to a curve at any point.</p>`),
   B.thm('Power rule', T`$$\frac{d}{dx}\left(ax^n\right)=anx^{n-1}\quad\text{for any rational }n,\qquad\frac{d}{dx}(f+g)=f'+g',\qquad\frac{d}{dx}(c)=0.$$`),
-  B.proof(T`<p>For positive integer $n$, the binomial expansion gives $(x+h)^n=x^n+nx^{n-1}h+\binom n2x^{n-2}h^2+\dots$, so $\frac{(x+h)^n-x^n}{h}=nx^{n-1}+(\text{terms containing }h)\to nx^{n-1}$. (The result holds for all rational $n$; you may use it.) Constants have zero gradient, and the limit of a sum is the sum of the limits.</p>`, 'Why the power rule works (positive integers)'),
+  B.opt(T`<p>For positive integer $n$, the binomial expansion gives $(x+h)^n=x^n+nx^{n-1}h+\binom n2x^{n-2}h^2+\dots$, so $\frac{(x+h)^n-x^n}{h}=nx^{n-1}+(\text{terms containing }h)\to nx^{n-1}$. (The result holds for all rational $n$; you may use it.) Constants have zero gradient, and the limit of a sum is the sum of the limits.</p>`, 'Why the power rule works (positive integers)'),
   B.def('second derivative', T`<p>$f''(x)=\dfrac{d^2y}{dx^2}$ is the derivative of the derivative — the rate at which the gradient changes.</p>`),
   T`<h3>1. Rewrite, then differentiate</h3><p>Turn roots into fractional powers and divisions into negative powers <b>first</b>; multiply out brackets; split fractions over a single-term denominator.</p>`,
   B.ex(1, T`Differentiate $y=4x^3-\dfrac3x+2\sqrt x$.`, [
@@ -181,7 +181,7 @@ BOOK.m_stat = [
   B.why(T`<p>Where a smooth curve turns, its gradient is zero. Finding those points — and deciding whether they are maxima or minima — lets you answer real optimisation problems: the biggest box from a sheet of card, the cheapest can for a given volume, the largest field for a given fence.</p>`),
   B.def('stationary point', T`<p>A point where $\dfrac{dy}{dx}=0$. A function is <b>increasing</b> on an interval where $f'(x)\gt0$ and <b>decreasing</b> where $f'(x)\lt0$.</p>`),
   B.thm('Classifying stationary points', T`<p>At a stationary point $x=a$:</p><ul><li>$f''(a)\gt0$ $\Rightarrow$ local <b>minimum</b> (gradient increasing through zero: $-,0,+$);</li><li>$f''(a)\lt0$ $\Rightarrow$ local <b>maximum</b> ($+,0,-$);</li><li>$f''(a)=0$ $\Rightarrow$ inconclusive: check the sign of $f'$ just either side.</li></ul>`),
-  B.proof(T`<p>$f''$ is the rate of change of the gradient. If $f''(a)\gt0$ the gradient is increasing through $x=a$, so it goes from negative to positive: the curve falls then rises — a minimum. The other case is the mirror image.</p>`, 'Why the second-derivative test works'),
+  B.opt(T`<p>$f''$ is the rate of change of the gradient. If $f''(a)\gt0$ the gradient is increasing through $x=a$, so it goes from negative to positive: the curve falls then rises — a minimum. The other case is the mirror image.</p>`, 'Why the second-derivative test works'),
   B.ex(1, T`Find and classify the stationary points of $y=x^3-6x^2+9x+1$.`, [
     T`$\dfrac{dy}{dx}=3x^2-12x+9=3(x-1)(x-3)=0\Rightarrow x=1,3$.`,
     T`$x=1$: $y=5$; $x=3$: $y=1$.`,
@@ -229,7 +229,7 @@ BOOK.m_stat = [
 BOOK.m_int = [
   B.why(T`<p>Integration reverses differentiation: given the gradient function, recover the curve. Because constants vanish when you differentiate, integrating gives a whole <b>family</b> of curves $y=F(x)+c$; one known point picks out the member you want.</p>`),
   B.thm('Integrating powers', T`$$\int ax^n\,dx=\frac{a\,x^{n+1}}{n+1}+c\qquad(n\ne-1).$$<p>Integrate term by term; $c$ is the <b>constant of integration</b>.</p>`),
-  B.proof(T`<p>Differentiate the answer: $\dfrac{d}{dx}\left(\dfrac{ax^{n+1}}{n+1}+c\right)=\dfrac{a(n+1)x^n}{n+1}+0=ax^n$ ✓. The rule fails at $n=-1$ because it would divide by zero ($\int x^{-1}dx$ is $\ln|x|$, met at A2).</p>`),
+  B.opt(T`<p>Differentiate the answer: $\dfrac{d}{dx}\left(\dfrac{ax^{n+1}}{n+1}+c\right)=\dfrac{a(n+1)x^n}{n+1}+0=ax^n$ ✓. The rule fails at $n=-1$ because it would divide by zero ($\int x^{-1}dx$ is $\ln|x|$, met at A2).</p>`),
   T`<p><b>Rule of thumb:</b> "add one to the power, divide by the new power". As with differentiation, rewrite roots and fractions as powers and multiply out brackets first.</p>`,
   B.ex(1, T`Find $\displaystyle\int(6x^2-4x+5)\,dx$.`, [
     T`$\dfrac{6x^3}{3}-\dfrac{4x^2}{2}+5x+c=2x^3-2x^2+5x+c$.`]),
@@ -268,7 +268,7 @@ BOOK.m_area = [
   B.why(T`<p>The same operation that reverses differentiation also measures area. That surprising link — the <b>Fundamental Theorem of Calculus</b> — turns an infinite sum of thin strips into two substitutions.</p>`),
   B.def('definite integral', T`<p>If $F'(x)=f(x)$, then $$\int_a^bf(x)\,dx=\big[F(x)\big]_a^b=F(b)-F(a).$$ The constant $c$ cancels, so it is left out.</p>`),
   B.thm('Area under a curve', T`<p>If $f(x)\ge0$ for $a\le x\le b$, the area between $y=f(x)$, the $x$-axis and the lines $x=a$, $x=b$ is $\displaystyle\int_a^bf(x)\,dx$.</p>`),
-  B.proof(T`<p>Let $A(x)$ be the area from $a$ up to $x$. Increasing $x$ by a small $h$ adds a thin strip of width $h$ and height about $f(x)$, so $A(x+h)-A(x)\approx h\,f(x)$, i.e. $\dfrac{A(x+h)-A(x)}{h}\approx f(x)$. As $h\to0$ this becomes exact: $A'(x)=f(x)$. So $A$ is an integral of $f$: $A(x)=F(x)+c$. Since $A(a)=0$, $c=-F(a)$, and the area up to $b$ is $A(b)=F(b)-F(a)$.</p>`, 'Why integration gives area (sketch proof)'),
+  B.opt(T`<p>Let $A(x)$ be the area from $a$ up to $x$. Increasing $x$ by a small $h$ adds a thin strip of width $h$ and height about $f(x)$, so $A(x+h)-A(x)\approx h\,f(x)$, i.e. $\dfrac{A(x+h)-A(x)}{h}\approx f(x)$. As $h\to0$ this becomes exact: $A'(x)=f(x)$. So $A$ is an integral of $f$: $A(x)=F(x)+c$. Since $A(a)=0$, $c=-F(a)$, and the area up to $b$ is $A(b)=F(b)-F(a)$.</p>`, 'Why integration gives area (sketch proof)'),
   B.tip(T`<p>Regions <b>below</b> the $x$-axis give a <b>negative</b> integral. For a total area, find where the curve crosses the axis, integrate each piece separately and add the absolute values. The area simulation shows the signed rectangles turning pink below the axis.</p>`),
   B.ex(1, T`Evaluate $\displaystyle\int_1^3(x^2+1)\,dx$.`, [
     T`$\left[\dfrac{x^3}3+x\right]_1^3=(9+3)-\left(\tfrac13+1\right)$.`,
@@ -310,7 +310,7 @@ BOOK.m_vec = [
   B.why(T`<p>A vector has a <b>size</b> and a <b>direction</b> — a displacement, a velocity, a force. Vectors let you do geometry with algebra: proving lines are parallel, points collinear or diagonals bisecting, all by adding and scaling arrows.</p>`),
   B.def('vectors in 2D', T`<ul><li>Notation: $\mathbf a=3\mathbf i-4\mathbf j=\begin{pmatrix}3\\-4\end{pmatrix}$, where $\mathbf i$, $\mathbf j$ are unit vectors along the axes.</li><li><b>Magnitude</b> $|x\mathbf i+y\mathbf j|=\sqrt{x^2+y^2}$; <b>direction</b>: the angle $\theta$ with $\mathbf i$, where $\tan\theta=\frac yx$ (use a sketch to get the quadrant).</li><li><b>Unit vector</b> in the direction of $\mathbf a$: $\hat{\mathbf a}=\dfrac{\mathbf a}{|\mathbf a|}$.</li><li><b>Position vector</b> of $A$: $\overrightarrow{OA}=\mathbf a$. Then $\overrightarrow{AB}=\mathbf b-\mathbf a$, and the distance $AB=|\mathbf b-\mathbf a|$.</li><li><b>Parallel</b>: $\mathbf a$ and $\mathbf b$ are parallel if $\mathbf a=\lambda\mathbf b$ for some scalar $\lambda$.</li></ul>`),
   B.thm('Vector rules', T`<p>Add and subtract component by component; $\lambda\mathbf a$ scales the length by $|\lambda|$ (and reverses direction if $\lambda\lt0$). Triangle law: $\overrightarrow{AB}+\overrightarrow{BC}=\overrightarrow{AC}$. The midpoint $M$ of $AB$ has position vector $\tfrac12(\mathbf a+\mathbf b)$.</p>`),
-  B.proof(T`<p>$\overrightarrow{AB}=\overrightarrow{AO}+\overrightarrow{OB}=-\mathbf a+\mathbf b$. For the midpoint: $\overrightarrow{OM}=\mathbf a+\tfrac12\overrightarrow{AB}=\mathbf a+\tfrac12(\mathbf b-\mathbf a)=\tfrac12(\mathbf a+\mathbf b)$.</p>`, 'Why AB = b − a, and the midpoint'),
+  B.opt(T`<p>$\overrightarrow{AB}=\overrightarrow{AO}+\overrightarrow{OB}=-\mathbf a+\mathbf b$. For the midpoint: $\overrightarrow{OM}=\mathbf a+\tfrac12\overrightarrow{AB}=\mathbf a+\tfrac12(\mathbf b-\mathbf a)=\tfrac12(\mathbf a+\mathbf b)$.</p>`, 'Why AB = b − a, and the midpoint'),
   B.ex(1, T`For $\mathbf a=3\mathbf i-4\mathbf j$ find $|\mathbf a|$, the unit vector $\hat{\mathbf a}$ and the direction of $\mathbf a$.`, [
     T`$|\mathbf a|=\sqrt{9+16}=5$; $\hat{\mathbf a}=\tfrac35\mathbf i-\tfrac45\mathbf j$.`,
     T`$\tan\theta=-\tfrac43$; the vector points right and down (quadrant 4), so $\theta=-53.1^\circ$, i.e. $53.1^\circ$ below the positive $x$-axis.`]),

@@ -21,7 +21,7 @@ function viewAbout() {
   <h2 class="sech">What makes it different</h2>
   <section class="grid tiles">${[
     ['spec', '#0a84ff', 'Spec first', `All ${nUnits} CCEA units, with every learning outcome from the official specification linked to the chapter or lab that teaches it.`],
-    ['book', '#ff9500', 'Explained properly', 'A textbook chapter for each of the ' + nPts + ' maths points: the idea, full proofs and derivations, worked examples, common mistakes and exam technique.'],
+    ['book', '#ff9500', 'Explained properly', 'A textbook chapter for each of the ' + nPts + ' maths points: the idea, worked examples, common mistakes and exam technique. Further Maths proves every result; Mathematics includes the proofs CCEA asks for and keeps the rest optional.'],
     ['drill', '#ff2d55', 'Practice that marks itself', 'Unlimited questions with worked solutions. Smart drill sends you back to whatever you are weakest at.'],
     ['sims', '#af52de', 'See it move', `${ps.labs} live physics labs across ${ps.sections} sections, plus maths simulations, a grapher and a Lab of tools for checking your own working.`],
     ['sigma', '#5e5ce6', 'Formula books', 'Every result tagged as in the CCEA booklet or one you must learn.'],

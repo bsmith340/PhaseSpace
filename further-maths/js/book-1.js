@@ -9,6 +9,9 @@ const B = {
   def: (t, h) => `<div class="box def"><div class="lbl">Definition${t ? ' · ' + t : ''}</div>${h}</div>`,
   thm: (t, h) => `<div class="box thm"><div class="lbl">${t || 'Theorem'}</div>${h}</div>`,
   proof: (h, t = 'Proof') => `<details class="proof" open><summary>${t}</summary>${h}<p class="qed">∎</p></details>`,
+  // Mathematics only: a proof the CCEA spec asks for stays open and is tagged; any other derivation is optional and starts closed
+  proofReq: (h, t = 'Proof') => `<details class="proof req" open><summary>${t} <span class="ptag">On the spec</span></summary>${h}<p class="qed">∎</p></details>`,
+  opt: (h, t = 'Why it works') => `<details class="proof optional"><summary><span class="ptag">Optional</span> ${t}</summary>${h}<p class="qed">∎</p></details>`,
   ex: (n, q, steps, note) => `<div class="box ex"><div class="lbl">Worked example ${n}</div><div class="exq">${q}</div><ol class="steps">${steps.map(s => `<li>${s}</li>`).join('')}</ol>${note ? `<p class="exnote">${note}</p>` : ''}</div>`,
   warn: items => `<div class="box warn"><div class="lbl">Common mistakes</div><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`,
   exam: items => `<div class="box exam"><div class="lbl">Exam technique</div><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`,

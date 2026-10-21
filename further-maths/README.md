@@ -19,7 +19,7 @@ On the two Further Maths applied units you answer two of the four sections in th
   - Outcome codes such as A2c or C11 are BcsMaths labels; CCEA prints its bullets unnumbered.
 - **Textbook** (`#/<unit>/book`). There is one chapter per spec point, and each chapter contains:
   - the big picture and definitions;
-  - theorems with proofs or derivations;
+  - theorems with proofs: every result in Further Maths; in Mathematics only the proofs CCEA's spec asks for (tagged "On the spec"), with other derivations marked "Optional" and closed by default;
   - worked examples;
   - common mistakes and exam technique;
   - check-yourself questions;

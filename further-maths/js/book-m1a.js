@@ -1,5 +1,5 @@
 // BcsMaths textbook — Maths AS 1, part 1: Proof; Algebra & functions; Straight lines.
-// Same chapter shape as the Further Maths book: big picture → definitions → theory with proofs → worked examples → mistakes → exam technique → check yourself → exam-style question.
+// Same chapter shape as the Further Maths book: big picture → definitions → theory (B.proofReq for proofs the Maths spec asks for, B.opt for the rest) → worked examples → mistakes → exam technique → check yourself → exam-style question.
 'use strict';
 
 /* ===================================================================== */
@@ -27,7 +27,7 @@ BOOK.m_proof = [
     T`$(x-3)^2\ge0$ for all real $x$ (a square is never negative).`,
     T`So $(x-3)^2+1\ge1\gt0$. $\blacksquare$`], T`This "complete the square, then a square is $\ge0$" argument is the standard way to prove an expression is always positive.`),
   B.thm('AM–GM for two numbers', T`<p>For $a,b\ge0$: $\dfrac{a+b}{2}\ge\sqrt{ab}$, with equality only when $a=b$.</p>`),
-  B.proof(T`<p>$\left(\sqrt a-\sqrt b\right)^2\ge0$ because it is a square. Expanding, $a-2\sqrt{ab}+b\ge0$, so $a+b\ge2\sqrt{ab}$; divide by $2$. Equality needs $\sqrt a-\sqrt b=0$, i.e. $a=b$.</p>`),
+  B.proofReq(T`<p>$\left(\sqrt a-\sqrt b\right)^2\ge0$ because it is a square. Expanding, $a-2\sqrt{ab}+b\ge0$, so $a+b\ge2\sqrt{ab}$; divide by $2$. Equality needs $\sqrt a-\sqrt b=0$, i.e. $a=b$.</p>`, 'Proof by deduction'),
   B.tip(T`<p>Notice the direction of that proof: it <b>starts from something certainly true</b> ($(\sqrt a-\sqrt b)^2\ge0$) and works forward to the result. If you discover a proof by working backwards from the result, rewrite it forwards — or make sure every step is reversible ($\iff$).</p>`),
   T`<h3>2. Proof by exhaustion</h3>
 <p>Split <i>all</i> possibilities into a finite number of cases, then prove the statement in each. The cases must cover everything: even/odd, remainders $0,1,2$ on division by $3$, last digits $0$–$9$, or a short list of values.</p>`,
@@ -75,7 +75,7 @@ BOOK.m_ind = [
 <p>For a positive whole number $m$, $a^m$ means $a\times a\times\dots\times a$ ($m$ factors). Counting factors gives the first three laws immediately:</p>`,
   B.thm('Laws of indices', T`$$a^m\times a^n=a^{m+n},\qquad \frac{a^m}{a^n}=a^{m-n},\qquad (a^m)^n=a^{mn},\qquad (ab)^n=a^nb^n.$$`),
   T`<p>We then <b>define</b> zero, negative and fractional powers so that these laws keep working:</p>`,
-  B.proof(T`<ul><li><b>Zero:</b> $\dfrac{a^n}{a^n}=1$, but the division law gives $a^{n-n}=a^0$. So $a^0=1$ ($a\ne0$).</li>
+  B.opt(T`<ul><li><b>Zero:</b> $\dfrac{a^n}{a^n}=1$, but the division law gives $a^{n-n}=a^0$. So $a^0=1$ ($a\ne0$).</li>
 <li><b>Negative:</b> $a^{-n}\times a^n=a^0=1$, so $a^{-n}=\dfrac1{a^n}$.</li>
 <li><b>Unit fraction:</b> $\left(a^{1/n}\right)^n=a^{n/n}=a$, so $a^{1/n}$ is the number whose $n$th power is $a$: $a^{1/n}=\sqrt[n]a$.</li>
 <li><b>General fraction:</b> $a^{m/n}=\left(a^{1/n}\right)^m=\left(\sqrt[n]a\right)^m$ (or $\sqrt[n]{a^m}$ — the root first is usually easier).</li></ul>`, 'Where the other rules come from'),
@@ -101,7 +101,7 @@ BOOK.m_ind = [
   T`<h3>2. Surds</h3>
 <p>A <b>surd</b> is an irrational root such as $\sqrt2$ or $\sqrt[3]5$. Leaving answers in surd form keeps them exact. For $a,b\gt0$:</p>`,
   B.thm('Surd rules', T`$$\sqrt{ab}=\sqrt a\,\sqrt b,\qquad \sqrt{\frac ab}=\frac{\sqrt a}{\sqrt b},\qquad (\sqrt a)^2=a,\qquad (a+\sqrt b)(a-\sqrt b)=a^2-b.$$`),
-  B.proof(T`<p>$(\sqrt a\sqrt b)^2=(\sqrt a)^2(\sqrt b)^2=ab$ and $\sqrt a\sqrt b\gt0$, so $\sqrt a\sqrt b$ is the positive square root of $ab$. The last rule is the difference of two squares: $(a+\sqrt b)(a-\sqrt b)=a^2-(\sqrt b)^2=a^2-b$.</p>`),
+  B.opt(T`<p>$(\sqrt a\sqrt b)^2=(\sqrt a)^2(\sqrt b)^2=ab$ and $\sqrt a\sqrt b\gt0$, so $\sqrt a\sqrt b$ is the positive square root of $ab$. The last rule is the difference of two squares: $(a+\sqrt b)(a-\sqrt b)=a^2-(\sqrt b)^2=a^2-b$.</p>`),
   T`<p><b>Simplify</b> by pulling out the largest square factor: $\sqrt{72}=\sqrt{36\times2}=6\sqrt2$.<br><b>Rationalise</b> a denominator (remove the surd from it): for $\dfrac{1}{\sqrt a}$ multiply top and bottom by $\sqrt a$; for $\dfrac{1}{a+\sqrt b}$ multiply by the <b>conjugate</b> $a-\sqrt b$.</p>`,
   B.ex(6, T`Simplify $\sqrt{50}+\sqrt{18}-\sqrt8$.`, [
     T`$\sqrt{50}=5\sqrt2$, $\sqrt{18}=3\sqrt2$, $\sqrt8=2\sqrt2$.`,
@@ -138,7 +138,7 @@ BOOK.m_quad = [
   T`<h3>1. Completing the square</h3>
 <p>The identity $(x+p)^2=x^2+2px+p^2$ means $x^2+2px=(x+p)^2-p^2$: <b>halve the coefficient of $x$, square-bracket it, subtract its square.</b></p>`,
   B.thm('Completed-square form', T`$$ax^2+bx+c=a\left(x+\frac{b}{2a}\right)^2+c-\frac{b^2}{4a}.$$<p>So the turning point (vertex) is $\left(-\dfrac{b}{2a},\ c-\dfrac{b^2}{4a}\right)$; it is a minimum if $a\gt0$ and a maximum if $a\lt0$. The line of symmetry is $x=-\dfrac b{2a}$.</p>`),
-  B.proof(T`<p>$ax^2+bx+c=a\left(x^2+\dfrac bax\right)+c=a\left[\left(x+\dfrac b{2a}\right)^2-\dfrac{b^2}{4a^2}\right]+c=a\left(x+\dfrac b{2a}\right)^2-\dfrac{b^2}{4a}+c.$</p>
+  B.opt(T`<p>$ax^2+bx+c=a\left(x^2+\dfrac bax\right)+c=a\left[\left(x+\dfrac b{2a}\right)^2-\dfrac{b^2}{4a^2}\right]+c=a\left(x+\dfrac b{2a}\right)^2-\dfrac{b^2}{4a}+c.$</p>
 <p>The squared bracket is $\ge0$ and equals $0$ only at $x=-\frac b{2a}$, which gives the vertex.</p>`),
   B.ex(1, T`Write $2x^2-12x+7$ in the form $a(x+p)^2+q$ and state the minimum point.`, [
     T`Take out the $2$ from the $x$ terms only: $2(x^2-6x)+7$.`,
@@ -146,7 +146,7 @@ BOOK.m_quad = [
     T`$=2(x-3)^2-11$. Minimum point $(3,-11)$.`], T`The $-9$ is multiplied by the $2$ — the most common slip.`),
   T`<h3>2. The quadratic formula</h3>`,
   B.thm('Quadratic formula', T`<p>The roots of $ax^2+bx+c=0$ ($a\ne0$) are $$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}.$$</p>`),
-  B.proof(T`<p>From the completed-square form, $ax^2+bx+c=0\iff a\left(x+\frac b{2a}\right)^2=\frac{b^2}{4a}-c=\frac{b^2-4ac}{4a}$, so $\left(x+\frac b{2a}\right)^2=\frac{b^2-4ac}{4a^2}$.</p><p>Square-root both sides (both signs): $x+\frac b{2a}=\pm\frac{\sqrt{b^2-4ac}}{2a}$, which rearranges to the formula.</p>`),
+  B.opt(T`<p>From the completed-square form, $ax^2+bx+c=0\iff a\left(x+\frac b{2a}\right)^2=\frac{b^2}{4a}-c=\frac{b^2-4ac}{4a}$, so $\left(x+\frac b{2a}\right)^2=\frac{b^2-4ac}{4a^2}$.</p><p>Square-root both sides (both signs): $x+\frac b{2a}=\pm\frac{\sqrt{b^2-4ac}}{2a}$, which rearranges to the formula.</p>`),
   B.ex(2, T`Solve $x^2+4x-1=0$, giving exact answers.`, [
     T`Complete the square: $(x+2)^2-4-1=0\Rightarrow(x+2)^2=5$.`,
     T`$x+2=\pm\sqrt5\Rightarrow x=-2\pm\sqrt5$.`], T`The formula gives the same: $x=\frac{-4\pm\sqrt{16+4}}{2}=\frac{-4\pm2\sqrt5}{2}$.`),
@@ -242,7 +242,7 @@ BOOK.m_sim = [
 BOOK.m_ineq = [
   B.why(T`<p>An inequality asks for a whole <b>range</b> of values, not a single answer. Linear inequalities behave almost like equations; quadratic ones need a sketch. They are also the end-point of many other questions: "for which $k$ does … have two roots?", "where is $f$ increasing?".</p>`),
   T`<h3>1. Linear inequalities</h3><p>You may add or subtract anything, and multiply or divide by a <b>positive</b> number. Multiplying or dividing by a <b>negative</b> number <b>reverses</b> the inequality.</p>`,
-  B.proof(T`<p>$a\lt b\iff b-a\gt0$. Multiplying by $-1$: $a-b\lt0$, i.e. $(-b)-(-a)\lt0$, i.e. $-b\lt-a$, which is $-a\gt-b$. The order flips.</p>`, 'Why the sign flips'),
+  B.opt(T`<p>$a\lt b\iff b-a\gt0$. Multiplying by $-1$: $a-b\lt0$, i.e. $(-b)-(-a)\lt0$, i.e. $-b\lt-a$, which is $-a\gt-b$. The order flips.</p>`, 'Why the sign flips'),
   B.ex(1, T`Solve $5-3x\lt2x+20$.`, [
     T`Collect $x$ on the side where it is positive: $5-20\lt2x+3x$.`,
     T`$-15\lt5x\Rightarrow x\gt-3$.`], T`Moving $x$ to the right avoids dividing by a negative.`),
@@ -297,9 +297,9 @@ BOOK.m_poly = [
   B.why(T`<p>Cubics and quartics can't be solved with a formula you're expected to know. Instead, you find one root by inspection, use it to peel off a factor, and finish with a quadratic. The <b>factor theorem</b> tells you when a guess is a root; the <b>remainder theorem</b> tells you what's left over when it isn't.</p>`),
   B.def('polynomial division', T`<p>Dividing $f(x)$ by $(x-a)$ gives a <b>quotient</b> $q(x)$ (one degree lower) and a constant <b>remainder</b> $r$: $$f(x)=(x-a)\,q(x)+r.$$</p>`),
   B.thm('Remainder theorem', T`<p>When $f(x)$ is divided by $(x-a)$ the remainder is $f(a)$. More generally, dividing by $(ax-b)$ leaves remainder $f\!\left(\tfrac ba\right)$.</p>`),
-  B.proof(T`<p>Put $x=a$ in $f(x)=(x-a)q(x)+r$: $f(a)=0\cdot q(a)+r=r$. For $(ax-b)$: $f(x)=(ax-b)q(x)+r$ and $x=\tfrac ba$ makes the bracket zero.</p>`),
+  B.opt(T`<p>Put $x=a$ in $f(x)=(x-a)q(x)+r$: $f(a)=0\cdot q(a)+r=r$. For $(ax-b)$: $f(x)=(ax-b)q(x)+r$ and $x=\tfrac ba$ makes the bracket zero.</p>`),
   B.thm('Factor theorem', T`<p>$(x-a)$ is a factor of $f(x)\iff f(a)=0$. Likewise $(ax-b)$ is a factor $\iff f\!\left(\tfrac ba\right)=0$.</p>`),
-  B.proof(T`<p>A factor means remainder $0$; by the remainder theorem the remainder is $f(a)$.</p>`),
+  B.opt(T`<p>A factor means remainder $0$; by the remainder theorem the remainder is $f(a)$.</p>`),
   T`<h3>Finding the quotient</h3>
 <p><b>Comparing coefficients</b> is the cleanest method. If $(x-3)$ is a factor of $2x^3-3x^2-11x+6$, write $2x^3-3x^2-11x+6=(x-3)(ax^2+bx+c)$: the $x^3$ terms give $a=2$, the constants give $-3c=6\Rightarrow c=-2$, and the $x^2$ terms give $b-3a=-3\Rightarrow b=3$. (Long division gives the same; include $0x^2$ etc. for any missing powers.)</p>
 <p><b>Which roots to try?</b> Integer roots must divide the constant term. Try $\pm1,\pm2,\pm3,\dots$; if the leading coefficient is $2$, also try $\pm\tfrac12$, etc.</p>`,
@@ -359,7 +359,7 @@ BOOK.m_graph = [
 <tr><td>$y=f(ax)$</td><td>stretch parallel to the $x$-axis, factor $\frac1a$</td><td>$(\frac pa,\ q)$</td></tr>
 <tr><td>$y=-f(x)$</td><td>reflection in the $x$-axis</td><td>$(p,\ -q)$</td></tr>
 <tr><td>$y=f(-x)$</td><td>reflection in the $y$-axis</td><td>$(-p,\ q)$</td></tr></table>`),
-  B.proof(T`<p>Take $y=f(x+a)$. At $x=p-a$: $y=f(p-a+a)=f(p)=q$. So $(p-a,q)$ is on the new graph: everything shifts $a$ to the <b>left</b>. Similarly for $y=f(ax)$ at $x=\frac pa$: $y=f(p)=q$, so $x$-coordinates are divided by $a$. Changes <b>inside</b> the bracket act on $x$ "the opposite way"; changes <b>outside</b> act on $y$ as you'd expect.</p>`, 'Why "inside the bracket" works backwards'),
+  B.opt(T`<p>Take $y=f(x+a)$. At $x=p-a$: $y=f(p-a+a)=f(p)=q$. So $(p-a,q)$ is on the new graph: everything shifts $a$ to the <b>left</b>. Similarly for $y=f(ax)$ at $x=\frac pa$: $y=f(p)=q$, so $x$-coordinates are divided by $a$. Changes <b>inside</b> the bracket act on $x$ "the opposite way"; changes <b>outside</b> act on $y$ as you'd expect.</p>`, 'Why "inside the bracket" works backwards'),
   B.ex(2, T`$y=f(x)$ has a maximum at $(2,5)$. Find the maximum (or minimum) of: (a) $y=f(x-3)$ (b) $y=2f(x)$ (c) $y=f(2x)$ (d) $y=-f(x)$ (e) $y=f(x)+4$.`, [
     T`(a) right 3: $(5,5)$, maximum.`,
     T`(b) $y$-values doubled: $(2,10)$, maximum.`,
@@ -401,7 +401,7 @@ BOOK.m_line = [
   B.why(T`<p>Straight lines are the simplest graphs, but they carry the key ideas of coordinate geometry: gradient as a rate, parallel and perpendicular directions, distances and midpoints. Circles, tangents and normals all build on this chapter.</p>`),
   B.def('gradient & equations', T`<p>Through $(x_1,y_1)$ and $(x_2,y_2)$: gradient $m=\dfrac{y_2-y_1}{x_2-x_1}$.</p><ul><li>Point–gradient form: $y-y_1=m(x-x_1)$.</li><li>Gradient–intercept form: $y=mx+c$.</li><li>General form: $ax+by+c=0$ (usually with integer $a,b,c$).</li><li>Midpoint $\left(\frac{x_1+x_2}{2},\frac{y_1+y_2}{2}\right)$; distance $\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}$ (Pythagoras).</li></ul>`),
   B.thm('Parallel and perpendicular lines', T`<p>Parallel lines have equal gradients. Lines with gradients $m_1$, $m_2$ (neither vertical) are perpendicular $\iff m_1m_2=-1$, i.e. $m_2=-\dfrac1{m_1}$.</p>`),
-  B.proof(T`<p>A line of gradient $m$ has direction "1 across, $m$ up", i.e. the step $(1,m)$. Rotating a step $(a,b)$ by $90^\circ$ gives $(-b,a)$, so $(1,m)$ becomes $(-m,1)$, whose gradient is $\dfrac{1}{-m}=-\dfrac1m$. Hence the product of the gradients is $m\cdot\left(-\frac1m\right)=-1$.</p>`),
+  B.opt(T`<p>A line of gradient $m$ has direction "1 across, $m$ up", i.e. the step $(1,m)$. Rotating a step $(a,b)$ by $90^\circ$ gives $(-b,a)$, so $(1,m)$ becomes $(-m,1)$, whose gradient is $\dfrac{1}{-m}=-\dfrac1m$. Hence the product of the gradients is $m\cdot\left(-\frac1m\right)=-1$.</p>`),
   B.ex(1, T`Find the equation of the line through $(2,-1)$ and $(6,7)$.`, [
     T`$m=\dfrac{7-(-1)}{6-2}=\dfrac84=2$.`,
     T`$y-(-1)=2(x-2)\Rightarrow y=2x-5$.`]),

@@ -4,7 +4,7 @@
 BOOK.m3_istd = [
   B.why(T`<p>Integration reverses differentiation. Every derivative you learned for $e^{kx}$, $\ln x$ and the trig functions gives an integral for free — plus one genuinely new result: the integral of $\frac1x$ is a logarithm.</p>`),
   B.thm('Standard integrals', T`$$\int e^{kx}dx=\frac1ke^{kx}+c\qquad\int\frac1xdx=\ln|x|+c\qquad\int\sin kx\,dx=-\frac1k\cos kx+c$$$$\int\cos kx\,dx=\frac1k\sin kx+c\qquad\int\sec^2kx\,dx=\frac1k\tan kx+c$$`),
-  B.proof(T`<p>Differentiate each right-hand side: e.g. $\frac d{dx}\left(-\frac1k\cos kx\right)=-\frac1k(-k\sin kx)=\sin kx$ ✓. For $\frac1x$: when $x\gt0$, $\frac d{dx}\ln x=\frac1x$; when $x\lt0$, $\frac d{dx}\ln(-x)=\frac{-1}{-x}=\frac1x$ — hence $\ln|x|$.</p>`, 'Check by differentiating'),
+  B.opt(T`<p>Differentiate each right-hand side: e.g. $\frac d{dx}\left(-\frac1k\cos kx\right)=-\frac1k(-k\sin kx)=\sin kx$ ✓. For $\frac1x$: when $x\gt0$, $\frac d{dx}\ln x=\frac1x$; when $x\lt0$, $\frac d{dx}\ln(-x)=\frac{-1}{-x}=\frac1x$ — hence $\ln|x|$.</p>`, 'Check by differentiating'),
   B.thm('Linear substitutions and f′/f', T`$$\int f(ax+b)\,dx=\frac1aF(ax+b)+c\qquad\qquad\int\frac{f'(x)}{f(x)}dx=\ln|f(x)|+c$$`),
   B.ex(1, T`Find $\displaystyle\int\left(4e^{2x}+\frac3x-\sin\frac x2\right)dx$.`, [T`$2e^{2x}+3\ln|x|+2\cos\frac x2+c$.`]),
   B.ex(2, T`Evaluate $\displaystyle\int_0^2\frac{1}{3x+2}dx$.`, [T`$\left[\frac13\ln|3x+2|\right]_0^2=\frac13(\ln8-\ln2)=\frac13\ln4$.`]),
@@ -22,7 +22,7 @@ BOOK.m3_area2 = [
   B.why(T`<p>Integration finds areas because an area is the limit of a sum of thin strips. The same idea gives the area <i>between</i> two curves: take (top − bottom) for every strip.</p>`),
   B.thm('Integration as the limit of a sum', T`$$\int_a^bf(x)\,dx=\lim_{\delta x\to0}\sum_{x=a}^{b}f(x)\,\delta x$$<p>Split $[a,b]$ into strips of width $\delta x$; each strip has area about $f(x)\,\delta x$. As $\delta x\to0$ the total tends to the exact area (for $f\ge0$).</p>`),
   B.thm('Area between two curves', T`$$A=\int_a^b\big(f(x)-g(x)\big)\,dx\qquad\text{where }f(x)\ge g(x)\text{ on }[a,b].$$<p>This works even if the curves are below the $x$-axis, since only the difference matters.</p>`),
-  B.proof(T`<p>Each strip between the curves has height $f(x)-g(x)$ and width $\delta x$. Summing and taking the limit gives the integral.</p>`),
+  B.proofReq(T`<p>Each strip between the curves has height $f(x)-g(x)$ and width $\delta x$. Summing and taking the limit gives the integral.</p>`, 'Area as the limit of a sum'),
   FIG.plot({ x: [-0.5, 4.5], y: [-1, 9], xt: [1, 2, 3, 4], yt: [2, 4, 6, 8], lines: [{ pts: Array.from({ length: 41 }, (_, i) => [i * 0.1, i * 0.1 * 2 + 0]).map(([x, y]) => [x, y]), cls: 'fc2' }, { pts: Array.from({ length: 41 }, (_, i) => [i * 0.1, (i * 0.1) ** 2 - 2 * i * 0.1 + 0]).map(([x, y]) => [x, y + 0]), cls: 'fc1' }], labels: [[3.5, 7.5, 'y = 2x'], [3.6, 1.4, 'y = x² − 2x']] }, 'The region between y = 2x and y = x² − 2x from x = 0 to x = 4.'),
   B.ex(1, T`Find the area enclosed by $y=2x$ and $y=x^2-2x$.`, [T`Intersect: $x^2-2x=2x\Rightarrow x=0,4$.`, T`$A=\displaystyle\int_0^4\big(2x-(x^2-2x)\big)dx=\int_0^4(4x-x^2)dx=\left[2x^2-\tfrac13x^3\right]_0^4=32-\tfrac{64}3=\tfrac{32}3$.`]),
   B.ex(2, T`Find the area between $y=\sin x$ and $y=\cos x$ from $x=\frac\pi4$ to $x=\frac{5\pi}4$.`, [T`On this interval $\sin x\ge\cos x$.`, T`$\displaystyle\int(\sin x-\cos x)dx=\big[-\cos x-\sin x\big]_{\pi/4}^{5\pi/4}=(\tfrac{\sqrt2}2+\tfrac{\sqrt2}2)-(-\tfrac{\sqrt2}2-\tfrac{\sqrt2}2)=2\sqrt2$.`]),
@@ -38,7 +38,7 @@ BOOK.m3_area2 = [
 BOOK.m3_subs = [
   B.why(T`<p>The chain rule differentiates a function of a function. Running it backwards is <b>substitution</b>: spot an "inner function" whose derivative is also present, rename it $u$, and the integral becomes simple.</p>`),
   B.thm('Integration by substitution', T`$$\int f(g(x))\,g'(x)\,dx=\int f(u)\,du\qquad(u=g(x),\ du=g'(x)\,dx)$$<p>For definite integrals, change the limits to $u$-values — then there's no need to substitute back.</p>`),
-  B.proof(T`<p>If $F'=f$, the chain rule gives $\frac d{dx}F(g(x))=f(g(x))g'(x)$. So $\int f(g(x))g'(x)dx=F(g(x))+c=F(u)+c=\int f(u)du$.</p>`, 'Why it works'),
+  B.proofReq(T`<p>If $F'=f$, the chain rule gives $\frac d{dx}F(g(x))=f(g(x))g'(x)$. So $\int f(g(x))g'(x)dx=F(g(x))+c=F(u)+c=\int f(u)du$.</p>`, 'Why it works: the reverse of the chain rule'),
   B.ex(1, T`Find $\displaystyle\int x(x^2+3)^4dx$.`, [T`$u=x^2+3$, $du=2x\,dx$, so $x\,dx=\frac12du$.`, T`$\frac12\int u^4du=\frac1{10}u^5+c=\frac1{10}(x^2+3)^5+c$.`]),
   B.ex(2, T`Evaluate $\displaystyle\int_0^3x\sqrt{x+1}\,dx$ using $u=x+1$.`, [T`$x=u-1$, $dx=du$; $x=0\to u=1$, $x=3\to u=4$.`, T`$\displaystyle\int_1^4(u-1)u^{1/2}du=\left[\tfrac25u^{5/2}-\tfrac23u^{3/2}\right]_1^4=\left(\tfrac{64}5-\tfrac{16}3\right)-\left(\tfrac25-\tfrac23\right)=\tfrac{116}{15}$.`]),
   B.ex(3, T`Find $\displaystyle\int\sin x\cos^3x\,dx$.`, [T`$u=\cos x$, $du=-\sin x\,dx$.`, T`$-\int u^3du=-\frac14\cos^4x+c$.`]),
@@ -54,7 +54,7 @@ BOOK.m3_subs = [
 BOOK.m3_parts = [
   B.why(T`<p>There's no product rule for integration — but rearranging the product rule gives a way to turn a hard integral of a product into an easier one. That's <b>integration by parts</b>.</p>`),
   B.thm('Integration by parts', T`$$\int u\frac{dv}{dx}\,dx=uv-\int v\frac{du}{dx}\,dx$$`),
-  B.proof(T`<p>The product rule: $\frac d{dx}(uv)=u\frac{dv}{dx}+v\frac{du}{dx}$. Integrate both sides: $uv=\int u\frac{dv}{dx}dx+\int v\frac{du}{dx}dx$. Rearrange.</p>`),
+  B.proofReq(T`<p>The product rule: $\frac d{dx}(uv)=u\frac{dv}{dx}+v\frac{du}{dx}$. Integrate both sides: $uv=\int u\frac{dv}{dx}dx+\int v\frac{du}{dx}dx$. Rearrange.</p>`, 'Why it works: the reverse of the product rule'),
   T`<h3>Choosing $u$</h3><p>Pick $u$ to be the factor that gets <b>simpler</b> when differentiated — usually a power of $x$. The exception: if $\ln x$ is present, let $u=\ln x$ (you can differentiate it but not easily integrate it). A memory aid: <b>L</b>ogs, <b>A</b>lgebraic (powers), <b>T</b>rig, <b>E</b>xponential — choose $u$ from earliest in "LATE".</p>`,
   B.ex(1, T`Find $\displaystyle\int xe^{3x}dx$.`, [T`$u=x$, $\frac{dv}{dx}=e^{3x}$: $u'=1$, $v=\frac13e^{3x}$.`, T`$\frac13xe^{3x}-\int\frac13e^{3x}dx=\frac13xe^{3x}-\frac19e^{3x}+c$.`]),
   B.ex(2, T`Evaluate $\displaystyle\int_0^{\pi/2}x\sin x\,dx$.`, [T`$u=x$, $v=-\cos x$.`, T`$\big[-x\cos x\big]_0^{\pi/2}+\int_0^{\pi/2}\cos x\,dx=0+\big[\sin x\big]_0^{\pi/2}=1$.`]),
@@ -102,7 +102,7 @@ BOOK.m3_sde = [
 BOOK.m3_vol = [
   B.why(T`<p>Spin a curve around the $x$-axis and it sweeps out a solid — a vase, a nose cone, a wine glass. Slicing that solid into thin discs and adding them up is integration again.</p>`),
   B.thm('Volume of revolution about the x-axis', T`$$V=\pi\int_a^by^2\,dx$$`),
-  B.proof(T`<p>At position $x$ the solid's cross-section is a circle of radius $y$, so a thin slice of thickness $\delta x$ is a disc of volume $\pi y^2\,\delta x$. The total volume is $\lim_{\delta x\to0}\sum\pi y^2\,\delta x=\pi\int_a^by^2\,dx$.</p>`),
+  B.opt(T`<p>At position $x$ the solid's cross-section is a circle of radius $y$, so a thin slice of thickness $\delta x$ is a disc of volume $\pi y^2\,\delta x$. The total volume is $\lim_{\delta x\to0}\sum\pi y^2\,\delta x=\pi\int_a^by^2\,dx$.</p>`),
   B.ex(1, T`Show that rotating $y=\frac rhx$ ($0\le x\le h$) gives the volume of a cone, $\frac13\pi r^2h$.`, [T`$V=\pi\displaystyle\int_0^h\frac{r^2}{h^2}x^2dx=\pi\frac{r^2}{h^2}\cdot\frac{h^3}3=\frac13\pi r^2h$.`]),
   B.ex(2, T`Find the volume when $y=\sqrt{x}\,e^x$ for $0\le x\le1$ is rotated about the $x$-axis.`, [T`$y^2=xe^{2x}$: $V=\pi\displaystyle\int_0^1xe^{2x}dx$.`, T`By parts: $\pi\left[\frac x2e^{2x}-\frac14e^{2x}\right]_0^1=\pi\left(\frac{e^2}4+\frac14\right)=\frac\pi4(e^2+1)$.`]),
   B.ex(3, T`Rotate $y=\sec x$ for $0\le x\le\frac\pi4$ about the $x$-axis.`, [T`$V=\pi\displaystyle\int_0^{\pi/4}\sec^2x\,dx=\pi\big[\tan x\big]_0^{\pi/4}=\pi$.`]),
@@ -117,7 +117,7 @@ BOOK.m3_vol = [
 BOOK.m3_root = [
   B.why(T`<p>Most equations — $x^3+x-5=0$, $e^x=3x$ — have no algebraic solution. Numerical methods find roots to any accuracy you like. The first step is always to <b>locate</b> a root: find an interval in which one must lie.</p>`),
   B.thm('Change of sign', T`<p>If $f$ is <b>continuous</b> on $[a,b]$ and $f(a)$ and $f(b)$ have opposite signs, then $f(x)=0$ has at least one root in $(a,b)$.</p>`),
-  B.proof(T`<p>A continuous graph can't jump from below the $x$-axis to above it without crossing it. (This is the intermediate value theorem; at A level you may quote it.)</p>`, 'Why'),
+  B.opt(T`<p>A continuous graph can't jump from below the $x$-axis to above it without crossing it. (This is the intermediate value theorem; at A level you may quote it.)</p>`, 'Why it works'),
   B.ex(1, T`Show that $x^3+x-5=0$ has a root between $1$ and $2$.`, [T`$f(1)=-3\lt0$, $f(2)=5\gt0$.`, T`Change of sign and $f$ continuous (a polynomial), so there is a root in $(1,2)$.`]),
   B.ex(2, T`Show that the root of $x^3+x-5=0$ is $1.516$ to 3 d.p.`, [T`Check the bounds of the interval that rounds to $1.516$: $f(1.5155)=-0.00379$, $f(1.5165)=+0.00410$.`, T`Change of sign, $f$ continuous: the root is in $(1.5155,1.5165)$, so it is $1.516$ to 3 d.p.`]),
   T`<h3>When it fails</h3><ul><li><b>Discontinuity</b>: $f(x)=\frac1{x-2}$ changes sign on $[1,3]$ but has no root — there's an asymptote.</li><li><b>Even number of roots</b> or a <b>repeated root</b> (touching the axis): no sign change even though roots exist, e.g. $(x-1.5)^2$ on $[1,2]$.</li><li><b>Interval too wide</b>: several roots may be hiding — use a sketch.</li></ul>`,
@@ -135,7 +135,7 @@ BOOK.m3_iter = [
   B.thm('Fixed-point iteration', T`<p>Rearrange $f(x)=0$ into $x=g(x)$ and iterate $x_{n+1}=g(x_n)$. If the sequence converges, it converges to a root (where $x=g(x)$). Near the root $\alpha$: it converges if $|g'(\alpha)|\lt1$ — a <b>staircase</b> diagram when $0\lt g'\lt1$, a <b>cobweb</b> when $-1\lt g'\lt0$ — and diverges if $|g'(\alpha)|\gt1$.</p>`),
   B.ex(1, T`Show that $x^3+x-5=0$ can be written as $x=\sqrt[3]{5-x}$, and iterate from $x_0=1.5$.`, [T`$x^3=5-x\Rightarrow x=\sqrt[3]{5-x}$.`, T`$x_1=1.5183$, $x_2=1.5156$, $x_3=1.5160$, $x_4=1.5160$.`, T`$g'(x)=-\frac13(5-x)^{-2/3}\approx-0.14$: a cobweb that converges quickly.`]),
   B.thm('Newton–Raphson', T`$$x_{n+1}=x_n-\frac{f(x_n)}{f'(x_n)}$$`),
-  B.proof(T`<p>The tangent at $(x_n,f(x_n))$ is $y-f(x_n)=f'(x_n)(x-x_n)$. It meets the $x$-axis where $y=0$: $x=x_n-\frac{f(x_n)}{f'(x_n)}$. Near a root the tangent is a good approximation to the curve, so this is a better estimate.</p>`),
+  B.opt(T`<p>The tangent at $(x_n,f(x_n))$ is $y-f(x_n)=f'(x_n)(x-x_n)$. It meets the $x$-axis where $y=0$: $x=x_n-\frac{f(x_n)}{f'(x_n)}$. Near a root the tangent is a good approximation to the curve, so this is a better estimate.</p>`),
   B.ex(2, T`Use Newton–Raphson with $x_0=2$ to find a root of $x^3-2x-5=0$ to 4 d.p.`, [T`$f'(x)=3x^2-2$.`, T`$x_1=2-\frac{-1}{10}=2.1$; $x_2=2.1-\frac{0.061}{11.23}=2.094568$; $x_3=2.094551$.`, T`Root $\approx2.0946$ (and check with a sign change).`]),
   T`<h3>When Newton–Raphson struggles</h3><ul><li>$f'(x_n)$ is zero or very small: the tangent is (nearly) horizontal and shoots off.</li><li>A starting value far from the root may converge to a different root, or oscillate.</li></ul>`,
   B.ex(3, T`Why does Newton–Raphson fail for $f(x)=x^3-3x+1$ with $x_0=1$?`, [T`$f'(1)=3-3=0$: the formula divides by zero — the tangent at $x=1$ is horizontal.`]),
@@ -151,7 +151,7 @@ BOOK.m3_iter = [
 BOOK.m3_trap = [
   B.why(T`<p>$\int_0^1e^{-x^2}dx$ can't be done with standard functions — yet it's central to statistics (the normal distribution). The trapezium rule estimates any definite integral by replacing the curve with straight-line segments.</p>`),
   B.thm('Trapezium rule', T`$$\int_a^by\,dx\approx\frac h2\big\{(y_0+y_n)+2(y_1+y_2+\dots+y_{n-1})\big\},\qquad h=\frac{b-a}{n}$$`),
-  B.proof(T`<p>Split $[a,b]$ into $n$ strips of width $h$. The $i$th trapezium has parallel sides $y_{i-1}$ and $y_i$, so area $\frac h2(y_{i-1}+y_i)$. Adding all $n$: the end ordinates appear once and every interior ordinate twice.</p>`),
+  B.opt(T`<p>Split $[a,b]$ into $n$ strips of width $h$. The $i$th trapezium has parallel sides $y_{i-1}$ and $y_i$, so area $\frac h2(y_{i-1}+y_i)$. Adding all $n$: the end ordinates appear once and every interior ordinate twice.</p>`),
   B.ex(1, T`Use the trapezium rule with 4 strips to estimate $\displaystyle\int_0^1e^{-x^2}dx$.`, [T`$h=0.25$; ordinates $1,\ 0.93941,\ 0.77880,\ 0.56978,\ 0.36788$.`, T`$\frac{0.25}2\{1+0.36788+2(0.93941+0.77880+0.56978)\}=0.7430$ (true value $0.7468$).`]),
   B.thm('Over or under?', T`<ul><li>Curve <b>concave up</b> ($f''\gt0$, "convex"): the chords lie above the curve — the rule <b>overestimates</b>.</li><li>Curve <b>concave down</b> ($f''\lt0$): underestimate.</li></ul>`),
   B.ex(2, T`Is the estimate in Example 1 an over- or underestimate?`, [T`$e^{-x^2}$ is concave down on $[0,0.707]$ and concave up after — mixed. Here the estimate $0.7430$ is below the true $0.7468$: an underestimate overall.`], T`When the concavity changes, compare with the exact value (or more strips) instead of guessing.`),

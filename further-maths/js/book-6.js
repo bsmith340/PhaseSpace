@@ -140,7 +140,7 @@ BOOK.m_growth = [
 <table class="tbl"><tr><th>£1000 at 5% for one year, compounded</th><th>Amount</th></tr><tr><td>yearly ($n=1$)</td><td>£1050.00</td></tr><tr><td>monthly ($n=12$)</td><td>£1051.16</td></tr><tr><td>daily ($n=365$)</td><td>£1051.27</td></tr><tr><td>continuously</td><td>$1000e^{0.05}=$ £1051.27</td></tr></table>`,
   B.thm('Continuous compounding', T`$$A=Pe^{rt},\qquad\text{since}\quad\left(1+\frac rn\right)^{nt}\to e^{rt}\ \text{ as }n\to\infty,\quad e=\lim_{n\to\infty}\left(1+\frac1n\right)^n.$$`),
   B.thm('Half-life and doubling time', T`<p>For $N=N_0e^{-kt}$ ($k\gt0$) the half-life is $T_{1/2}=\dfrac{\ln2}{k}$; for $N=N_0e^{kt}$ the doubling time is $\dfrac{\ln2}{k}$. Neither depends on $N_0$.</p>`),
-  B.proof(T`<p>Half-life: $N_0e^{-kT}=\frac12N_0\iff e^{-kT}=\frac12\iff-kT=\ln\frac12=-\ln2\iff T=\frac{\ln2}{k}$. $N_0$ cancels, so it takes the same time to halve from any starting amount.</p>`),
+  B.opt(T`<p>Half-life: $N_0e^{-kT}=\frac12N_0\iff e^{-kT}=\frac12\iff-kT=\ln\frac12=-\ln2\iff T=\frac{\ln2}{k}$. $N_0$ cancels, so it takes the same time to halve from any starting amount.</p>`),
   B.ex(1, T`£2000 is invested at 4% per annum compounded continuously. Find the value after 10 years and the time taken to double.`, [
     T`$A=2000e^{0.04\times10}=2000e^{0.4}=$ £2983.65.`,
     T`Double: $e^{0.04t}=2\Rightarrow t=\frac{\ln2}{0.04}=17.3$ years.`]),

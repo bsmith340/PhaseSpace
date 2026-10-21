@@ -188,7 +188,7 @@ function viewHome() {
   const pts = C.points, { a, c } = totals(pts), route = routeOf(C), mine = drillable(C);
   const read = pts.filter(p => isRead(p.id)).length, secure = pts.filter(p => mastery(p.id) >= 0.8).length;
   const nextRead = pts.find(p => !isRead(p.id) && inRoute(C, TP[p.topic])), weakest = mine.filter(p => st(p.id).a > 0).sort((x, y) => mastery(x.id) - mastery(y.id))[0];
-  const tiles = [['spec', 'spec', '#0a84ff', 'Specification', 'Every outcome, status and confidence'], ['book', 'book', '#ff9500', 'Textbook', `${pts.length} chapters with full ${C.sections ? 'derivations' : 'proofs'}`], ['drill', 'drill', '#ff2d55', 'Smart drill', 'Endless questions, weakest first'],
+  const tiles = [['spec', 'spec', '#0a84ff', 'Specification', 'Every outcome, status and confidence'], ['book', 'book', '#ff9500', 'Textbook', C.qual === 'maths' ? `${pts.length} chapters, worked examples first` : `${pts.length} chapters with full ${C.sections ? 'derivations' : 'proofs'}`], ['drill', 'drill', '#ff2d55', 'Smart drill', 'Endless questions, weakest first'],
     ['formulae', 'sigma', '#5e5ce6', 'Formula book', 'Every result, searchable'], ['papers', 'papers', '#34c759', 'Past papers', 'Official links, tracker, question bank'], ['sprint', 'sprint', '#ff9f0a', 'Sprint', `${PREFS.sprintN} timed mixed questions`]];
   // on a chosen route, list its sections first
   const order = route ? [...C.topics.filter(t => inRoute(C, t)), ...C.topics.filter(t => !inRoute(C, t))] : C.topics;
@@ -244,7 +244,7 @@ function viewArchive() {
 /* ---------- BOOK ---------- */
 function viewBook() {
   mount(`${crumbs('Textbook')}
-  <header class="phead slim"><div><h1>The ${C.short} textbook</h1><p>One chapter per spec point: the big picture, definitions, theorems with <b>full proofs and derivations</b>, worked examples, common mistakes, exam technique, check-yourself questions and an original exam-style question with a model solution.</p></div></header>
+  <header class="phead slim"><div><h1>The ${C.short} textbook</h1><p>One chapter per spec point: the big picture, definitions, theorems with ${C.qual === 'maths' ? '<b>the proofs the CCEA spec asks for</b> (marked “On the spec”; other derivations are optional and start closed)' : '<b>full proofs and derivations</b>'}, worked examples, common mistakes, exam technique, check-yourself questions and an original exam-style question with a model solution.</p></div></header>
   ${bySection(C, C.topics, ts => ts.map(t => `<section class="card booktoc" style="--tc:${t.color}"><h2><span class="code">${t.code}</span> ${t.title}</h2><ol>${t.points.map(p => `<li class="${isRead(p.id) ? 'done' : ''}"><a href="${cr('point/' + p.id)}?tab=learn"><span class="code">${p.code}</span> ${esc(p.title)}</a> ${badge(p)} <span class="muted small">· ${readMins(p)} min${isRead(p.id) ? ' · ✓ read' : ''}</span></li>`).join('')}</ol></section>`).join(''))}`);
 }
 
