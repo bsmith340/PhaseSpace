@@ -1,4 +1,4 @@
-// BcsMaths statistics library: distributions (pmf/cdf/inverse), data summaries, regression and test statistics.
+// BCS Academy statistics library: distributions (pmf/cdf/inverse), data summaries, regression and test statistics.
 // Accurate to well beyond the 4 decimal places of the CCEA tables; used by drills, the Lab and simulations.
 'use strict';
 

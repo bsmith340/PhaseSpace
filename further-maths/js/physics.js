@@ -1,7 +1,7 @@
-// BcsMaths · Physics: CCEA GCE Physics (2016 specification), units AS 1, AS 2, A2 1 and A2 2.
+// BCS Academy · Physics: CCEA GCE Physics (2016 specification), units AS 1, AS 2, A2 1 and A2 2.
 // The physics lab engine (live simulations for every section, revision notes, randomised drills, mock tests and a
 // tutor), ported from the Phase Space site. It runs inside one function scope so none of its names reach the maths
-// code; the BcsMaths shell talks to it only through the PHYS object returned at the bottom.
+// code; the BCS Academy shell talks to it only through the PHYS object returned at the bottom.
 const PHYS = (() => {
 'use strict';
 /* ================= core ================= */
@@ -7549,7 +7549,7 @@ const Tutor = {
       if (p.options) { const L = low.match(/^\(?([a-h])\)?\.?$/); if (L) { const i = L[1].charCodeAt(0) - 97; this.pending = null; return this.reveal(p, p.order[i]); } }
       else { const v = parseNum(s.replace(/\s*[a-zA-Zµ°Ω⁻¹²³\/]+(\s+[a-zA-Z⁻¹²³]+)*\s*$/, '')); if (isFinite(v)) { this.pending = null; return this.reveal(p, v); } }
     }
-    if (/^(hi|hello|hey|yo|sup)\b/.test(low)) return `<p>Hi! I’m the BcsMaths physics tutor. Ask me about any CCEA AS or A2 Physics topic — “define specific heat capacity”, “equation for capacitor energy”, “why does a filament lamp curve” — or say <b>quiz me on circular motion</b>.</p>`;
+    if (/^(hi|hello|hey|yo|sup)\b/.test(low)) return `<p>Hi! I’m the BCS Academy physics tutor. Ask me about any CCEA AS or A2 Physics topic — “define specific heat capacity”, “equation for capacitor energy”, “why does a filament lamp curve” — or say <b>quiz me on circular motion</b>.</p>`;
     if (/^(help|what can you do)/.test(low)) return `<p>I search every section’s notes, equations, exam traps and spec outcomes, and I can quiz you with randomised exam questions (with worked solutions).</p><ul><li><b>define …</b> / <b>what is …</b></li><li><b>equation for …</b></li><li><b>quiz me on …</b> (then type your number, or a letter for multiple choice; “skip” to see the answer)</li></ul><p>For open-ended explanations, you can switch on Claude mode in <a href="#/settings">Settings</a> with your own API key.</p>`;
     const quiz = low.match(/^(quiz|test|question|another|next|ask)( me)?( on| about)?\s*(.*)$/);
     if (quiz) {
@@ -7578,7 +7578,7 @@ const Tutor = {
   async claude(q) {
     const key = Settings.get('apiKey'), model = Settings.get('model');
     const ctxDocs = this.search(q, 4).map(([, d]) => `[${d.t.code} ${d.t.title} — ${stripTags(d.title)}] ${stripTags(d.html)}`).join('\n');
-    const system = 'You are the BcsMaths physics tutor: a friendly, precise tutor for CCEA GCE Physics (AS 1, AS 2, A2 1, A2 2) for students in Northern Ireland. Use CCEA exam wording for definitions, SI units, and show numbered working ending in a value with units. If the student is attempting a problem, give a hint first and let them try before revealing the full solution. Keep answers short (under 200 words) unless asked for more. Use **bold** for key terms and plain-text maths (e.g. v = fλ, 3.2 × 10⁻⁴). If something is outside the CCEA specification, say so briefly.';
+    const system = 'You are the BCS Academy physics tutor: a friendly, precise tutor for CCEA GCE Physics (AS 1, AS 2, A2 1, A2 2) for students in Northern Ireland. Use CCEA exam wording for definitions, SI units, and show numbered working ending in a value with units. If the student is attempting a problem, give a hint first and let them try before revealing the full solution. Keep answers short (under 200 words) unless asked for more. Use **bold** for key terms and plain-text maths (e.g. v = fλ, 3.2 × 10⁻⁴). If something is outside the CCEA specification, say so briefly.';
     const prev = this.hist.slice(0, -1).filter(m => m.api && m.text), msgs = prev.slice(-10).map(m => ({ role: m.role, content: m.text }));
     while (msgs.length && msgs[0].role !== 'user') msgs.shift();
     msgs.push({ role: 'user', content: (ctxDocs ? `Relevant notes from the app (use if helpful):\n${ctxDocs}\n\n` : '') + `Student: ${q}` });
@@ -7737,8 +7737,8 @@ const MINI = {
   }
 };
 
-/* ================= BcsMaths integration: units, pages and routing ================= */
-// BcsMaths owns the hash router, the global and unit bars, the theme and the footer. It calls route() for
+/* ================= BCS Academy integration: units, pages and routing ================= */
+// BCS Academy owns the hash router, the global and unit bars, the theme and the footer. It calls route() for
 // #/physics/…, leave() whenever it shows anything else, and reads UNITS / stats() for the Physics subject page.
 const UNITS = [
   { id: 'as1', no: 'AS 1', level: 'AS', title: 'Forces, Energy and Electricity' },
@@ -7769,12 +7769,12 @@ function Ctx() {
 function teardown() { if (cur.ctx) { cur.ctx.destroy(); cur.ctx = null; } }
 function leave() { teardown(); cur = { page: null, topic: null, lab: null, ctx: null }; window.PS_CUR = null; fabSync(); }
 
-// a fresh page inside BcsMaths' <main>; everything physics draws lives under .phys so its styles stay scoped
+// a fresh page inside BCS Academy's <main>; everything physics draws lives under .phys so its styles stay scoped
 function page(name, title) {
   teardown(); cur = { page: name, topic: null, lab: null, ctx: Ctx() };
   const a = host(); a.innerHTML = ''; window.scrollTo(0, 0);
   const w = el('div', { class: 'phys' }); a.append(w);
-  document.title = `${title} · BcsMaths`; fabSync();
+  document.title = `${title} · BCS Academy`; fabSync();
   return w;
 }
 const crumbs = (...parts) => el('nav', { class: 'crumbs', html: `<a href="#/">Courses</a> / <a href="#/physics">Physics</a>${parts.map(p => ' / ' + p).join('')}` });
@@ -7882,11 +7882,11 @@ function topicPage(t, labId) {
   [...cur.chips.children].forEach(c => c.classList.toggle('on', c.dataset.lab === lab.id));
   cur.labBox.innerHTML = '';
   const ctx = Ctx(); cur.ctx = ctx;
-  if (lab === NOTES_LAB) { NotesPage(cur.labBox, t); document.title = `${t.code} Notes · BcsMaths`; return; }
+  if (lab === NOTES_LAB) { NotesPage(cur.labBox, t); document.title = `${t.code} Notes · BCS Academy`; return; }
   const P = Plate(cur.labBox, lab, t);
   window.PS_CUR = t.id;
   try { lab.mount(P, ctx); if (!lab.noFill) requestAnimationFrame(() => ctx.fillLast()); } catch (e) { console.error(e); P.stageBox.append(el('div', { class: 'flag', style: { margin: '16px' } }, 'This lab failed to load: ' + e.message)); }
-  document.title = `${t.code} ${lab.title} · BcsMaths`;
+  document.title = `${t.code} ${lab.title} · BCS Academy`;
 }
 
 /* ---------- practice and tutor ---------- */
@@ -7912,7 +7912,7 @@ function fabSync() {
   if (fab.hidden) closeChat();
 }
 
-/* ---------- settings (rendered inside the BcsMaths Settings page) ---------- */
+/* ---------- settings (rendered inside the BCS Academy Settings page) ---------- */
 function settingsInto(box) {
   const s = Settings.all(), grid = el('div', { class: 'phys set-grid' }); box.append(grid);
   const g2 = Card(grid, 'Simulations', null);
@@ -7942,7 +7942,7 @@ function settingsInto(box) {
       confirmBtn(null, 'Reset spec checklist', 'Tap again to untick all', () => { Store.set('ticks', {}); msg.textContent = 'Checklist cleared.'; })), msg);
 }
 
-/* ---------- progress data (merged into the BcsMaths progress file) ---------- */
+/* ---------- progress data (merged into the BCS Academy progress file) ---------- */
 const DATA_KEYS = ['ticks', 'scores', 'tests', 'set', 'practiceSel', 'unit'];
 function exportData() { const d = {}; for (const k of DATA_KEYS) { const v = Store.get(k, null); if (v != null) d[k] = v; } if (d.set) d.set = Object.assign({}, d.set, { apiKey: '' }); return d; }
 // accepts our own block or a whole export from the stand-alone Phase Space site ({ app: 'phase-space', ticks, scores, … });
@@ -7972,7 +7972,7 @@ function route(parts) {
   return unitPage(lastUnit());
 }
 
-/* ---------- theme: follow the BcsMaths light/dark switch ---------- */
+/* ---------- theme: follow the BCS Academy light/dark switch ---------- */
 Theme.refresh();
 Settings.apply();
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { Theme.refresh(); window.dispatchEvent(new Event('ps-theme')); }); } catch (e) {}

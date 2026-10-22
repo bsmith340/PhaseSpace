@@ -1,4 +1,4 @@
-// BcsMaths textbook — Further Maths A2 2, Section B: Mechanics 2.
+// BCS Academy textbook — Further Maths A2 2, Section B: Mechanics 2.
 'use strict';
 
 BOOK.f4_kin3 = [

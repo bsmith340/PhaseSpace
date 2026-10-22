@@ -1,4 +1,4 @@
-// BcsMaths textbook — Further Maths AS 2, Sections A (Mechanics 1) and B (Mechanics 2).
+// BCS Academy textbook — Further Maths AS 2, Sections A (Mechanics 1) and B (Mechanics 2).
 'use strict';
 
 BOOK.f2_hooke = [

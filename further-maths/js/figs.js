@@ -1,4 +1,4 @@
-// BcsMaths figures: small theme-aware SVG diagrams for the textbook (forces, planes, pulleys, beams, graphs,
+// BCS Academy figures: small theme-aware SVG diagrams for the textbook (forces, planes, pulleys, beams, graphs,
 // box plots, histograms, Venn and tree diagrams, networks). Strokes use CSS variables so they follow light/dark.
 'use strict';
 

@@ -1,4 +1,4 @@
-// BcsMaths textbook — Maths A2 2, Section B: Statistics.
+// BCS Academy textbook — Maths A2 2, Section B: Statistics.
 'use strict';
 
 const normPts = (mu, sd, lo, hi, n = 80) => Array.from({ length: n + 1 }, (_, i) => { const x = lo + (hi - lo) * i / n; return [x, Math.exp(-0.5 * ((x - mu) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI))]; });

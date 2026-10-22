@@ -1,4 +1,4 @@
-// About BcsMaths: why it exists. The story lives in ABOUT so it can be edited in one place.
+// About BCS Academy: why it exists. The story lives in ABOUT so it can be edited in one place.
 'use strict';
 
 const ABOUT = {
@@ -15,7 +15,7 @@ function viewAbout() {
   const ps = PHYS.stats(), nUnits = COURSE_ORDER.length + PHYS.UNITS.length, nPts = COURSE_ORDER.reduce((s, id) => s + COURSES[id].points.length, 0);
   const feat = ([i, c, t, d]) => `<div class="card tile" style="--tc:${c}"><span class="ti">${ico(i)}</span><b>${t}</b><small>${d}</small></div>`;
   mount(`<nav class="crumbs"><a href="#/">Courses</a> / About</nav>
-  <section class="hero about-hero"><p class="kicker">About BcsMaths</p><h1>Built by a student who <span class="grad">needed it</span>.</h1>
+  <section class="hero about-hero"><p class="kicker">About BCS Academy</p><h1>Built by a student who <span class="grad">needed it</span>.</h1>
     <p class="lead">Why this exists, what's in it, and how to get the most from it.</p></section>
   <article class="card about-story">${ABOUT.story.map(p => `<p>${esc(p)}</p>`).join('')}<p class="sig">— ${esc(ABOUT.name)}</p></article>
   <h2 class="sech">What makes it different</h2>
@@ -34,6 +34,6 @@ function viewAbout() {
     <li><b>Drill it</b> until it reads "Secure", then use Smart drill and Sprints to keep everything fresh.</li>
     <li><b>Finish with real papers</b> from CCEA's website, and log your scores and tricky questions on the Papers page.</li>
     <li><b>Save your progress</b> from Settings now and then. It lives only in this browser.</li></ol>
-  <div class="box notice"><b>Not affiliated with CCEA.</b> BcsMaths is an independent study resource. Learning outcomes come from CCEA's GCE Mathematics (2018), GCE Further Mathematics (2018) and GCE Physics (2016) specifications. Always check CCEA's website for the current version and for the papers themselves.</div>
+  <div class="box notice"><b>Not affiliated with CCEA.</b> BCS Academy is an independent study resource. Learning outcomes come from CCEA's GCE Mathematics (2018), GCE Further Mathematics (2018) and GCE Physics (2016) specifications. Always check CCEA's website for the current version and for the papers themselves.</div>
   <p class="credit center">${CREDIT}</p>`);
 }

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Phase Space has moved to BcsMaths</title>
-<meta name="description" content="Phase Space is now part of BcsMaths: every CCEA Physics lab, note, drill and mock test, alongside Maths and Further Maths.">
+<title>Phase Space has moved to BCS Academy</title>
+<meta name="description" content="Phase Space is now part of BCS Academy: every CCEA Physics lab, note, drill and mock test, alongside Maths and Further Maths.">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://bcsmath.netlify.app/#/physics">
@@ -59,9 +59,9 @@ a:focus-visible, button:focus-visible { outline: 3px solid color-mix(in srgb, va
 <main>
   <div class="logo" aria-hidden="true">B</div>
   <p class="kicker">Phase Space has moved</p>
-  <h1>Physics now lives on <span>BcsMaths</span></h1>
+  <h1>Physics now lives on <span>BCS Academy</span></h1>
   <p class="lead">Every lab, note, drill and mock test, in a new design, alongside Maths and Further Maths.</p>
-  <a class="go" id="go" href="https://bcsmath.netlify.app/#/physics">Go to BcsMaths <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <a class="go" id="go" href="https://bcsmath.netlify.app/#/physics">Go to BCS Academy <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
   <p class="addr">bcsmath.netlify.app</p>
   <p id="auto" role="status"></p>
 
@@ -71,10 +71,10 @@ a:focus-visible, button:focus-visible { outline: 3px solid color-mix(in srgb, va
     <button class="save" id="save" type="button">Download my progress</button>
     <ol>
       <li>Download your progress file here.</li>
-      <li>On BcsMaths, open <b>Settings</b> and choose <b>Load progress file</b>.</li>
+      <li>On BCS Academy, open <b>Settings</b> and choose <b>Load progress file</b>.</li>
     </ol>
   </section>
-  <p class="foot">BcsMaths is an independent study resource, not affiliated with CCEA.</p>
+  <p class="foot">BCS Academy is an independent study resource, not affiliated with CCEA.</p>
 </main>
 <script>
 (() => {
@@ -99,13 +99,13 @@ a:focus-visible, button:focus-visible { outline: 3px solid color-mix(in srgb, va
     document.getElementById('progress').hidden = false;
     const btn = document.getElementById('save');
     btn.addEventListener('click', () => {
-      // the same shape the old site's Settings → Export made, which BcsMaths loads
+      // the same shape the old site's Settings → Export made, which BCS Academy loads
       const data = { app: 'phase-space', at: new Date().toISOString(), ticks, scores, tests, set: set ? Object.assign({}, set, { apiKey: '' }) : {} };
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
       a.download = `phase-space-progress-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-      btn.textContent = 'Downloaded ✓ Now load it in BcsMaths Settings'; btn.classList.add('done');
+      btn.textContent = 'Downloaded ✓ Now load it in BCS Academy Settings'; btn.classList.add('done');
     });
     return; // no automatic jump while there is progress to save
   }

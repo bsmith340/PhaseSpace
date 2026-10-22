@@ -1,4 +1,4 @@
-// BcsMaths textbook — Further Maths A2 2, Section C: Statistics.
+// BCS Academy textbook — Further Maths A2 2, Section C: Statistics.
 'use strict';
 
 BOOK.f4_lin = [

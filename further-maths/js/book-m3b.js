@@ -1,4 +1,4 @@
-// BcsMaths textbook — Maths A2 1, part 2: Trigonometry; Differentiation.
+// BCS Academy textbook — Maths A2 1, part 2: Trigonometry; Differentiation.
 'use strict';
 
 const trigPts = (f, a, b, n = 240, cap = 6) => { const out = []; for (let i = 0; i <= n; i++) { const x = a + (b - a) * i / n, y = f(x); if (isFinite(y) && Math.abs(y) <= cap) out.push([x, y]); } return out; };

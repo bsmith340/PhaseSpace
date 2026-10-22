@@ -1,4 +1,4 @@
-// BcsMaths textbook — Further Maths AS 1: matrices and vectors.
+// BCS Academy textbook — Further Maths AS 1: matrices and vectors.
 'use strict';
 
 BOOK.f1_mat = [

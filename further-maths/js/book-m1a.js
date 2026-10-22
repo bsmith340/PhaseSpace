@@ -1,4 +1,4 @@
-// BcsMaths textbook — Maths AS 1, part 1: Proof; Algebra & functions; Straight lines.
+// BCS Academy textbook — Maths AS 1, part 1: Proof; Algebra & functions; Straight lines.
 // Same chapter shape as the Further Maths book: big picture → definitions → theory (B.proofReq for proofs the Maths spec asks for, B.opt for the rest) → worked examples → mistakes → exam technique → check yourself → exam-style question.
 'use strict';
 

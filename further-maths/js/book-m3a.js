@@ -1,4 +1,4 @@
-// BcsMaths textbook — Maths A2 1, part 1: Proof by contradiction; Algebra & functions; Parametric equations; Sequences & series.
+// BCS Academy textbook — Maths A2 1, part 1: Proof by contradiction; Algebra & functions; Parametric equations; Sequences & series.
 'use strict';
 
 BOOK.m3_contra = [

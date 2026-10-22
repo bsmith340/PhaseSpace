@@ -1,4 +1,4 @@
-// BcsMaths textbook, part 4: Further calculus.
+// BCS Academy textbook, part 4: Further calculus.
 'use strict';
 
 BOOK.ca6 = [

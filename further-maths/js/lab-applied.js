@@ -1,4 +1,4 @@
-// BcsMaths Lab — applied tools: distribution calculator, data & correlation, suvat solver, forces.
+// BCS Academy Lab — applied tools: distribution calculator, data & correlation, suvat solver, forces.
 'use strict';
 
 const r4 = x => (Math.abs(x) < 5e-5 ? '0.0000' : x.toFixed(4));

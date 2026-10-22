@@ -1,4 +1,4 @@
-// BcsMaths textbook — Maths AS 2, Section B: Statistics.
+// BCS Academy textbook — Maths AS 2, Section B: Statistics.
 'use strict';
 
 BOOK.m2_samp = [

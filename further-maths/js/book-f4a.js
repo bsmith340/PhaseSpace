@@ -1,4 +1,4 @@
-// BcsMaths textbook — Further Maths A2 2, Section A: Mechanics 1.
+// BCS Academy textbook — Further Maths A2 2, Section A: Mechanics 1.
 'use strict';
 
 BOOK.f4_shm = [

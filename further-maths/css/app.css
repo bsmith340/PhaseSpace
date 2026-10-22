@@ -1,4 +1,4 @@
-/* BcsMaths design system — modelled on Apple's design language:
+/* BCS Academy design system — modelled on Apple's design language:
    system typography (SF Pro where available), neutral grey/white surfaces, one blue accent, generous space,
    frosted-glass bars, pill buttons, segmented controls, squircle icons and soft depth. */
 
@@ -670,6 +670,8 @@ body[data-route="calc"] .calc-fab, body[data-route="calc"] .calc-drawer, body[da
 .setrow { display: grid; grid-template-columns: 220px 1fr; gap: 6px 18px; padding: 14px 0; border-bottom: 1px solid var(--hair); align-items: start; }
 .setrow:last-child { border-bottom: 0; }
 .setrow > b { font-weight: 500; }
+.setrow > * { min-width: 0; }
+.setrow select { max-width: 100%; }
 .radio { display: inline-flex; gap: 7px; align-items: center; cursor: pointer; }
 .code-box { width: 100%; font: .76rem var(--mono); word-break: break-all; letter-spacing: 0; }
 .setsec.danger h2 { color: var(--bad); }
@@ -748,6 +750,7 @@ body[data-route="calc"] .calc-fab, body[data-route="calc"] .calc-drawer, body[da
   .stat b { font-size: 1.6rem; }
 }
 @media (max-width: 520px) { .brand-t { display: none; } }
+@media (max-width: 350px) { .top-in { padding: 0 10px; gap: 6px; } .cswitch a { padding: 4px 6px !important; } .nav a, .nav button.icon-btn { padding: 6px 5px; } }
 
 /* ============ 21. Accessibility preferences ============ */
 @media (prefers-reduced-motion: reduce) {

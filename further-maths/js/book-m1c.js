@@ -1,4 +1,4 @@
-// BcsMaths textbook — Maths AS 1, part 3: Logarithms & modelling; Differentiation; Integration; Vectors.
+// BCS Academy textbook — Maths AS 1, part 3: Logarithms & modelling; Differentiation; Integration; Vectors.
 'use strict';
 
 /* ===================================================================== */

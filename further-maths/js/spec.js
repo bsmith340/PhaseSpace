@@ -1,4 +1,4 @@
-// BcsMaths course registry. Each course arranges points from the shared pool into its specification structure.
+// BCS Academy course registry. Each course arranges points from the shared pool into its specification structure.
 // status: 'core'  = directly covers a learning outcome quoted from the CCEA specification
 //         'check' = supporting material (an example context or a technique a listed outcome needs)
 'use strict';
@@ -39,7 +39,7 @@ function defineCourse(def) {
 
 /* ===================== Further Mathematics A2 1 ===================== */
 // Outcomes are quoted from the CCEA GCE Further Mathematics (2018) specification, Unit A2 1 (pages 20–22).
-// Each point lists the outcome codes it covers; codes are BcsMaths labels (CCEA prints the bullets without numbers).
+// Each point lists the outcome codes it covers; codes are BCS Academy labels (CCEA prints the bullets without numbers).
 defineCourse({
   id: 'fm', short: 'FM A2 1', name: 'Further Mathematics', unit: 'A2 1 Pure Mathematics', qual: 'further', level: 'A2', unitNo: 'A2 1', uname: 'Pure Mathematics', board: 'CCEA GCE Further Mathematics (2018)',
   icon: '∫', color: '#007aff', paper: 'AFM11', specRef: 'CCEA GCE Further Mathematics (2018) specification, Section 3.4 (pp. 20–22)',

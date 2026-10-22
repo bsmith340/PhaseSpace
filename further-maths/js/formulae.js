@@ -1,4 +1,4 @@
-// BcsMaths formula book. Each entry: [name, TeX, note, pointId]
+// BCS Academy formula book. Each entry: [name, TeX, note, pointId]
 'use strict';
 
 const FORMULAE = [

@@ -1,4 +1,4 @@
-// BcsMaths Graph — a Desmos-style interactive grapher that runs entirely in the page (no key, works offline).
+// BCS Academy Graph — a Desmos-style interactive grapher that runs entirely in the page (no key, works offline).
 // One expression per line:
 //   a = 2 [0, 5]            slider (optional range)        f(x) = x^3 - 3x       function you can reuse
 //   y = a(x - p)^2 + q      curve y = f(x)                 x = y^2 - 1           curve x = g(y)

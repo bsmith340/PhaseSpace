@@ -1,4 +1,4 @@
-// BcsMaths textbook — Maths A2 1, part 3: Integration; Numerical methods.
+// BCS Academy textbook — Maths A2 1, part 3: Integration; Numerical methods.
 'use strict';
 
 BOOK.m3_istd = [

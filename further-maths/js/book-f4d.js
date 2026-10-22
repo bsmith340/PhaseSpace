@@ -1,4 +1,4 @@
-// BcsMaths textbook — Further Maths A2 2, Section D: Discrete and Decision Mathematics.
+// BCS Academy textbook — Further Maths A2 2, Section D: Discrete and Decision Mathematics.
 'use strict';
 
 BOOK.f4_pie = [

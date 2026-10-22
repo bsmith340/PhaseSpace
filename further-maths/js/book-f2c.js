@@ -1,4 +1,4 @@
-// BcsMaths textbook — Further Maths AS 2, Section D: Discrete and Decision Mathematics.
+// BCS Academy textbook — Further Maths AS 2, Section D: Discrete and Decision Mathematics.
 'use strict';
 
 const ttab = (vars, cols) => { const rows = []; const n = vars.length; for (let i = 0; i < 2 ** n; i++) { const v = vars.map((_, k) => !((i >> (n - 1 - k)) & 1)); rows.push(v); }

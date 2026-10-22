@@ -1,4 +1,4 @@
-# BcsMaths · CCEA Maths, Further Maths & Physics
+# BCS Academy · CCEA Maths, Further Maths & Physics
 
 A complete self-study course for **CCEA GCE Mathematics**, **CCEA GCE Further Mathematics** (2018 specifications) and **CCEA GCE Physics** (2016 specification). It covers all twelve written units, including every section of the applied units. It is a static site: no build step and no server. Created by Ben Smith.
 
@@ -16,7 +16,7 @@ On the two Further Maths applied units you answer two of the four sections in th
 
 - **Specification map** (`#/<unit>/spec`).
   - Every learning outcome is **quoted from the CCEA specification**, grouped by section and topic and linked to the chapters that teach it.
-  - Outcome codes such as A2c or C11 are BcsMaths labels; CCEA prints its bullets unnumbered.
+  - Outcome codes such as A2c or C11 are BCS Academy labels; CCEA prints its bullets unnumbered.
 - **Textbook** (`#/<unit>/book`). There is one chapter per spec point, and each chapter contains:
   - the big picture and definitions;
   - theorems with proofs: every result in Further Maths; in Mathematics only the proofs CCEA's spec asks for (tagged "On the spec"), with other derivations marked "Optional" and closed by default;
@@ -34,11 +34,11 @@ On the two Further Maths applied units you answer two of the four sections in th
   - a score tracker;
   - your own bank of real past-paper questions.
 
-BcsMaths never invents CCEA questions or examiner comments. Every exam-style question is labelled "BcsMaths original · not a CCEA past paper".
+BCS Academy never invents CCEA questions or examiner comments. Every exam-style question is labelled "BCS Academy original · not a CCEA past paper".
 
 ## Physics
 
-Physics (`#/physics/…`) is built around live labs rather than textbook chapters. It is the Phase Space physics engine, restyled to match and running inside BcsMaths:
+Physics (`#/physics/…`) is built around live labs rather than textbook chapters. It is the Phase Space physics engine, restyled to match and running inside BCS Academy:
 
 - **36 sections, 87 labs, 159 spec outcomes** across AS 1, AS 2, A2 1 and A2 2. AS 3 and A2 3 (the practical units) have no unit of their own; the virtual practicals in each section practise those skills.
 - **Section pages** (`#/physics/<section>/<lab>`): an interactive simulation with its controls, readouts, embedded exam drills, equations, exam traps and the section's spec outcomes.
@@ -48,7 +48,7 @@ Physics (`#/physics/…`) is built around live labs rather than textbook chapter
 - **Practice** (`#/physics/practice`): timed mock tests and endless drills drawn from every lab's question generators, with difficulty levels and a weak-area tracker.
 - **Tutor** (`#/physics/tutor`, plus a floating chat button on physics pages): searches every section's notes offline. Optionally it can call Claude with your own Anthropic API key (set in Settings → Physics; billed to that key and stored only in your browser).
 
-Physics progress is part of the BcsMaths progress file. Settings also loads a progress file exported from the old stand-alone Phase Space site.
+Physics progress is part of the BCS Academy progress file. Settings also loads a progress file exported from the old stand-alone Phase Space site.
 
 ## Shared tools
 
@@ -75,7 +75,7 @@ Physics progress is part of the BcsMaths progress file. Settings also loads a pr
   - start page;
   - section choices for each unit;
   - resets.
-- **About** (`#/about`): why BcsMaths exists. Edit the story in the `ABOUT` object in `js/about.js`.
+- **About** (`#/about`): why BCS Academy exists. Edit the story in the `ABOUT` object in `js/about.js`.
 
 ## Design
 
@@ -92,13 +92,24 @@ It respects reduced motion, reduced transparency and increased contrast.
 
 Progress lives in the browser's localStorage for one web address. Before moving to a new address, download a progress file from ⚙ Settings, then load it on the new site.
 
+## Deploy from GitHub (Cloudflare Pages)
+
+The site needs no build step: the `further-maths` folder is served as it is.
+
+1. Cloudflare dashboard → Workers & Pages → Create application → Pages → Connect to Git, and pick this repository.
+2. Production branch `main`. Framework preset None, build command blank, build output directory `further-maths`.
+3. Save and deploy. Every push to `main` goes live; other branches get preview addresses.
+4. Custom domain: the Pages project → Custom domains → Set up a custom domain. A root domain (example.com) needs the domain's DNS on Cloudflare (change the nameservers at the registrar); a subdomain (www.example.com) can be a CNAME to the project's `pages.dev` address.
+
+Netlify reads `netlify.toml`, which publishes the same folder.
+
 ## Deploy (Netlify Drop)
 
 ```bash
-python3 tools/build_netlify.py      # → bcsmaths-netlify.zip (a single index.html at the root)
+python3 tools/build_netlify.py      # → bcs-academy-netlify.zip (a single index.html at the root)
 ```
 
-Drag `bcsmaths-netlify.zip` (or the `dist/netlify` folder) onto https://app.netlify.com/drop.
+Drag `bcs-academy-netlify.zip` (or the `dist/netlify` folder) onto https://app.netlify.com/drop.
 
 ## Run locally
 

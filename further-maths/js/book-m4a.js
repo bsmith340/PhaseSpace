@@ -1,4 +1,4 @@
-// BcsMaths textbook — Maths A2 2, Section A: Mechanics.
+// BCS Academy textbook — Maths A2 2, Section A: Mechanics.
 'use strict';
 
 BOOK.m4_cal1 = [

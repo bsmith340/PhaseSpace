@@ -1,4 +1,4 @@
-// BcsMaths app shell: multi-course routing, progress, and every view.
+// BCS Academy app shell: multi-course routing, progress, and every view.
 // Routes: #/ (course chooser) · #/<course>/… (home, spec, book, topic/:id, point/:id, drill, sprint, formulae, papers, progress, archive) · shared: #/lab, #/lab/:tool, #/sims, #/sim/:id, #/calc
 'use strict';
 
@@ -159,7 +159,7 @@ function viewChooser() {
   const tool = ([h, i, t]) => `<a class="tool" href="${h}">${ico(i)}<span>${t}</span></a>`;
   mount(`${backupBanner()}<section class="chooser">
     <p class="kicker">CCEA A level · Maths, Further Maths and Physics</p>
-    <h1><span class="grad">BcsMaths</span></h1>
+    <h1><span class="grad">BCS Academy</span></h1>
     <p class="lead">Every unit of all three subjects, every specification point, in order.</p>
     <div class="cta center"><a class="btn primary" href="${ch}">${cl} ${ico('chevron')}</a><a class="btn" href="#/about">Why I built this ${ico('chevron')}</a></div>
   </section>
@@ -226,7 +226,7 @@ function viewSpec() {
     <td><select data-conf="${p.id}">${['', 'Not started', 'Shaky', 'OK', 'Confident'].map(o => `<option ${DB.conf[p.id] === o ? 'selected' : ''}>${o}</option>`).join('')}</select></td></tr>`; };
   mount(`${crumbs('Specification')}
   <header class="phead slim"><div><h1>${C.unit} — specification map</h1><p>Every topic and learning outcome for ${esc(C.board)}, linked to its chapter, simulation and drills. Only specification content is in this course.</p></div></header>
-  <div class="box notice"><b>Official wording.</b> Every learning outcome below is quoted from the ${esc(C.specRef)}. The codes (${C.topics[0].outcomes[0].code}, …) are BcsMaths labels — CCEA prints the bullets unnumbered. Next to each outcome are the chapters that cover it, so you can see that nothing is missing and nothing extra is included. Badges: ${['core', 'check'].map(k => `<span class="sbadge s-${k}">${STATUS[k][0]}</span> ${STATUS[k][1]}`).join(' · ')}.</div>
+  <div class="box notice"><b>Official wording.</b> Every learning outcome below is quoted from the ${esc(C.specRef)}. The codes (${C.topics[0].outcomes[0].code}, …) are BCS Academy labels — CCEA prints the bullets unnumbered. Next to each outcome are the chapters that cover it, so you can see that nothing is missing and nothing extra is included. Badges: ${['core', 'check'].map(k => `<span class="sbadge s-${k}">${STATUS[k][0]}</span> ${STATUS[k][1]}`).join(' · ')}.</div>
   <div class="box"><b>Assessment.</b> ${esc(C.exam)}. ${esc(C.assumes || '')} Formulae provided in the exam are in the <a href="${C.sources[2].url}" target="_blank" rel="noopener">Mathematical Formulae and Tables</a> booklet — see the <a href="${cr('formulae')}">formula book</a> for what is given and what you must learn.</div>
   ${bySection(C, C.topics, ts => ts.map(t => `<section class="card spect" style="--tc:${t.color}"><h2><span class="code">${t.code}</span> ${t.title}</h2>
     <p class="muted small">Students should be able to:</p>
@@ -440,7 +440,7 @@ function bindCards(root, after) {
 }
 function papersForPoint(pane, p) {
   const qs = DB.bank.filter(b => b.pid === p.id), ns = DB.notes.filter(n => n.pid === p.id);
-  pane.innerHTML = `<div class="box notice">BcsMaths doesn't reproduce CCEA papers or reports (they're CCEA's copyright). Open them from the <a href="${cr('papers')}">Past papers</a> page, then save the questions and examiner comments for <b>${p.code}</b> here.</div>
+  pane.innerHTML = `<div class="box notice">BCS Academy doesn't reproduce CCEA papers or reports (they're CCEA's copyright). Open them from the <a href="${cr('papers')}">Past papers</a> page, then save the questions and examiner comments for <b>${p.code}</b> here.</div>
     <h3>Examiner comments on ${p.code}</h3>${ns.length ? ns.map(nCard).join('') : '<p class="muted">None saved yet.</p>'}
     <h3>Your past-paper questions on ${p.code}</h3>${qs.length ? qs.map(qCard).join('') : '<p class="muted">None saved yet.</p>'}
     <p class="muted">Every textbook chapter also ends with an original exam-style question with a model solution.</p>${qForm(p.id)}`;
@@ -468,7 +468,7 @@ function viewPapers() {
   $('#addp').onclick = () => { papers.push({ id: uid(), name: 'New paper', score: '', out: '', date: '', notes: '' }); save(); viewPapers(); };
   bindCards(root, viewPapers); bindForms(root, viewPapers);
   $('#exp').onclick = downloadProgress;
-  $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const pl = readPayload(JSON.parse(t)); if (confirm('Merge this progress file with the progress on this device? (Cancel to stop. To replace instead, use Settings.)')) { applyPayload(pl, 'merge'); viewPapers(); } } catch { alert('That file is not a BcsMaths progress file.'); } }); };
+  $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const pl = readPayload(JSON.parse(t)); if (confirm('Merge this progress file with the progress on this device? (Cancel to stop. To replace instead, use Settings.)')) { applyPayload(pl, 'merge'); viewPapers(); } } catch { alert('That file is not a BCS Academy progress file.'); } }); };
 }
 
 /* ---------- PROGRESS ---------- */

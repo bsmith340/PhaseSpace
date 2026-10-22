@@ -1,4 +1,4 @@
-/* BcsMaths · Physics. Styles for the physics lab engine, in the same Apple design language as the rest of the site:
+/* BCS Academy · Physics. Styles for the physics lab engine, in the same Apple design language as the rest of the site:
    system type, grouped white surfaces on a grey ground, segmented controls, iOS sliders and switches, soft depth.
    Everything is scoped under .phys so none of it reaches the maths pages; the UI accent comes from the subject
    theme (body[data-subject="physics"]). The --ps-* palette is what the simulations draw with. */
@@ -392,7 +392,7 @@ html.calm .phys .tc-stage { opacity: .8; }
 @keyframes chatIn { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
 @media (max-width: 700px) { .phys.fab { display: none; } .phys.chat-pop { display: none; } }
 
-/* ============ 12. Settings cards (inside the BcsMaths Settings page) ============ */
+/* ============ 12. Settings cards (inside the BCS Academy Settings page) ============ */
 .phys.set-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 14px; align-items: start; margin-top: 10px; }
 .phys.set-grid .card { display: flex; flex-direction: column; gap: 12px; box-shadow: none; background: var(--panel2); }
 .phys.set-grid .card > .ctl-head { margin-bottom: -6px; font-size: .86rem; }

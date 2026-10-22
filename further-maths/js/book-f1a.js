@@ -1,4 +1,4 @@
-// BcsMaths textbook — Further Maths AS 1: further algebra and complex numbers.
+// BCS Academy textbook — Further Maths AS 1: further algebra and complex numbers.
 'use strict';
 
 const circPts = (cx, cy, r, n = 72) => Array.from({ length: n + 1 }, (_, i) => [cx + r * Math.cos(2 * Math.PI * i / n), cy + r * Math.sin(2 * Math.PI * i / n)]);

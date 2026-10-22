@@ -1,6 +1,6 @@
-"""Build a single-file, Netlify-ready bundle of the BcsMaths site (Maths, Further Maths and Physics).
+"""Build a single-file, Netlify-ready bundle of the BCS Academy site (Maths, Further Maths and Physics).
 
-Output: dist/netlify/index.html (all CSS/JS inlined) and bcsmaths-netlify.zip
+Output: dist/netlify/index.html (all CSS/JS inlined) and bcs-academy-netlify.zip
 with index.html at the zip root, ready for Netlify Drop.
 """
 import pathlib, re, zipfile
@@ -29,7 +29,7 @@ html = html.replace('</body>', bundle + '\n</body>')
 
 OUT.mkdir(parents=True, exist_ok=True)
 (OUT / 'index.html').write_text(html)
-zpath = ROOT / 'bcsmaths-netlify.zip'
+zpath = ROOT / 'bcs-academy-netlify.zip'
 with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_DEFLATED) as z:
     z.write(OUT / 'index.html', 'index.html')
 print(f'{OUT / "index.html"} ({len(html) // 1024} KB), {zpath.name} ({zpath.stat().st_size // 1024} KB)')
