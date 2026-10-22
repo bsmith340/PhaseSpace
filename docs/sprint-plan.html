@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>BCS Academy Sprint Plan</title>
+<style>
+@page { size: A4; margin: 15mm 15mm 17mm 15mm; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font: 9.5pt/1.42 "Liberation Sans", Arial, Helvetica, sans-serif; color: #000; letter-spacing: -.003em; }
+h1 { font-size: 23pt; line-height: 1.06; letter-spacing: -.025em; margin: 0 0 6pt; font-weight: 700; }
+h2 { font-size: 12.5pt; letter-spacing: -.012em; margin: 13pt 0 5pt; font-weight: 700; }
+h3 { font-size: 10pt; margin: 9pt 0 3pt; font-weight: 700; }
+p { margin: 0 0 5pt; }
+ul, ol { margin: 0 0 6pt; padding-left: 13pt; }
+li { margin: 0 0 2pt; }
+.sec { break-before: page; }
+.eyebrow { font-size: 7.6pt; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 5pt; color: #000; }
+.lead { font-size: 11.5pt; line-height: 1.38; letter-spacing: -.01em; margin: 0 0 11pt; color: #222; }
+.muted { color: #555; }
+.small { font-size: 8pt; }
+.card { background: #f1f1f1; border-radius: 9pt; padding: 9pt 11pt; margin: 0 0 9pt; break-inside: avoid; }
+.card.line { background: none; border: 1pt solid #000; }
+.card.ink { background: #000; color: #fff; }
+.card.ink .muted, .card.ink .label { color: #ddd; }
+.card > :last-child { margin-bottom: 0; }
+.label { font-size: 7.4pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 3pt; color: #444; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9pt; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9pt; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt; }
+.big { font-size: 22pt; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+.mid { font-size: 15pt; font-weight: 700; letter-spacing: -.02em; line-height: 1.05; }
+.stat .t { font-size: 8pt; line-height: 1.3; margin-top: 3pt; color: #333; }
+.stat .s { font-size: 6.8pt; color: #666; margin-top: 2pt; }
+table { border-collapse: collapse; width: 100%; font-size: 8.5pt; line-height: 1.3; margin: 0 0 9pt; }
+th { text-align: left; font-size: 7pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #333; border-bottom: 1.2pt solid #000; padding: 3pt 5pt 3pt 0; vertical-align: bottom; }
+td { border-bottom: .5pt solid #c8c8c8; padding: 4pt 5pt 4pt 0; vertical-align: top; }
+tr { break-inside: avoid; }
+td.r, th.r { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; }
+td.d { white-space: nowrap; font-weight: 700; width: 46pt; }
+tr.total td { border-top: 1pt solid #000; border-bottom: 1.2pt solid #000; font-weight: 700; }
+.pill { display: inline-block; font-size: 6.6pt; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1pt 5pt; border-radius: 99pt; border: .8pt solid #000; white-space: nowrap; vertical-align: 1pt; }
+.pill.ink { background: #000; color: #fff; }
+.box { display: inline-block; width: 8pt; height: 8pt; border: 1pt solid #000; border-radius: 2pt; vertical-align: -1pt; margin-right: 4pt; }
+.checks { list-style: none; padding: 0; }
+.checks li { padding-left: 13pt; position: relative; margin-bottom: 3pt; break-inside: avoid; }
+.checks li::before { content: ""; position: absolute; left: 0; top: 1.5pt; width: 7.5pt; height: 7.5pt; border: 1pt solid #000; border-radius: 2pt; }
+.day td { padding-top: 5pt; padding-bottom: 5pt; }
+.day td:nth-child(2) b { display: block; font-size: 9.2pt; }
+.prompt { display: block; margin-top: 2pt; font-size: 7.6pt; color: #444; font-style: italic; }
+.done { font-size: 8pt; }
+.cover { height: 260mm; display: flex; flex-direction: column; }
+.cover .mark { width: 40pt; height: 40pt; border-radius: 11pt; background: #000; color: #fff; display: grid; place-items: center; font: 700 22pt/1 "Liberation Sans", Arial, sans-serif; }
+.cover h1 { font-size: 44pt; line-height: .98; letter-spacing: -.035em; margin: 64pt 0 12pt; }
+.cover .sub { font-size: 14pt; line-height: 1.3; letter-spacing: -.012em; color: #222; max-width: 135mm; margin: 0 0 24pt; }
+.cover .foot { margin-top: auto; border-top: 1pt solid #000; padding-top: 7pt; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt; font-size: 8.2pt; }
+.cover .foot b { display: block; font-size: 7pt; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 2pt; }
+.bar { height: 5pt; background: #ddd; border-radius: 99pt; overflow: hidden; margin-top: 4pt; }
+.bar i { display: block; height: 100%; background: #000; border-radius: 99pt; }
+.rule { border: 0; border-top: 1pt solid #000; margin: 9pt 0; }
+.src li { font-size: 7.6pt; word-break: break-all; margin-bottom: 2.5pt; }
+.log td { height: 25pt; }
+.tl { position: relative; padding-left: 16pt; }
+.tl::before { content: ""; position: absolute; left: 4pt; top: 4pt; bottom: 4pt; width: 1.2pt; background: #000; }
+.tl .w { position: relative; margin: 0 0 7pt; break-inside: avoid; }
+.tl .w::before { content: ""; position: absolute; left: -15.4pt; top: 2.5pt; width: 7pt; height: 7pt; border-radius: 50%; background: #fff; border: 1.4pt solid #000; }
+.tl .w.key::before { background: #000; }
+.tl .w b { font-size: 9.4pt; }
+.tl .w span { color: #333; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<section class="cover" id="cover">
+  <div class="mark">B</div>
+  <h1>BCS Academy<br>Sprint &amp;<br>Christmas Plan</h1>
+  <p class="sub">Fourteen days, 45 minutes a day, from a working prototype to a fast, findable, trusted site that's out of beta. Then a clear run to Christmas.</p>
+  <div class="card ink" style="max-width:140mm">
+    <p class="label">The goal</p>
+    <p style="font-size:12pt;line-height:1.35;margin:0">By Thursday 5 November, BCS Academy is on its own domain, every unit has its own Google-findable page, it loads fast on a phone, and it's tested by real students. By Christmas Eve it's earning, ranking and collecting reviews.</p>
+  </div>
+  <div class="foot">
+    <div><b>Sprint</b>Fri 23 Oct to Thu 5 Nov 2026</div>
+    <div><b>Daily time</b>45 minutes, 14 days: 10.5 hours</div>
+    <div><b>Deadline</b>Thursday 24 December 2026</div>
+    <div><b>For</b>Ben Smith · v1 · 22 Oct 2026</div>
+  </div>
+</section>
+
+<!-- 1 AT A GLANCE -->
+<section class="sec" id="s1">
+  <p class="eyebrow">01 · At a glance</p>
+  <h1>The whole plan on one page</h1>
+  <p class="lead">The content is done. What's missing is everything that makes a site findable, fast and trusted. Two weeks fixes the foundations; seven more weeks turns them into users and money.</p>
+
+  <div class="g4">
+    <div class="card stat"><div class="big">10.5 h</div><div class="t">Total sprint time: 14 × 45 min</div></div>
+    <div class="card stat"><div class="big">12</div><div class="t">Unit pages Google can find, up from roughly 1 today</div></div>
+    <div class="card stat"><div class="big">≥ 90</div><div class="t">Lighthouse mobile performance target (up from a 3 MB single page)</div></div>
+    <div class="card stat"><div class="big">v1.0</div><div class="t">Out of beta on Thu 5 Nov, with 10 exit criteria met</div></div>
+  </div>
+
+  <h2>The 14 days</h2>
+  <table>
+    <tr><th>Days</th><th>Theme</th><th>Ends with</th></tr>
+    <tr><td class="d">1–3</td><td><b>Foundations.</b> Name, domain, GitHub, hosting, analytics, legal pages</td><td>BCS Academy live on its own domain, measured</td></tr>
+    <tr><td class="d">4–7</td><td><b>Make Google see it.</b> Real URLs, a page per unit, sitemap, Search Console</td><td>Sitemap submitted; v0.9 deployed</td></tr>
+    <tr><td class="d">8–11</td><td><b>Fast, useful, trusted.</b> Speed, landing copy, error reporting, sign-ups, booking</td><td>Lighthouse ≥ 90; tutoring bookable</td></tr>
+    <tr><td class="d">12–14</td><td><b>Test and launch.</b> Real students, fix the top 5, launch v1.0</td><td>"Beta" label removed; launch posts out</td></tr>
+  </table>
+
+  <h2>By Christmas Eve</h2>
+  <div class="g3">
+    <div class="card"><p class="label">Found</p><p class="mid">≥ 90%</p><p class="small">of submitted pages indexed; first search clicks in Search Console</p></div>
+    <div class="card"><p class="label">Used</p><p class="mid">100+</p><p class="small">email subscribers; weekly visitors rising four weeks in a row</p></div>
+    <div class="card"><p class="label">Earning</p><p class="mid">£480+</p><p class="small">from tutoring, plus January "Mock Ready" seats sold (business plan base case)</p></div>
+  </div>
+
+  <h2>Your 45 minutes, every day</h2>
+  <div class="g3">
+    <div class="card line"><p class="label">0:00–0:05 · Read</p><p>Read today's card. Copy its prompt into a Claude Code session.</p></div>
+    <div class="card line"><p class="label">0:05–0:35 · Build</p><p>Claude builds; you check every change on your phone. Push when it works.</p></div>
+    <div class="card line"><p class="label">0:35–0:45 · Ship &amp; log</p><p>Deploy, tick the box, and write one line in the daily log (page 11).</p></div>
+  </div>
+  <p class="small muted">Rule: if a day overruns, stop at 45 minutes and carry the rest to the buffer days (Fri 6 to Sun 8 Nov). Your own study time doesn't move.</p>
+</section>
+
+<!-- 2 DATA -->
+<section class="sec" id="s2">
+  <p class="eyebrow">02 · The data</p>
+  <h1>Market, competitors and the numbers that matter</h1>
+  <p class="lead">Google is where students search, video is where they hang out, and the big revision sites barely serve CCEA. That's the opening.</p>
+
+  <div class="g4">
+    <div class="card stat"><div class="big">3,655</div><div class="t">A level Maths entries in NI, summer 2026, the most popular subject</div><div class="s">CCEA provisional entries</div></div>
+    <div class="card stat"><div class="big">33,740</div><div class="t">NI A level entries in 2026, up 4.5% on 2025</div><div class="s">CCEA provisional entries</div></div>
+    <div class="card stat"><div class="big">91%</div><div class="t">of UK searches go to Google. SEO here means Google.</div><div class="s">StatCounter, June 2026</div></div>
+    <div class="card stat"><div class="big">+32%</div><div class="t">bounce probability as mobile load time goes from 1 s to 3 s</div><div class="s">Google/SOASTA, 2017</div></div>
+    <div class="card stat"><div class="big">29%</div><div class="t">of secondary pupils in England &amp; Wales have had private tutoring (45% in London)</div><div class="s">Sutton Trust, 2026 (no NI figure)</div></div>
+    <div class="card stat"><div class="big">67% · 60%</div><div class="t">of UK children use YouTube and TikTok; 95% use at least one social or video platform</div><div class="s">Ofcom, 2026</div></div>
+    <div class="card stat"><div class="big">175,035</div><div class="t">NI GCSE entries in 2026: the next market up</div><div class="s">CCEA provisional entries</div></div>
+    <div class="card stat"><div class="big">23,540</div><div class="t">Leaving Cert higher level Maths candidates in 2025 (Physics: 6,592)</div><div class="s">Secondary source; check SEC</div></div>
+  </div>
+
+  <h2>Competitors</h2>
+  <table>
+    <tr><th style="width:19%">Who</th><th style="width:31%">Scale</th><th style="width:20%">Price</th><th>CCEA gap = your opening</th></tr>
+    <tr><td><b>Save My Exams</b></td><td>2.5M+ registered students (all time, Feb 2026), 430k educators; forecast +41% revenue in 2025; about 8.2M visits (Semrush, May 2025)</td><td>Subscription; price varies by account</td><td>Our check found only past papers for CCEA Maths and Physics</td></tr>
+    <tr><td><b>Physics &amp; Maths Tutor</b></td><td>9.6M page views and 560k users a month (self-reported)</td><td>Free, ad-funded</td><td>Built around English boards</td></tr>
+    <tr><td><b>Seneca</b></td><td>14M+ users worldwide, 300k+ teachers (self-reported)</td><td>Freemium</td><td>General, not CCEA-mapped</td></tr>
+    <tr><td><b>Up Learn</b></td><td>Premium A level video courses</td><td>£74.99/month, or £319.99 until summer 2027 exams</td><td>English boards; 10× your Pro price</td></tr>
+    <tr><td><b>Local tutors</b></td><td>Everywhere, limited hours each</td><td>≈ £20–£40 an hour (NI directory estimates)</td><td>Expensive; no free resource behind them</td></tr>
+    <tr><td><b>CCEA</b></td><td>The exam board: specs, papers, mark schemes</td><td>Free</td><td>Documents, not teaching. Link to them.</td></tr>
+  </table>
+
+  <div class="card ink">
+    <p class="label">What the data says</p>
+    <p style="margin:0">Students already pay a lot (Up Learn charges £319.99 for one A level until the 2027 exams) and search on Google for almost everything. The scale players treat CCEA as an afterthought. A fast, CCEA-only site that ranks for "CCEA A2 1 maths" can win Northern Ireland without beating anyone nationally.</p>
+  </div>
+</section>
+
+<!-- 3 AUDIT -->
+<section class="sec" id="s3">
+  <p class="eyebrow">03 · Where the site is</p>
+  <h1>Audit: today versus v1.0</h1>
+  <p class="lead">The site works brilliantly for someone who's already on it. To Google and to a slow phone, it barely exists. Four technical problems cause most of that.</p>
+
+  <table>
+    <tr><th style="width:22%">Problem</th><th style="width:40%">Why it hurts</th><th>Fix (sprint day)</th></tr>
+    <tr><td><b>Links are #/…</b></td><td>Google's own guidance: don't use URL fragments to load different content, because Googlebot can't reliably resolve them. In practice Google sees one page.</td><td>Real URLs (/maths/as-1/) with the History API, plus redirects from old # links. <span class="pill">Day 4</span></td></tr>
+    <tr><td><b>One 3 MB HTML file</b></td><td>Every visitor downloads all 12 units, physics included, before anything shows. Slow on phones, and bounce risk rises with every second.</td><td>Split into per-page files; physics and textbooks load only when opened. <span class="pill">Day 8</span></td></tr>
+    <tr><td><b>No page titles or descriptions</b></td><td>Search results would show the same title for everything, with no reason to click.</td><td>One real page per unit with its own title, description, headings and intro text. <span class="pill">Days 5, 9</span></td></tr>
+    <tr><td><b>Hosting limits</b></td><td>Netlify's free plan for new accounts (from Sept 2025) is 300 credits a month: about 15 credits per deploy and about 20 per GB served (third-party figures). At ~0.9 MB per visit, that's roughly 8,000 visits a month with 10 deploys. After that the site is suspended until the month ends.</td><td>Move to Cloudflare Pages (free, 500 builds a month, static bandwidth not metered per third-party reviews), deploying from GitHub. <span class="pill">Day 1</span></td></tr>
+    <tr><td><b>No data</b></td><td>You can't see visitors, popular units or broken pages.</td><td>Cookie-free analytics plus Search Console. <span class="pill">Day 3</span></td></tr>
+    <tr><td><b>No trust signals</b></td><td>No reviews, contact, error reporting, privacy page or domain.</td><td>Own domain, legal pages, "report an error", reviews later. <span class="pill">Days 1, 3, 10</span></td></tr>
+    <tr><td><b>Code not backed up</b></td><td>The code lives in one temporary session. GitHub pushes currently fail (403).</td><td>Reconnect GitHub and install the Claude app on the repo. <span class="pill">Day 1</span></td></tr>
+  </table>
+
+  <h2>v1.0: the ten exit criteria (out of beta when all are ticked)</h2>
+  <div class="g2">
+    <ul class="checks">
+      <li>Live on its own domain over HTTPS, branded BCS Academy</li>
+      <li>Every unit and section has a real URL, title and description</li>
+      <li>sitemap.xml submitted; at least 90% of it indexed</li>
+      <li>Lighthouse mobile: performance ≥ 90, accessibility ≥ 95</li>
+      <li>Core Web Vitals "good": LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1</li>
+    </ul>
+    <ul class="checks">
+      <li>Analytics and Search Console live, with a baseline recorded</li>
+      <li>Privacy notice, terms and contact pages</li>
+      <li>"Report an error" on every chapter and lab</li>
+      <li>Tested by 5+ real students; top 5 issues fixed</li>
+      <li>Code on GitHub; every push deploys automatically</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4 SPRINT WEEK 1 -->
+<section class="sec" id="s4">
+  <p class="eyebrow">04 · Sprint week 1</p>
+  <h1>Days 1–7: foundations and Google</h1>
+  <p class="lead">Each row is one 45-minute session. The italic line is the prompt to give Claude. Tick the box when its "done when" is true.</p>
+  <table class="day">
+    <tr><th style="width:12%">Day</th><th style="width:58%">Task</th><th>Done when</th></tr>
+    <tr><td class="d"><span class="box"></span>1<br><span class="muted small">Fri 23 Oct</span></td><td><b>Lock the name, domain and plumbing</b>Decide on "BCS Academy". Check and buy a domain (try bcsacademy.co.uk first). Reconnect GitHub and install the Claude app on the repo. Create a free Cloudflare Pages project linked to the repo.<span class="prompt">"Push the branch, set up Cloudflare Pages from GitHub, and connect my domain."</span></td><td class="done">Domain bought; repo connected; first automatic deploy works</td></tr>
+    <tr><td class="d"><span class="box"></span>2<br><span class="muted small">Sat 24 Oct</span></td><td><b>Rebrand to BCS Academy</b>Name, logo mark, page titles, footer, About page and the meta description, across all three subjects.<span class="prompt">"Rename BcsMaths to BCS Academy everywhere, keep the subject colours, and redirect bcsmath.netlify.app and bcs35 to the new domain."</span></td><td class="done">No "BcsMaths" left on screen; old addresses redirect</td></tr>
+    <tr><td class="d"><span class="box"></span>3<br><span class="muted small">Sun 25 Oct</span></td><td><b>Measure, and be legal</b>Cloudflare Web Analytics (cookie-free). Verify the domain in Google Search Console. Add privacy, terms and contact pages.<span class="prompt">"Add cookie-free analytics, and privacy, terms and contact pages written for under-18 users."</span></td><td class="done">Visitors show in analytics; Search Console verified</td></tr>
+    <tr><td class="d"><span class="box"></span>4<br><span class="muted small">Mon 26 Oct</span></td><td><b>Real URLs</b>Switch routing from #/m1/… to /maths/as-1/… with the History API. Old # links redirect to the new ones, and the host serves the app for every path.<span class="prompt">"Replace hash routing with History API routes, keep every old #/ link working, and add the host rewrite rules."</span></td><td class="done">Every page has a clean URL; refreshing any page works</td></tr>
+    <tr><td class="d"><span class="box"></span>5<br><span class="muted small">Tue 27 Oct</span></td><td><b>A real page per unit and section</b>The build pre-renders static HTML for the 12 units, the physics sections and each spec topic, with unique titles, descriptions, an H1 and real text.<span class="prompt">"Pre-render a static HTML page for every unit, topic and physics section at build time, with its own title, meta description and H1."</span></td><td class="done">View-source on any unit shows its content, not an empty shell</td></tr>
+    <tr><td class="d"><span class="box"></span>6<br><span class="muted small">Wed 28 Oct</span></td><td><b>Search plumbing</b>sitemap.xml, robots.txt, canonical tags, Open Graph tags, breadcrumb and Course structured data, and a 404 page.<span class="prompt">"Generate sitemap.xml and robots.txt, add canonical, Open Graph and Course/Breadcrumb JSON-LD, and a 404 page."</span></td><td class="done">The Rich Results Test passes on 3 sample pages</td></tr>
+    <tr><td class="d"><span class="box"></span>7<br><span class="muted small">Thu 29 Oct</span></td><td><b>Ship v0.9 and tell Google</b>Deploy. Submit the sitemap. Request indexing for the home page and the 12 unit pages with URL Inspection. Check every unit on your phone.</td><td class="done">Sitemap status "Success"; 13 indexing requests made</td></tr>
+  </table>
+  <div class="card"><p class="label">Week 1 rule</p><p>If Day 4 or 5 runs over, move everything else back a day. Real URLs and pre-rendering are the two jobs that decide whether Google can find you; everything after them depends on them.</p></div>
+</section>
+
+<!-- 5 SPRINT WEEK 2 -->
+<section class="sec" id="s5">
+  <p class="eyebrow">05 · Sprint week 2</p>
+  <h1>Days 8–14: fast, useful, trusted, launched</h1>
+  <table class="day">
+    <tr><th style="width:12%">Day</th><th style="width:58%">Task</th><th>Done when</th></tr>
+    <tr><td class="d"><span class="box"></span>8<br><span class="muted small">Fri 30 Oct</span></td><td><b>Speed</b>Split the bundle: each page loads only its own code. Physics (≈ 860 KB) and the textbooks load on demand. Inline KaTeX's CSS for above-the-fold maths; preload fonts.<span class="prompt">"Split the app so each subject and the physics engine load only when needed; get Lighthouse mobile performance to 90 or more."</span></td><td class="done">Lighthouse mobile ≥ 90 on home, a maths chapter and a physics lab</td></tr>
+    <tr><td class="d"><span class="box"></span>9<br><span class="muted small">Sat 31 Oct</span></td><td><b>Landing copy that ranks</b>Each unit page gets 150–300 words of real text: what's examined, paper length, weighting, topics, and how to use the site. Add a short FAQ per unit.<span class="prompt">"Draft landing text and a 4-question FAQ for each unit page from the spec data; mark anything I must check."</span></td><td class="done">You've checked all 12 pages; no fact left unverified</td></tr>
+    <tr><td class="d"><span class="box"></span>10<br><span class="muted small">Sun 1 Nov</span></td><td><b>Trust</b>"Report an error" button on every chapter and lab (sends the page and a note). A "Fixed this week" log. A "Founder" line on the home page.<span class="prompt">"Add a report-an-error button that emails me the page URL and the message, plus a public fixed-this-week page."</span></td><td class="done">A test report reaches your inbox</td></tr>
+    <tr><td class="d"><span class="box"></span>11<br><span class="muted small">Mon 2 Nov</span></td><td><b>Turn visitors into customers</b>Email sign-up with a free printable checklist. A tutoring and courses page with a booking link and Stripe payment links (a parent as account owner).<span class="prompt">"Add an email sign-up with a downloadable checklist PDF, and a tutoring page with booking and payment links."</span></td><td class="done">You can sign up and book yourself end to end</td></tr>
+    <tr><td class="d"><span class="box"></span>12<br><span class="muted small">Tue 3 Nov</span></td><td><b>Real students</b>Give 5–10 classmates one task each ("find the SHM lab and do a drill"). Watch one of them use it without helping. Collect issues in a list.</td><td class="done">10 or more issues logged, ranked by how many people hit them</td></tr>
+    <tr><td class="d"><span class="box"></span>13<br><span class="muted small">Wed 4 Nov</span></td><td><b>Fix the top 5 and polish</b>Fix the five worst issues. Keyboard and screen-reader pass. Re-run Lighthouse. Check every unit on a phone and a laptop, in light and dark.<span class="prompt">"Fix these five issues, then run an accessibility pass and re-check Lighthouse on mobile."</span></td><td class="done">All 10 v1.0 criteria ticked (page 3)</td></tr>
+    <tr><td class="d"><span class="box"></span>14<br><span class="muted small">Thu 5 Nov</span></td><td><b>Launch v1.0</b>Remove the beta label. Post in year group chats. Email 5 heads of department. Post the first 3 short videos. Record baseline numbers in the log.</td><td class="done">Launch posts out; baseline recorded</td></tr>
+  </table>
+
+  <div class="g2">
+    <div class="card"><p class="label">Buffer · Fri 6 to Sun 8 Nov</p><p>Catch up on anything that overran. If you're on track, rest. Week 3 starts the Christmas plan.</p></div>
+    <div class="card"><p class="label">If you only have 20 minutes</p><p>Do the "done when" check, ship what works, and log it. A shipped half-task beats an unshipped whole one.</p></div>
+  </div>
+</section>
+
+<!-- 6 SEO -->
+<section class="sec" id="s6">
+  <p class="eyebrow">06 · SEO playbook</p>
+  <h1>How BCS Academy gets found</h1>
+  <p class="lead">SEO for a small, focused board comes down to three things: Google can read every page, every page answers a real search, and other sites point to you.</p>
+
+  <div class="g3">
+    <div class="card"><p class="label">1 · Technical</p><ul style="margin:0">
+      <li>Real URLs, no # routes</li><li>Static HTML for each page</li><li>sitemap.xml, robots.txt</li><li>Unique &lt;title&gt; and description</li><li>Canonical, Open Graph, JSON-LD</li><li>Core Web Vitals "good"</li><li>HTTPS on your own domain</li></ul></div>
+    <div class="card"><p class="label">2 · Content</p><ul style="margin:0">
+      <li>One page per unit and topic</li><li>150–300 words of intro text</li><li>A FAQ that answers real questions</li><li>Internal links: unit → topic → lab</li><li>Descriptive headings (H1, H2)</li><li>Updated each term; dates shown</li></ul></div>
+    <div class="card"><p class="label">3 · Authority</p><ul style="margin:0">
+      <li>School websites and teachers linking</li><li>Video descriptions linking back</li><li>A Google Business Profile (tutoring)</li><li>Mentions in NI student groups</li><li>Never buy links</li></ul></div>
+  </div>
+
+  <h2>Page title formula and keyword map</h2>
+  <p class="small muted">Titles follow "[Unit] [subject] revision: [what's in it] | BCS Academy". The searches below are examples; find real ones in Search Console once data arrives.</p>
+  <table>
+    <tr><th style="width:24%">Page</th><th style="width:44%">Example title</th><th>Searches it should win</th></tr>
+    <tr><td>/maths/as-1/</td><td>CCEA AS 1 Maths revision: pure maths, every spec point | BCS Academy</td><td>ccea as maths revision · ccea as 1 maths</td></tr>
+    <tr><td>/further-maths/a2-1/</td><td>CCEA A2 1 Further Maths: complex numbers, matrices, proof | BCS Academy</td><td>ccea further maths a2 · ccea fp revision</td></tr>
+    <tr><td>/physics/as-2/</td><td>CCEA AS 2 Physics: waves, photons, astronomy with live labs | BCS Academy</td><td>ccea as physics unit 2 · ccea physics waves</td></tr>
+    <tr><td>/physics/shm/</td><td>Simple harmonic motion for CCEA A2 Physics: live lab and drills | BCS Academy</td><td>shm ccea physics · simple harmonic motion a level</td></tr>
+    <tr><td>/maths/a2-1/trigonometry/</td><td>CCEA A2 1 trigonometry: identities, proofs, R cos(θ − α) | BCS Academy</td><td>ccea a2 trig identities · double angle proof</td></tr>
+  </table>
+
+  <h2>Weekly Search Console routine (10 minutes, Sundays)</h2>
+  <div class="g2">
+    <ol>
+      <li><b>Pages → Not indexed:</b> fix the top reason first.</li>
+      <li><b>Performance → Queries:</b> find searches with impressions but few clicks, and rewrite those pages' titles.</li>
+      <li><b>Queries ranked 8–20:</b> add a paragraph or FAQ to that page. These are the quickest wins.</li>
+    </ol>
+    <ol start="4">
+      <li><b>Core Web Vitals:</b> anything not "good" goes on next week's list.</li>
+      <li><b>Links:</b> note any new site linking to you and thank them.</li>
+      <li><b>Write it down</b> in the scorecard: impressions, clicks, average position.</li>
+    </ol>
+  </div>
+  <div class="card line"><p class="label">Expect</p><p style="margin:0">A new site can take anywhere from a few days to several weeks to be crawled and indexed, and Google gives no fixed timeline. Submitting a sitemap and using URL Inspection helps. Rankings build over months, which is why the technical work goes first.</p></div>
+</section>
+
+<!-- 7 CHRISTMAS -->
+<section class="sec" id="s7">
+  <p class="eyebrow">07 · To Christmas</p>
+  <h1>Week by week to 24 December</h1>
+  <p class="lead">Seven weeks after launch. Building drops to 45 minutes, four days a week (3 hours). With tutoring, that keeps you inside the 7-hour cap from the business plan.</p>
+  <div class="g2">
+    <div class="tl">
+      <div class="w"><b>w/c 9 Nov · Index and listen</b><br><span>Fix every Search Console indexing error. Ask 2 teachers to spot-check a unit. Start tutoring (target: 2 students).</span></div>
+      <div class="w"><b>w/c 16 Nov · Announce Mock Ready</b><br><span>January course on sale (8 seats × 2 groups, £30). 3 videos a week. Email list live on every page.</span></div>
+      <div class="w"><b>w/c 23 Nov · Content that ranks</b><br><span>Two guides: "What's on CCEA A2 1 Maths" and "CCEA Physics practicals explained". First reviews collected.</span></div>
+      <div class="w key"><b>w/c 30 Nov · Halfway check</b><br><span>Mock Ready at 10+ seats. Pro waitlist page live. Re-check Lighthouse and fix regressions.</span></div>
+    </div>
+    <div class="tl">
+      <div class="w"><b>w/c 7 Dec · Lead magnet</b><br><span>Free "Christmas revision planner" PDF for email sign-ups. Tutoring holiday slots open.</span></div>
+      <div class="w"><b>w/c 14 Dec · The Christmas push</b><br><span>"12 days of revision" video series. Final Mock Ready reminder. Thank-you email to the list.</span></div>
+      <div class="w key"><b>w/c 21 Dec · Deadline week</b><br><span>Tick the checklist below by Thu 24 Dec. Then stop and rest; January starts with the mock course.</span></div>
+    </div>
+  </div>
+
+  <h2>The Christmas deadline checklist</h2>
+  <div class="g2">
+    <ul class="checks">
+      <li>v1.0 live on your own domain, out of beta</li>
+      <li>≥ 90% of sitemap pages indexed</li>
+      <li>First 100 search clicks in Search Console</li>
+      <li>Lighthouse mobile ≥ 90 on the 3 key templates</li>
+      <li>100+ email subscribers</li>
+      <li>Weekly visitors up four weeks running</li>
+      <li>Code on GitHub, auto-deploying, backed up</li>
+    </ul>
+    <ul class="checks">
+      <li>3+ tutoring students; £480+ earned</li>
+      <li>Mock Ready: 10+ seats sold for January</li>
+      <li>5+ genuine reviews, with permission to publish</li>
+      <li>2 teachers have spot-checked a unit</li>
+      <li>0 open "critical" error reports</li>
+      <li>Stripe (parent owner), records spreadsheet, ICO check done</li>
+      <li>Plan for January written on one page</li>
+    </ul>
+  </div>
+  <div class="card ink"><p class="label">If you fall behind</p><p style="margin:0">Protect three things, in this order: the site being findable (indexing), Mock Ready selling, and your own revision. Videos and guides can slip a week; those three can't.</p></div>
+</section>
+
+<!-- 8 BUSINESS -->
+<section class="sec" id="s8">
+  <p class="eyebrow">08 · The business</p>
+  <h1>Every part of the business, on one page</h1>
+  <table>
+    <tr><th style="width:15%">Area</th><th style="width:43%">Now (October 2026)</th><th>By Christmas</th></tr>
+    <tr><td><b>Brand</b></td><td>Called BcsMaths, though it covers Physics too</td><td>BCS Academy, own domain, one logo, one voice</td></tr>
+    <tr><td><b>Product</b></td><td>12 units, 204 maths points, 36 physics sections, 87 labs</td><td>v1.0: fast, findable, error-reporting, tested</td></tr>
+    <tr><td><b>Customers</b></td><td>Students (users) and parents (payers)</td><td>First paying families; first teacher fans</td></tr>
+    <tr><td><b>Offer</b></td><td>Free course only</td><td>Free course, tutoring £20/h, Mock Ready £30, Pro waitlist</td></tr>
+    <tr><td><b>Channels</b></td><td>None running</td><td>School chats, 3 videos a week, Google, email list</td></tr>
+    <tr><td><b>Sales</b></td><td>No way to pay</td><td>Booking link and payment links; refund policy</td></tr>
+    <tr><td><b>Support</b></td><td>None</td><td>Contact page, error reports answered within 24 h</td></tr>
+    <tr><td><b>Tech</b></td><td>One 3 MB file, manual uploads, no backup</td><td>GitHub, auto-deploy, per-page files, analytics</td></tr>
+    <tr><td><b>Legal</b></td><td>"Not affiliated" notice only</td><td>Privacy, terms, parent-owned Stripe, ICO check, AccessNI</td></tr>
+    <tr><td><b>Finance</b></td><td>£0 in, ~£0 out</td><td>Records sheet; separate account; under the £1,000 allowance</td></tr>
+    <tr><td><b>Team</b></td><td>You (and Claude)</td><td>You, plus 2 teacher reviewers and 5 student testers</td></tr>
+  </table>
+
+  <h2>Profit and time</h2>
+  <div class="g4">
+    <div class="card stat"><div class="mid">≈ £80</div><div class="t">fixed costs for year one: domain, ICO £52, AccessNI £16. Hosting £0.</div></div>
+    <div class="card stat"><div class="mid">1.5% + 20p</div><div class="t">per card payment (Stripe, UK cards): 65p on a £30 course</div></div>
+    <div class="card stat"><div class="mid">£5.6K</div><div class="t">12-month base-case revenue (business plan); £2.8K to £9.6K range</div></div>
+    <div class="card stat"><div class="mid">£33–£44</div><div class="t">per hour from group courses, versus about £16 from 1:1 tutoring</div></div>
+  </div>
+  <table>
+    <tr><th>Where your hours go (Nov–Dec)</th><th class="r">Hours / week</th><th class="r">What it earns</th></tr>
+    <tr><td>Building and SEO (45 min × 4 days)</td><td class="r">3</td><td class="r">Long-term traffic; compounds</td></tr>
+    <tr><td>Tutoring</td><td class="r">3</td><td class="r">£60 a week</td></tr>
+    <tr><td>Videos and outreach (batched on Sundays)</td><td class="r">≤ 1</td><td class="r">Visitors and sign-ups</td></tr>
+    <tr class="total"><td>Business total</td><td class="r">≤ 7</td><td class="r">The term-time cap from the business plan</td></tr>
+  </table>
+  <p class="small muted">Price check: Up Learn charges £319.99 for one A level until the 2027 exams. BCS Pro at £29 a year is about a tenth of that, a gap you can lead with.</p>
+</section>
+
+<!-- 9 EXPANSION -->
+<section class="sec" id="s9">
+  <p class="eyebrow">09 · Future</p>
+  <h1>Expansion, in the right order</h1>
+  <p class="lead">Each stage opens only when the one before has proved itself. The gates stop you expanding before the core is working.</p>
+  <table>
+    <tr><th style="width:5%">#</th><th style="width:24%">Move</th><th style="width:25%">Market size (data)</th><th style="width:24%">Gate to start</th><th>Why this order</th></tr>
+    <tr><td>1</td><td><b>Own CCEA A level Maths, Further Maths, Physics</b></td><td>3,655 A level Maths entries a year in NI, plus Year 13s</td><td>Now</td><td>Built already; win it first</td></tr>
+    <tr><td>2</td><td><b>BCS Pro</b> (sync, mock papers, packs)</td><td>1–3% of active users (estimate)</td><td>Accounts working; 1,000 visitors a week</td><td>Revenue without your time</td></tr>
+    <tr><td>3</td><td><b>Schools licence</b> (class codes, teacher view)</td><td>NI schools offering CCEA A levels</td><td>2 schools piloting free; teachers recommending</td><td>One sale reaches a whole class</td></tr>
+    <tr><td>4</td><td><b>CCEA GCSE</b> Maths, Further Maths, Physics</td><td>175,035 NI GCSE entries a year, all subjects</td><td>£500 a month; A level pages ranking</td><td>Huge market, same board, same parents</td></tr>
+    <tr><td>5</td><td><b>BCS tutors</b>: recruit top students and graduates</td><td>29% of England &amp; Wales pupils have had tutoring</td><td>Your own slots fully booked for 6 weeks</td><td>Sells your demand without your hours</td></tr>
+    <tr><td>6</td><td><b>Other CCEA A levels</b> (Chemistry, Biology)</td><td>Smaller than Maths each</td><td>A paid subject expert to write and check</td><td>Same model; needs content you can't write</td></tr>
+    <tr><td>7</td><td><b>Leaving Cert</b> (Republic of Ireland)</td><td>23,540 higher Maths and 6,592 higher Physics candidates (2025)</td><td>NI saturated; a partner teacher in the ROI</td><td>A big neighbouring market</td></tr>
+    <tr><td>8</td><td><b>AI tutor upgrade</b> (paid tier)</td><td>Existing users</td><td>Pro revenue covers API costs twice over</td><td>Cost grows with every use; wait for revenue</td></tr>
+  </table>
+
+  <div class="g2">
+    <div class="card"><p class="label">Never expand into</p><ul style="margin:0"><li>English exam boards head-on against Save My Exams</li><li>An app-store app before the website has paid off</li><li>Paid ads before organic channels convert</li><li>Features no customer has asked for</li></ul></div>
+    <div class="card"><p class="label">Long-term picture (2028+)</p><p style="margin:0">BCS Academy: the CCEA-first learning platform for Northern Ireland. Free course, paid Pro, school licences and a tutor network, with your A level results and university as the story behind it.</p></div>
+  </div>
+</section>
+
+<!-- 10 RISKS -->
+<section class="sec" id="s10">
+  <p class="eyebrow">10 · Risks and rules</p>
+  <h1>What could go wrong, and the rules that prevent it</h1>
+  <table>
+    <tr><th style="width:27%">Risk</th><th style="width:12%">Odds</th><th>Prevention</th></tr>
+    <tr><td>The sprint overruns into study time</td><td>High</td><td>Hard stop at 45 minutes; buffer days; carry tasks forward, never stay up.</td></tr>
+    <tr><td>Google doesn't index pages</td><td>Medium</td><td>Real URLs, pre-rendered HTML, sitemap, URL Inspection; fix Search Console errors weekly.</td></tr>
+    <tr><td>Site suspended for hosting limits</td><td>Medium</td><td>Move to Cloudflare Pages; smaller per-page files; fewer manual deploys.</td></tr>
+    <tr><td>Losing the code</td><td>Medium</td><td>Fix GitHub on Day 1; every change pushed; keep the latest zip offline.</td></tr>
+    <tr><td>A content error embarrasses you</td><td>Medium</td><td>Error button, teacher spot-checks, fixes within 24 hours, public log.</td></tr>
+    <tr><td>Rebrand confuses existing users</td><td>Low</td><td>Redirect every old address; one notice saying "BcsMaths is now BCS Academy".</td></tr>
+    <tr><td>Copyright complaint over spec quotes</td><td>Low</td><td>Link to CCEA's papers; ask CCEA before charging for anything that quotes the spec.</td></tr>
+    <tr><td>Fake-review or claims breach</td><td>Low</td><td>Only genuine reviews (banned since April 2025); never promise grades.</td></tr>
+  </table>
+
+  <h2>Ten rules for the sprint</h2>
+  <div class="g2">
+    <ol>
+      <li>45 minutes. Stop on time.</li>
+      <li>Ship every day, even if it's small.</li>
+      <li>Test on a phone before you push.</li>
+      <li>One task per day. No side quests.</li>
+      <li>If it doesn't help Google, speed or trust, it waits.</li>
+    </ol>
+    <ol start="6">
+      <li>Every fact on a landing page is checked.</li>
+      <li>No new content until v1.0 ships.</li>
+      <li>Log every day, good or bad.</li>
+      <li>Real students beat your own opinion.</li>
+      <li>Exams first, always.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 11 LOG -->
+<section class="sec" id="s11">
+  <p class="eyebrow">11 · Daily log</p>
+  <h1>Sprint log</h1>
+  <p>One line a day. Tick, note, number. If you skip a day, write why.</p>
+  <table class="log">
+    <tr><th style="width:9%">Day</th><th style="width:9%">Done</th><th>What shipped (one line)</th><th style="width:13%">Visitors</th><th style="width:13%">Indexed pages</th><th style="width:12%">Minutes</th></tr>
+    <tr><td>1</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>3</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>4</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>5</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>6</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>7</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>8</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>9</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>10</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>11</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>12</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>13</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>14</td><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <div class="g3">
+    <div class="card line"><p class="label">Baseline (Day 3)</p><p>Visitors / week: ______<br>Indexed pages: ______</p></div>
+    <div class="card line"><p class="label">Launch (Day 14)</p><p>Lighthouse: ______<br>Email subs: ______</p></div>
+    <div class="card line"><p class="label">Christmas Eve</p><p>Revenue: £______<br>Reviews: ______</p></div>
+  </div>
+</section>
+
+<!-- 12 SOURCES -->
+<section class="sec" id="s12">
+  <p class="eyebrow">12 · Sources</p>
+  <h1>Where the numbers come from</h1>
+  <p class="small">Checked 21–22 October 2026. "Self-reported" means the company's own claim. Third-party hosting figures can change; check the provider's own pricing page before relying on them.</p>
+  <ul class="src">
+    <li>CCEA, Provisional Entries by Year Group, Summer 2026 (A level Maths 3,655; A level total 33,740, +4.5%; GCSE 175,035): ccea.org.uk/downloads/docs/regulation/statistics/general/Provisional Entries by Year Group/2026/Summer/</li>
+    <li>JCQ, Northern Ireland GCE results 2026: jcq.org.uk/wp-content/uploads/sites/2/2026/08/JCQ-Northern-Ireland-GCE-Results-2026-Press-Release.pdf</li>
+    <li>StatCounter, search engine market share, United Kingdom (Google 91.19%, June 2026): gs.statcounter.com/search-engine-market-share/all-globe/united-kingdom</li>
+    <li>Think with Google, page load time and bounce probability (+32% from 1 s to 3 s; Google/SOASTA 2017): thinkwithgoogle.com/data/page-load-time-statistics</li>
+    <li>Google Search Central, JavaScript SEO basics (don't use fragments to load content; use the History API): developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics</li>
+    <li>Sutton Trust, Private Tutoring 2026 (29% of secondary pupils; London 45%): suttontrust.com/wp-content/uploads/2026/02/Private-Tutoring-2026.pdf</li>
+    <li>Ofcom findings via Silicon UK, 2026 (YouTube 67%, TikTok 60%, 95% use at least one platform): silicon.co.uk/e-regulation/ofcom-youtube-tiktok-630005</li>
+    <li>Save My Exams, How many people use Save My Exams (2.5M+ students, 430k educators; self-reported): savemyexams.com/learning-hub/sme-articles/how-many-people-use-save-my-exams/ · revenue forecast: businesscloud.co.uk/?p=185343 · visits estimate: semrush.com (May 2025)</li>
+    <li>Physics &amp; Maths Tutor, advertising page (9.6M page views, 560k users a month; self-reported): physicsandmathstutor.com/?p=5477</li>
+    <li>Seneca Learning, About (14M+ users, 300k+ teachers; self-reported): senecalearning.com/en-gb/about/</li>
+    <li>Up Learn, pricing (£74.99/month; £319.99 until summer 2027 exams): uplearn.co.uk/pricing</li>
+    <li>Leaving Certificate 2025 higher level Maths 23,540, Physics 6,592 (secondary source): telescoper.blog/?p=89419</li>
+    <li>Netlify free plan credits (300/month; deploy and bandwidth costs; third-party): netli.fyi/blog/netlify-free-plan-limits-2026 · Cloudflare Pages limits (500 builds/month): developers.cloudflare.com/pages/platform/limits</li>
+    <li>Tutoring prices in NI (directory estimates): bizhub365.com/find/private-tutor/belfast/cost/ · Stripe UK pricing (1.5% + 20p): wise.com/gb/blog/stripe-payments-charges-uk</li>
+    <li>Indexing timescales (days to weeks; no fixed Google timeline; third-party): ahrefs.com/blog/google-index/</li>
+  </ul>
+  <hr class="rule">
+  <p class="small muted">BCS Academy is an independent study resource, not affiliated with or endorsed by CCEA. This is a working plan, not legal or financial advice.</p>
+</section>
+
+</body>
+</html>
