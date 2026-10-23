@@ -26,7 +26,7 @@ function normDB() {
   if (Array.isArray(DB.papers)) DB.papers = { fm: DB.papers }; DB.papers ||= {};
 }
 normDB();
-const save = () => { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch { /* private mode */ } };
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch { /* private mode */ } if (typeof CLOUD !== 'undefined') CLOUD.touch(); };
 const st = id => DB.stats[id] ||= { a: 0, c: 0, r: [] };
 function record(id, ok) {
   const s = st(id); s.a++; if (ok) s.c++; s.r.push(ok ? 1 : 0); if (s.r.length > 10) s.r.shift();
@@ -95,7 +95,7 @@ function renderNav(inCourse, qual) {
   const cid = inCourse ? C.id : (COURSES[DB.lastCourse] ? DB.lastCourse : C.id), q = inCourse ? C.qual : qual;
   document.body.classList.toggle('in-course', inCourse);
   const qs = `<div class="cswitch" role="group" aria-label="Qualification">${Object.entries(QUALS).map(([k, Q]) => `<a href="#/${k}" class="${q === k ? 'on' : ''}"><span class="q-long">${Q.short}</span><span class="q-short">${Q.mini}</span></a>`).join('')}</div>`;
-  $('#nav').innerHTML = `${qs}<a href="#/lab" data-r="lab" class="g-lab">${ico('lab')}<span class="gtext">Lab</span></a><a href="#/sims" data-r="sims" title="Simulations">${ico('sims')}<span class="gtext">Simulations</span></a><a href="#/about" data-r="about" class="g-about"><span class="gtext">About</span></a><a href="#/calc" class="gico g-calc" title="Calculator (Alt+C)" aria-label="Calculator" data-r="calc">${ico('calc')}</a><a href="#/settings" class="gico" title="Settings — save and load progress" aria-label="Settings" data-r="settings">${ico('gear')}</a><button id="theme" class="icon-btn gico" title="Light or dark appearance" aria-label="Switch between light and dark appearance">${ico('theme')}</button>`;
+  $('#nav').innerHTML = `${qs}<a href="#/lab" data-r="lab" class="g-lab">${ico('lab')}<span class="gtext">Lab</span></a><a href="#/sims" data-r="sims" title="Simulations">${ico('sims')}<span class="gtext">Simulations</span></a><a href="#/about" data-r="about" class="g-about"><span class="gtext">About</span></a><a href="#/calc" class="gico g-calc" title="Calculator (Alt+C)" aria-label="Calculator" data-r="calc">${ico('calc')}</a><a href="#/settings" class="gico" title="Settings — save and load progress" aria-label="Settings" data-r="settings">${ico('gear')}</a><button id="theme" class="icon-btn gico" title="Light or dark appearance" aria-label="Switch between light and dark appearance">${ico('theme')}</button>${typeof ACCOUNT !== 'undefined' ? ACCOUNT.navButton() : ''}`;
   $('#theme').onclick = toggleTheme;
   const ln = $('#lnav'); ln.hidden = !inCourse;
   ln.innerHTML = inCourse ? `<div class="lnav-in"><a class="lnav-title" href="#/${C.qual}">${QUALS[C.qual].name}</a>
@@ -274,7 +274,7 @@ function viewPoint(id, tab = 'learn') {
   const tabs = [['learn', 'Textbook'], ['summary', 'Summary'], ...(p.sims.length ? [['sim', 'Simulate']] : []), ...(hasDes ? [['graph', 'Graph']] : []), ['drill', 'Drill'], ['papers', `Past papers${nPP ? ` (${nPP})` : ''}`]];
   if (!tabs.find(x => x[0] === tab)) tab = 'learn';
   mount(`${crumbs(`<a href="${cr('topic/' + t.id)}">${t.title}</a>`, p.code)}
-  <header class="phead slim" style="--tc:${t.color}"><div><h1><span class="code">${p.code}</span> ${esc(p.title)}</h1><p>${badge(p)} ${isRead(p.id) ? '<span class="muted small">✓ read</span>' : ''}</p></div>
+  <header class="phead slim" style="--tc:${t.color}"><div><h1><span class="code">${p.code}</span> ${esc(p.title)}</h1><p>${badge(p)} ${isRead(p.id) ? '<span class="muted small">✓ read</span>' : ''} ${typeof REPORT !== 'undefined' ? REPORT.button({ unit: C.id, point: p.id }) : ''}</p></div>
   <div class="mast">${bar(mastery(p.id), t.color)}<small>${level(mastery(p.id))[0]} · ${Math.round(mastery(p.id) * 100)}%</small></div></header>
   ${p.status === 'beyond' ? `<div class="box notice">This topic is <b>not on the ${C.unit} specification</b>. It's archived for reference only.</div>` : ''}
   ${p.covers && p.covers.length ? `<div class="box specsays"><div class="lbl">The specification says — students should be able to:</div><ul>${p.covers.map(o => `<li><span class="ocode">${o.code}</span> ${esc(o.text)}</li>`).join('')}</ul>${p.status === 'check' ? '<p class="muted small">This chapter supports these outcomes (an example context or a technique they rely on) rather than being named outright.</p>' : ''}</div>` : ''}
@@ -512,6 +512,8 @@ function route() {
   }
   renderNav(false, QUALS[r] ? r : ''); highlight(r === 'sim' ? 'sims' : r || '');
   if (QUALS[r]) return viewQual(r);
+  if (r === 'account') return ACCOUNT.route(parts, mount);
+  if (r === 'admin') return REPORT.route(parts, mount);
   if (r === 'about') return viewAbout();
   if (r === 'sims') return viewSims();
   if (r === 'sim') return viewSim(parts[1]);

@@ -781,3 +781,5 @@ body[data-route="calc"] .calc-fab, body[data-route="calc"] .calc-drawer, body[da
 .uptoast { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 90; display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 32px); padding: 10px 10px 10px 18px; border-radius: 980px; background: var(--panel); color: var(--text); box-shadow: 0 8px 30px rgba(0, 0, 0, .18); font-size: .9rem; }
 .uptoast button { border: 0; border-radius: 980px; padding: 7px 14px; background: var(--accent-fill); color: var(--on-accent); font: 600 .86rem var(--sans); cursor: pointer; }
 .logo svg { display: block; }
+.acct-pill .acct-ico { display: none; }
+@media (max-width: 520px) { .nav #theme { display: none; } .acct-pill:not(.in) .acct-t { display: none; } .acct-pill:not(.in) .acct-ico { display: block; } .acct-pill:not(.in) { padding: 6px 7px !important; } }

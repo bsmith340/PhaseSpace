@@ -1,0 +1,74 @@
+name: Nightly database backup
+
+# Dumps the Supabase database every night and keeps it as a workflow artifact for 30 days.
+# Needs repository secrets:
+#   SUPABASE_DB_URL     the Session pooler connection string (IPv4), e.g.
+#                       postgresql://postgres.<ref>:<password>@aws-0-eu-west-2.pooler.supabase.com:5432/postgres
+#   BACKUP_PASSPHRASE   encrypts the files (required when this repository is public, recommended always:
+#                       the backups contain students' personal data). Restore steps: docs/backend/SETUP.md.
+
+on:
+  schedule:
+    - cron: '17 2 * * *'   # 02:17 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      REPO_PRIVATE: ${{ github.event.repository.private }}
+    steps:
+      - name: Check secrets
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then echo "::error::Add the SUPABASE_DB_URL repository secret (docs/backend/SETUP.md)."; exit 1; fi
+          if [ "$REPO_PRIVATE" != "true" ] && [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::This repository is public, so artifacts are visible to others. Add a BACKUP_PASSPHRASE secret so backups are encrypted."; exit 1
+          fi
+
+      - name: Install PostgreSQL 17 client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Dump
+        run: |
+          set -euo pipefail
+          umask 077
+          stamp=$(date -u +%Y%m%d-%H%M)
+          mkdir -p backup
+          # 1. our tables, structure and data (reference copy of the schema; restore uses supabase/schema.sql)
+          pg_dump "$SUPABASE_DB_URL" --schema=public --no-owner --no-privileges | gzip -9 > "backup/bcs-$stamp-public-full.sql.gz"
+          # 2. our tables, data only (what a restore loads)
+          pg_dump "$SUPABASE_DB_URL" --schema=public --data-only --no-owner --no-privileges | gzip -9 > "backup/bcs-$stamp-public-data.sql.gz"
+          # 3. the accounts themselves (Supabase Auth users and identities), data only
+          pg_dump "$SUPABASE_DB_URL" --data-only --no-owner --no-privileges --table=auth.users --table=auth.identities | gzip -9 > "backup/bcs-$stamp-auth-data.sql.gz"
+          for f in backup/*.gz; do gunzip -t "$f"; done
+          if [ -n "$BACKUP_PASSPHRASE" ]; then
+            for f in backup/*.gz; do
+              gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 -o "$f.gpg" "$f" <<< "$BACKUP_PASSPHRASE"
+              rm "$f"
+            done
+          fi
+          ls -l backup
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_id }}
+          path: backup/
+          retention-days: 30
+          if-no-files-found: error
+          compression-level: 0
