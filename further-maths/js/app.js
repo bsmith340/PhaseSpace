@@ -543,3 +543,20 @@ window.toggleCalc = setupCalcDrawer();
 function boot() { if (!location.hash || location.hash === '#' || location.hash === '#/') { const s = PREFS.start === 'last' ? DB.lastCourse : PREFS.start; if (s && COURSES[s]) { location.replace('#/' + s); return; } if (s === 'physics') { location.replace('#/physics/' + PHYS.lastUnit().id); return; } } route(); }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 window.addEventListener('load', () => renderMath(app()));
+
+// offline app: the service worker caches the site; a new deploy shows "Update available" instead of swapping files under the reader
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  let asked = false;
+  const offer = w => {
+    if (document.querySelector('.uptoast')) return;
+    const t = document.createElement('div'); t.className = 'uptoast'; t.setAttribute('role', 'status');
+    t.innerHTML = '<span>A new version of BCS Academy is ready.</span><button type="button">Update</button>';
+    t.querySelector('button').onclick = () => { asked = true; w.postMessage({ type: 'SKIP_WAITING' }); };
+    document.body.append(t);
+  };
+  navigator.serviceWorker.register('sw.js').then(r => {
+    if (r.waiting && navigator.serviceWorker.controller) offer(r.waiting);
+    r.addEventListener('updatefound', () => { const w = r.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) offer(w); }); });
+  }).catch(() => { });
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (asked) { asked = false; location.reload(); } });
+}
