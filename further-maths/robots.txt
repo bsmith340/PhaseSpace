@@ -1,0 +1,5 @@
+# BCS Academy — everything may be crawled.
+User-agent: *
+Allow: /
+
+Sitemap: https://bcs-academy.pages.dev/sitemap.xml

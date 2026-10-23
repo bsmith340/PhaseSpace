@@ -1,0 +1,41 @@
+# Cloudflare Pages response headers for BCS Academy. Docs: https://developers.cloudflare.com/pages/configuration/headers/
+# Rules that match the same path all apply; "! Header" removes a header set by an earlier rule.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=(), interest-cohort=()
+  X-Frame-Options: SAMEORIGIN
+  Cache-Control: public, max-age=0, must-revalidate
+  # The app shell's CSP runs in report-only mode first: it lists every origin the app uses today (KaTeX on cdnjs,
+  # supabase-js on jsdelivr, Google Fonts, Supabase, the Desmos API, the physics tutor's api.anthropic.com).
+  # Violations only appear in the browser console. When a week of use shows none, rename the header to
+  # Content-Security-Policy to enforce it (see docs/seo/SEO-PLAN.md, "Security headers").
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://www.desmos.com https://*.desmos.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://www.desmos.com; font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com https://www.desmos.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://cdn.jsdelivr.net https://*.desmos.com; worker-src 'self' blob:; frame-src 'self' https://*.desmos.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'
+
+# Static SEO pages: no scripts at all, so they get a strict, enforced CSP.
+/learn/*
+  ! Content-Security-Policy-Report-Only
+  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Cache-Control: public, max-age=600, stale-while-revalidate=86400
+
+# Assets are not fingerprinted (js/app.js, css/app.css keep their names between deploys), so a long max-age would
+# leave visitors on a mix of old and new scripts for days. Pages revalidates with ETags, so repeat visits are 304s.
+# Once file names carry a version (e.g. app.3f2a.js) switch these to: public, max-age=31536000, immutable
+/js/*
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+/css/*
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400
+/assets/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+# The service worker and manifest must always be fresh.
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+/robots.txt
+  Cache-Control: public, max-age=3600
