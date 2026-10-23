@@ -206,7 +206,7 @@ $$x=ut\cos\alpha,\qquad y=ut\sin\alpha-\tfrac12gt^2,\qquad v_x=u\cos\alpha,\quad
         () => { const L = [['the significance level', 'the probability of rejecting $H_0$ when it is in fact true'], ['the p-value', 'the probability, assuming $H_0$, of a result at least as extreme as the one observed'], ['the critical region', 'the set of values of the test statistic for which $H_0$ is rejected'], ['the acceptance region', 'the values of the test statistic for which $H_0$ is not rejected']];
           const [t, r] = pick(L), opts = shuffle(L.map(x => x[1])); return { q: T`What is meant by ${t}?`, mc: { options: opts, correct: opts.indexOf(r) }, sol: T`${t[0].toUpperCase() + t.slice(1)}: ${r}.` }; },
         () => { const a = pick([0.01, 0.05, 0.1]), pv = pick([0.003, 0.02, 0.04, 0.07, 0.12, 0.3]), rej = pv < a; const opts = ['Reject $H_0$: there is sufficient evidence for $H_1$', 'Do not reject $H_0$: there is insufficient evidence for $H_1$'];
-          return { q: T`A test at the $${a * 100}\%$ level gives a p-value of $${pv}$. What do you conclude?`, mc: { options: opts, correct: rej ? 0 : 1 }, sol: T`$${pv}${rej ? '\\lt' : '\\gt'}${a}$, so ${rej ? 'reject' : 'do not reject'} $H_0$. Never claim $H_0$ is proved true — only that there isn't enough evidence against it.` }; },
+          return { q: T`A test at the $${a * 100}\%$ level gives a p-value of $${pv}$. What do you conclude?`, mc: { options: opts, correct: rej ? 0 : 1 }, sol: T`$${pv}${rej ? '\\lt' : '\\gt'}${a}$, so ${rej ? 'reject' : 'do not reject'} $H_0$. Never claim $H_0$ has been shown to be true — only that there isn't enough evidence against it.` }; },
       ],
     },
     {

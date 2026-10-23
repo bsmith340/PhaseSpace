@@ -1,24 +1,5 @@
-// BCS Academy textbook — Maths A2 1, part 1: Proof by contradiction; Algebra & functions; Parametric equations; Sequences & series.
+// BCS Academy textbook — Maths A2 1, part 1: Algebra & functions; Parametric equations; Sequences & series.
 'use strict';
-
-BOOK.m3_contra = [
-  B.why(T`<p>Some statements are hard to prove directly but easy to defend against every attack. Proof by contradiction works by assuming the statement is <i>false</i> and showing that this leads to something impossible. If the only alternative is absurd, the statement must be true.</p>`),
-  B.def('proof by contradiction', T`<ol><li>Assume the negation of what you want to prove.</li><li>Reason logically from that assumption (using known facts).</li><li>Reach a contradiction — a statement that is false, or contradicts the assumption.</li><li>Conclude that the assumption was false, so the original statement is true.</li></ol>`),
-  B.thm('Theorem 1', T`<p>$\sqrt2$ is irrational.</p>`),
-  B.proofReq(T`<p>Assume $\sqrt2$ is rational: $\sqrt2=\dfrac ab$ where $a,b$ are integers, $b\ne0$, with no common factor (the fraction is in lowest terms).</p><p>Squaring: $a^2=2b^2$, so $a^2$ is even, so $a$ is even (if $a$ were odd, $a^2$ would be odd). Write $a=2c$. Then $4c^2=2b^2$, so $b^2=2c^2$ is even, and $b$ is even.</p><p>Now $a$ and $b$ are both even — they share the factor 2, contradicting "no common factor". So $\sqrt2$ is irrational.</p>`, 'Proof by contradiction: √2 is irrational'),
-  B.thm('Theorem 2 (Euclid)', T`<p>There are infinitely many prime numbers.</p>`),
-  B.proofReq(T`<p>Assume there are finitely many primes, $p_1,p_2,\dots,p_n$. Let $N=p_1p_2\cdots p_n+1$.</p><p>$N\gt1$, so $N$ has at least one prime factor. But dividing $N$ by any $p_i$ leaves remainder $1$, so none of the $p_i$ divides $N$. Hence $N$ has a prime factor not in the list — contradicting the assumption that the list contained every prime.</p>`, 'Proof by contradiction: there are infinitely many primes'),
-  B.ex(1, T`Prove that if $n^2$ is even, then $n$ is even.`, [T`Assume $n^2$ is even but $n$ is odd: $n=2k+1$.`, T`Then $n^2=4k^2+4k+1=2(2k^2+2k)+1$, which is odd.`, T`This contradicts "$n^2$ is even". So $n$ is even.`]),
-  B.ex(2, T`Prove that $\log_23$ is irrational.`, [T`Assume $\log_23=\frac pq$ with $p,q$ positive integers.`, T`Then $2^{p/q}=3\Rightarrow2^p=3^q$.`, T`$2^p$ is even and $3^q$ is odd: they can't be equal. Contradiction.`]),
-  B.ex(3, T`Prove there are no integers $a,b$ with $15a+6b=4$.`, [T`Assume such integers exist. The left side is $3(5a+2b)$, a multiple of $3$.`, T`$4$ is not a multiple of $3$. Contradiction, so no such integers exist.`]),
-  B.tip(T`<p>Precise language is part of the proof (the overarching themes stress it): "Assume, for contradiction, that …", "which contradicts …", "Hence …". Define every symbol ("where $a,b\in\mathbb Z$"), and distinguish $\Rightarrow$ (implies) from $\Leftrightarrow$ (if and only if).</p>`),
-  B.warn([T`Assuming the wrong negation — the negation of "for all $n$, …" is "there exists an $n$ for which … fails".`, T`Forgetting "lowest terms" in the $\sqrt2$ proof — without it there's no contradiction.`, T`Not saying explicitly what is contradicted.`]),
-  B.exam([T`Learn the two classic proofs word for word; they are frequently examined.`, T`End with a clear conclusion sentence.`]),
-  B.checks([[T`What is the negation of "$\sqrt3$ is irrational"?`, T`"$\sqrt3$ is rational", i.e. $\sqrt3=\frac ab$ in lowest terms.`], [T`Why does $N=p_1\cdots p_n+1$ have a prime factor?`, T`Every integer greater than 1 has at least one prime factor.`], [T`Prove there is no largest even number.`, T`Assume $N$ is the largest even number; $N+2$ is even and larger — contradiction.`]]),
-  B.examq(6, T`<p>Prove by contradiction that $\sqrt3$ is irrational. You may assume that if $a^2$ is a multiple of $3$ then $a$ is a multiple of $3$.</p>`,
-    T`<p>Assume $\sqrt3=\frac ab$, $a,b$ integers, no common factor <span class="mk">B1</span>. $a^2=3b^2$ so $3\mid a^2$, hence $3\mid a$ <span class="mk">M1</span>. Let $a=3c$: $9c^2=3b^2\Rightarrow b^2=3c^2$ <span class="mk">M1</span>, so $3\mid b$ <span class="mk">A1</span>. Then $a,b$ share a factor 3, contradicting lowest terms <span class="mk">M1</span>; so $\sqrt3$ is irrational <span class="mk">A1</span>.</p>`),
-  B.key([T`Assume the negation → logical steps → contradiction → conclusion.`, T`Classics: $\sqrt2$ irrational, infinitely many primes.`, T`State exactly what is contradicted.`]),
-].join('');
 
 BOOK.m3_ratx = [
   B.why(T`<p>Algebraic fractions behave exactly like numerical fractions: you cancel common factors, find common denominators and divide by multiplying by the reciprocal. Fluency here is needed for partial fractions, calculus and differential equations.</p>`),
@@ -90,7 +71,6 @@ BOOK.m3_trans = [
 BOOK.m3_pf = [
   B.why(T`<p>Adding fractions combines them; partial fractions does the reverse — splitting one complicated fraction into simple ones. It's the key to integrating rational functions, to series expansions, and (in Further Maths) to the method of differences.</p>`),
   B.thm('Forms', T`<ul><li>Distinct linear factors: $\dfrac{px+q}{(x-a)(x-b)}\equiv\dfrac A{x-a}+\dfrac B{x-b}$.</li><li>Three factors: one term per factor.</li><li>Repeated linear factor: $\dfrac{\dots}{(x-a)(x-b)^2}\equiv\dfrac A{x-a}+\dfrac B{x-b}+\dfrac C{(x-b)^2}$.</li></ul><p>The fraction must be <b>proper</b> (degree of numerator less than degree of denominator); if not, divide first.</p>`),
-  B.opt(T`<p>Why a repeated factor needs two terms: $\dfrac{A}{x-a}+\dfrac{B}{(x-b)^2}$ combines to a numerator of degree at most 2 — but with only two constants it can't match every quadratic numerator. Including $\dfrac{B}{x-b}$ gives three constants for the three coefficients of a quadratic numerator, so the identity can always be satisfied.</p>`, 'Why these forms'),
   B.ex(1, T`Express $\dfrac{5x+1}{(x-1)(x+2)}$ in partial fractions.`, [T`$5x+1\equiv A(x+2)+B(x-1)$.`, T`$x=1$: $6=3A\Rightarrow A=2$. $x=-2$: $-9=-3B\Rightarrow B=3$.`, T`$\dfrac{2}{x-1}+\dfrac{3}{x+2}$.`]),
   B.ex(2, T`Express $\dfrac{x^2+4}{x(x-2)^2}$ in partial fractions.`, [T`$x^2+4\equiv A(x-2)^2+Bx(x-2)+Cx$.`, T`$x=0$: $4=4A\Rightarrow A=1$. $x=2$: $8=2C\Rightarrow C=4$.`, T`Compare $x^2$: $1=A+B\Rightarrow B=0$.`, T`$\dfrac1x+\dfrac{4}{(x-2)^2}$.`], T`A zero coefficient is fine. Check with $x=1$: LHS $=\frac{1+4}{1\cdot1}=5$, RHS $=\frac11+\frac{4}{1}=5$ ✓.`),
   B.ex(3, T`Express $\dfrac{2x^2-x+4}{(x+1)(x-1)}$ in partial fractions.`, [T`Improper: $2x^2-x+4=2(x^2-1)-x+6$, so the fraction is $2+\dfrac{-x+6}{(x+1)(x-1)}$.`, T`$-x+6\equiv A(x-1)+B(x+1)$: $x=1$: $B=\frac52$; $x=-1$: $A=-\frac72$.`, T`$2-\dfrac{7}{2(x+1)}+\dfrac{5}{2(x-1)}$.`]),
@@ -153,37 +133,35 @@ BOOK.m3_seq = [
 ].join('');
 
 BOOK.m3_ap = [
-  B.why(T`<p>An arithmetic sequence goes up (or down) by the same amount each time: a salary with fixed rises, seats in rows that grow by two. You'll find any term and the sum of any number of terms with two formulae — and prove the sum formula.</p>`),
+  B.why(T`<p>An arithmetic sequence goes up (or down) by the same amount each time: a salary with fixed rises, seats in rows that grow by two. You'll find any term and the sum of any number of terms with two formulae.</p>`),
   B.def('arithmetic sequence', T`<p>$a,\ a+d,\ a+2d,\dots$ with first term $a$ and common difference $d$: $$u_n=a+(n-1)d.$$</p>`),
   B.thm('Sum of an arithmetic series', T`$$S_n=\frac n2\big(2a+(n-1)d\big)=\frac n2(a+l)\qquad(l=\text{last term})$$`),
-  B.proofReq(T`<p>$S_n=a+(a+d)+\dots+(l-d)+l$. Writing it backwards: $S_n=l+(l-d)+\dots+(a+d)+a$. Add the two lines term by term: every pair sums to $a+l$, and there are $n$ pairs, so $2S_n=n(a+l)$. Since $l=a+(n-1)d$, $S_n=\frac n2\big(2a+(n-1)d\big)$.</p>`, 'Proof of the arithmetic series formula'),
   B.ex(1, T`Find the sum of all the odd numbers from 1 to 199.`, [T`$a=1$, $d=2$, $l=199$: $199=1+2(n-1)\Rightarrow n=100$.`, T`$S=\frac{100}{2}(1+199)=10\,000$.`]),
   B.ex(2, T`The 5th term of an AP is 23 and the 12th term is 58. Find the sum of the first 20 terms.`, [T`$a+4d=23$, $a+11d=58\Rightarrow7d=35$, $d=5$, $a=3$.`, T`$S_{20}=10(6+19\times5)=1010$.`]),
   B.ex(3, T`How many terms of $5+9+13+\dots$ are needed for the sum to exceed $1000$?`, [T`$\frac n2(10+4(n-1))\gt1000\Rightarrow2n^2+3n-1000\gt0$.`, T`Positive root $n=\frac{-3+\sqrt{8009}}{4}=21.6$. So $n=22$.`]),
   B.warn([T`Using $nd$ instead of $(n-1)d$.`, T`Giving a non-integer number of terms.`, T`Confusing the $n$th term with the sum.`]),
-  B.exam([T`"Prove the formula" means the forwards-backwards argument, written out in full.`, T`Simultaneous equations for $a$ and $d$ from two given terms.`]),
+  B.exam([T`Simultaneous equations for $a$ and $d$ from two given terms.`]),
   B.checks([[T`$a=7$, $d=-3$. $u_{10}$?`, T`$-20$.`], [T`$1+2+\dots+50$?`, T`$1275$.`], [T`$S_n=n^2+2n$. Find $u_n$.`, T`$u_n=S_n-S_{n-1}=2n+1$.`]]),
-  B.examq(7, T`<p>Sam saves £50 in the first month, and each month saves £$d$ more than the month before. In 24 months he saves a total of £3960.</p><p>(a) Find $d$. <span class="mk">[3]</span> (b) In which month does his saving first exceed £200? <span class="mk">[2]</span> (c) Prove that the sum of the first $n$ terms of an arithmetic series is $\frac n2(2a+(n-1)d)$. <span class="mk">[3]</span></p>`,
-    T`<p>(a) $12(100+23d)=3960\Rightarrow23d=230\Rightarrow d=10$ <span class="mk">M1 A1 A1</span>.</p><p>(b) $50+10(n-1)\gt200\Rightarrow n-1\gt15\Rightarrow n\gt16$: the 17th month (£210) <span class="mk">M1 A1</span>.</p><p>(c) Forwards + backwards argument as in the proof above <span class="mk">B3</span>.</p>`),
-  B.key([T`$u_n=a+(n-1)d$.`, T`$S_n=\frac n2(2a+(n-1)d)=\frac n2(a+l)$, proved by reversing the series.`]),
+  B.examq(5, T`<p>Sam saves £50 in the first month, and each month saves £$d$ more than the month before. In 24 months he saves a total of £3960.</p><p>(a) Find $d$. <span class="mk">[3]</span> (b) In which month does his saving first exceed £200? <span class="mk">[2]</span></p>`,
+    T`<p>(a) $12(100+23d)=3960\Rightarrow23d=230\Rightarrow d=10$ <span class="mk">M1 A1 A1</span>.</p><p>(b) $50+10(n-1)\gt200\Rightarrow n-1\gt15\Rightarrow n\gt16$: the 17th month (£210) <span class="mk">M1 A1</span>.</p>`),
+  B.key([T`$u_n=a+(n-1)d$.`, T`$S_n=\frac n2(2a+(n-1)d)=\frac n2(a+l)$ — learn both forms.`]),
 ].join('');
 
 BOOK.m3_gp = [
   B.why(T`<p>When something changes by a constant <i>factor</i> — compound interest, a bouncing ball losing 20% of its height, radioactive decay — you get a geometric sequence. Remarkably, if the factor is less than 1 in size, infinitely many terms can add up to a finite total.</p>`),
   B.def('geometric sequence', T`<p>$a,\ ar,\ ar^2,\dots$ with common ratio $r$: $$u_n=ar^{n-1}.$$</p>`),
   B.thm('Sum of a geometric series', T`$$S_n=\frac{a(1-r^n)}{1-r}=\frac{a(r^n-1)}{r-1}\qquad(r\ne1)$$`),
-  B.proofReq(T`<p>$S_n=a+ar+\dots+ar^{n-1}$. Multiply by $r$: $rS_n=ar+ar^2+\dots+ar^n$. Subtract: $S_n-rS_n=a-ar^n$, since all the middle terms cancel. So $S_n(1-r)=a(1-r^n)$, and dividing by $1-r\ne0$ gives the result.</p>`, 'Proof of the geometric series formula'),
   B.thm('Sum to infinity', T`<p>If $|r|\lt1$ then $r^n\to0$ as $n\to\infty$, so $$S_\infty=\frac a{1-r}.$$ If $|r|\ge1$ the series diverges (no sum to infinity).</p>`),
   B.ex(1, T`Find the sum of the first 10 terms of $3+6+12+\dots$.`, [T`$a=3$, $r=2$: $S_{10}=\frac{3(2^{10}-1)}{1}=3069$.`]),
   B.ex(2, T`A ball is dropped from 2 m and each bounce reaches $75\%$ of the previous height. Find the total distance travelled before it comes to rest.`, [T`Down $2$; then up and down for each bounce: $2\times(1.5+1.125+\dots)$.`, T`$2+2\cdot\frac{1.5}{1-0.75}=2+12=14$ m.`]),
   B.ex(3, T`Find the least $n$ such that the sum of the first $n$ terms of $8+4+2+\dots$ exceeds $15.99$.`, [T`$S_n=16(1-0.5^n)\gt15.99\Rightarrow0.5^n\lt0.000625$.`, T`$n\ln0.5\lt\ln0.000625\Rightarrow n\gt10.6$ (dividing by $\ln0.5\lt0$ flips the inequality). $n=11$.`]),
   B.ex(4, T`For which $x$ does $1+(2x-1)+(2x-1)^2+\dots$ have a sum to infinity? Find it when $x=0.25$.`, [T`$|2x-1|\lt1\Rightarrow0\lt x\lt1$.`, T`$x=0.25$: $r=-0.5$, $S_\infty=\frac{1}{1.5}=\frac23$.`]),
   B.warn([T`Using $S_\infty$ when $|r|\ge1$.`, T`Forgetting to flip the inequality when dividing by a negative log.`, T`$ar^n$ instead of $ar^{n-1}$ for the $n$th term.`]),
-  B.exam([T`Prove $S_n$ by "multiply by $r$ and subtract" — write every line.`, T`State the condition $|r|\lt1$ whenever you use $S_\infty$.`]),
+  B.exam([T`State the condition $|r|\lt1$ whenever you use $S_\infty$.`]),
   B.checks([[T`$a=5$, $r=\frac13$. $S_\infty$?`, T`$7.5$.`], [T`$u_3=12$, $u_6=96$. Find $r$.`, T`$r^3=8$, $r=2$.`], [T`Does $1-2+4-\dots$ converge?`, T`No: $|r|=2$.`]]),
   B.examq(8, T`<p>The second term of a geometric series is $-6$ and the sum to infinity is $8$.</p><p>(a) Show that $4r^2-4r-3=0$. <span class="mk">[3]</span> (b) Find $r$ and $a$, explaining your choice. <span class="mk">[3]</span> (c) Find $S_5$. <span class="mk">[2]</span></p>`,
     T`<p>(a) $ar=-6$, $\frac a{1-r}=8\Rightarrow a=8(1-r)$ <span class="mk">M1</span>; $8r(1-r)=-6\Rightarrow8r-8r^2+6=0\Rightarrow4r^2-4r-3=0$ <span class="mk">M1 A1</span>.</p><p>(b) $(2r-3)(2r+1)=0$: $r=\frac32$ or $-\frac12$; need $|r|\lt1$ so $r=-\frac12$ <span class="mk">M1 A1</span>, $a=12$ <span class="mk">A1</span>.</p><p>(c) $S_5=\frac{12(1-(-\frac12)^5)}{1.5}=8\cdot\frac{33}{32}=8.25$ <span class="mk">M1 A1</span>.</p>`),
-  B.key([T`$u_n=ar^{n-1}$, $S_n=\frac{a(1-r^n)}{1-r}$ (proof: $S_n-rS_n$).`, T`$S_\infty=\frac a{1-r}$ only for $|r|\lt1$.`]),
+  B.key([T`$u_n=ar^{n-1}$, $S_n=\frac{a(1-r^n)}{1-r}$.`, T`$S_\infty=\frac a{1-r}$ only for $|r|\lt1$.`]),
 ].join('');
 
 BOOK.m3_binr = [

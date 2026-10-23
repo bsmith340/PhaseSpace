@@ -244,7 +244,7 @@ function viewArchive() {
 /* ---------- BOOK ---------- */
 function viewBook() {
   mount(`${crumbs('Textbook')}
-  <header class="phead slim"><div><h1>The ${C.short} textbook</h1><p>One chapter per spec point: the big picture, definitions, theorems with ${C.qual === 'maths' ? '<b>the proofs the CCEA spec asks for</b> (marked “On the spec”; other derivations are optional and start closed)' : '<b>full proofs and derivations</b>'}, worked examples, common mistakes, exam technique, check-yourself questions and an original exam-style question with a model solution.</p></div></header>
+  <header class="phead slim"><div><h1>The ${C.short} textbook</h1><p>One chapter per spec point: the big picture, definitions, theorems${C.qual === 'maths' ? '' : ' with <b>full proofs and derivations</b>'}, worked examples, common mistakes, exam technique, check-yourself questions and an original exam-style question with a model solution.</p></div></header>
   ${bySection(C, C.topics, ts => ts.map(t => `<section class="card booktoc" style="--tc:${t.color}"><h2><span class="code">${t.code}</span> ${t.title}</h2><ol>${t.points.map(p => `<li class="${isRead(p.id) ? 'done' : ''}"><a href="${cr('point/' + p.id)}?tab=learn"><span class="code">${p.code}</span> ${esc(p.title)}</a> ${badge(p)} <span class="muted small">· ${readMins(p)} min${isRead(p.id) ? ' · ✓ read' : ''}</span></li>`).join('')}</ol></section>`).join(''))}`);
 }
 
@@ -293,7 +293,7 @@ function viewPoint(id, tab = 'learn') {
     renderMath(pane);
     $('#markread').onclick = () => { if (isRead(p.id)) delete DB.read[p.id]; else DB.read[p.id] = Date.now(); save(); viewPoint(id, 'learn'); };
   } else if (tab === 'summary') {
-    pane.innerHTML = `<article class="notes card">${p.notes}</article><p class="muted center">The one-page summary. For full explanations and proofs use the Textbook tab.</p>`;
+    pane.innerHTML = `<article class="notes card">${p.notes}</article><p class="muted center">The one-page summary. For full explanations use the Textbook tab.</p>`;
     renderMath(pane);
   } else if (tab === 'sim') {
     p.sims.forEach(sid => { const [k, opt] = sid.split(':'), S = SIMS[k]; if (!S) return; const box = document.createElement('div'); box.className = 'card simcard'; box.innerHTML = `<h3>${S.title}</h3><p class="muted">${S.desc}</p>`; pane.append(box); cleanup.push(S.mount(box, opt)); });
@@ -402,7 +402,7 @@ function viewFormulae() {
   const items = sec => sec.f.filter(([, , , pid]) => !pid || (PT[pid] && PT[pid].status !== 'beyond'));
   const all = F.flatMap(items), nB = all.filter(([n]) => BK.has(n)).length;
   mount(`${crumbs('Formula book')}
-  <header class="phead slim"><div><h1>∑ Formula book · ${C.short}</h1><p>Every key result in ${C.unit}, tagged against CCEA's <a href="${C.sources[2].url}" target="_blank" rel="noopener">Mathematical Formulae and Tables</a> booklet. Click a formula's link to jump to the chapter that proves it.</p></div><input class="search" id="fsearch" placeholder="Search formulae…"></header>
+  <header class="phead slim"><div><h1>∑ Formula book · ${C.short}</h1><p>Every key result in ${C.unit}, tagged against CCEA's <a href="${C.sources[2].url}" target="_blank" rel="noopener">Mathematical Formulae and Tables</a> booklet. Click a formula's link to jump to the chapter that covers it.</p></div><input class="search" id="fsearch" placeholder="Search formulae…"></header>
   <div class="box notice"><b>${nB} of ${all.length}</b> results here are <span class="fbk b">In booklet</span> — printed in the booklet you get in the exam. The other ${all.length - nB} are <span class="fbk l">Learn it</span> — you must know them by heart.</div>
   <div class="seg" id="fseg"><button class="on" data-f="all">All</button><button data-f="l">Must learn (${all.length - nB})</button><button data-f="b">In booklet (${nB})</button></div>
   <div id="flist">${F.map(sec => items(sec).length ? `<section class="card fsec" style="--tc:${sec.c}"><h2>${sec.t}</h2><div class="fgrid">${items(sec).map(([n, tex, note, pid]) => { const inB = BK.has(n); return `<div class="fitem" data-k="${inB ? 'b' : 'l'}" data-s="${esc((sec.t + ' ' + n + ' ' + note + ' ' + tex).toLowerCase())}"><div class="fn">${esc(n)} <span class="fbk ${inB ? 'b' : 'l'}">${inB ? 'In booklet' : 'Learn it'}</span>${note ? ` <span class="muted small">· ${esc(note)}</span>` : ''}${pid && PT[pid] ? ` <a class="small" href="${cr('point/' + pid)}?tab=learn">${PT[pid].code} →</a>` : ''}</div><div class="ftex">$$${tex}$$</div></div>`; }).join('')}</div></section>` : '').join('')}</div>`);

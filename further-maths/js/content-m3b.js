@@ -12,7 +12,7 @@ topic({
       id: 'm3_dstd', title: 'Differentiating eᵏˣ, ln kx, trigonometric and reciprocal trig functions', sims: [],
       notes: T`$$\frac{d}{dx}e^{kx}=ke^{kx}\qquad\frac{d}{dx}\ln kx=\frac1x\qquad\frac{d}{dx}\sin kx=k\cos kx\qquad\frac{d}{dx}\cos kx=-k\sin kx\qquad\frac{d}{dx}\tan kx=k\sec^2kx$$
 $$\frac{d}{dx}\sec x=\sec x\tan x\qquad\frac{d}{dx}\operatorname{cosec}x=-\operatorname{cosec}x\cot x\qquad\frac{d}{dx}\cot x=-\operatorname{cosec}^2x$$
-<ul><li>$x$ must be in <b>radians</b>. $\frac d{dx}\ln kx=\frac1x$ because $\ln kx=\ln k+\ln x$.</li><li>The reciprocal-trig results come from the quotient (or chain) rule — be able to derive them.</li></ul>`,
+<ul><li>$x$ must be in <b>radians</b>. $\frac d{dx}\ln kx=\frac1x$ because $\ln kx=\ln k+\ln x$.</li><li>The reciprocal-trig results come from the quotient (or chain) rule.</li></ul>`,
       drills: [
         () => { const A = rnz(-4, 5), k = rnz(-3, 3), B = rnz(-5, 5), m = pick([1, 2, 3, 5]), Cc = rnz(-4, 4), n = pick([1, 2, 3]), x0 = pick([0.5, 1, 2]); const fp = A * k * Math.exp(k * x0) + B / x0 + Cc * n * Math.cos(n * x0);
           return { q: T`$y=${A}e^{${kx(k)}}${sgn(B)}\ln ${m === 1 ? '' : m}x${sgn(Cc)}\sin ${kx(n)}$. Find $\dfrac{dy}{dx}$ when $x=${x0}$.`, fields: [{ label: "dy/dx", ans: fp }],

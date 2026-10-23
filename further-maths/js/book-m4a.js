@@ -6,7 +6,6 @@ BOOK.m4_cal1 = [
   B.pre(T`<p>Differentiating and integrating polynomials, $e^{kx}$ and trig functions (AS 1, A2 1); the language of kinematics and motion graphs (AS 2).</p>`),
   B.def('calculus in kinematics', T`$$v=\frac{ds}{dt},\qquad a=\frac{dv}{dt}=\frac{d^2s}{dt^2},\qquad s=\int v\,dt,\qquad v=\int a\,dt.$$<p>Differentiate to go down the chain $s\to v\to a$; integrate (and find the constant) to go back up.</p>`),
   B.thm('suvat is a special case', T`<p>If $a$ is constant, $v=u+at$ and $s=ut+\tfrac12at^2$ (taking $s=0$ when $t=0$).</p>`),
-  B.opt(T`<p>$v=\int a\,dt=at+c$; at $t=0$, $v=u$, so $c=u$: $v=u+at$. Then $s=\int(u+at)\,dt=ut+\tfrac12at^2+k$; at $t=0$, $s=0$, so $k=0$.</p>`),
   B.ex(1, T`A particle moves along a line so that $s=t^3-6t^2+9t$ m at time $t$ s. Find when it is at rest and the total distance travelled in the first $4$ s.`, [
     T`$v=3t^2-12t+9=3(t-1)(t-3)$, so it is at rest at $t=1$ and $t=3$.`, T`$s(0)=0$, $s(1)=4$, $s(3)=0$, $s(4)=4$.`,
     T`It goes out $4$ m, back $4$ m, then out $4$ m: distance $=12$ m (but displacement only $4$ m).`], T`Find where $v=0$ before working out a distance — the particle may turn round.`),
@@ -44,7 +43,6 @@ BOOK.m4_proj = [
   B.def('the projectile model', T`<ul><li>The body is a <b>particle</b> (no size, no spin).</li><li><b>No air resistance</b>.</li><li>$g=9.8$ m s⁻² is constant and vertically downwards.</li></ul><p>Projected with speed $u$ at angle $\alpha$ above the horizontal, the initial velocity has components $u\cos\alpha$ (horizontal) and $u\sin\alpha$ (vertical).</p>`),
   B.thm('Equations of motion', T`$$x=ut\cos\alpha,\qquad y=ut\sin\alpha-\tfrac12gt^2,\qquad\dot x=u\cos\alpha,\qquad\dot y=u\sin\alpha-gt.$$<p>In vector form: $\mathbf r=\mathbf ut+\tfrac12\mathbf gt^2$ with $\mathbf g=-9.8\mathbf j$.</p>`),
   B.thm('Level-ground results', T`$$\text{time of flight }T=\frac{2u\sin\alpha}g,\qquad\text{greatest height }H=\frac{u^2\sin^2\alpha}{2g},\qquad\text{range }R=\frac{u^2\sin2\alpha}g.$$`),
-  B.opt(T`<p>Lands when $y=0$: $t(u\sin\alpha-\tfrac12gt)=0\Rightarrow T=\frac{2u\sin\alpha}g$. Top when $\dot y=0$: $t=\frac{u\sin\alpha}g$, giving $H=\frac{u^2\sin^2\alpha}g-\frac{u^2\sin^2\alpha}{2g}=\frac{u^2\sin^2\alpha}{2g}$. Range $=u\cos\alpha\cdot T=\frac{2u^2\sin\alpha\cos\alpha}g=\frac{u^2\sin2\alpha}g$, greatest when $\sin2\alpha=1$, i.e. $\alpha=45^\circ$.</p><p>Eliminating $t=\frac x{u\cos\alpha}$ gives the trajectory $y=x\tan\alpha-\dfrac{gx^2}{2u^2\cos^2\alpha}$, a parabola.</p>`),
   B.tip(T`<p>These results are not in the formula booklet, and they only hold on level ground. Derive what you need from the two equations of motion each time.</p>`),
   FIG.projectile(20, 40, 'A projectile at 20 m s⁻¹, 40° above the horizontal: a parabola.'),
   B.ex(1, T`A ball is kicked from level ground at $20$ m s⁻¹ at $30^\circ$ above the horizontal. Find the time of flight, greatest height and range.`, [
@@ -88,7 +86,6 @@ BOOK.m4_ladder = [
   B.def('forces on a ladder', T`<p>For a ladder resting on rough horizontal ground against a <b>smooth</b> vertical wall:</p><ul><li>weight $W$ at the centre (if uniform);</li><li>at the ground: normal reaction $R$ (up) and friction $F$ (towards the wall — the foot tends to slide away);</li><li>at the wall: normal reaction $S$, horizontal (a smooth wall gives no friction).</li></ul>`),
   FIG.ladder(60, 'A ladder against a smooth wall: friction at the foot acts towards the wall.'),
   B.thm('Limiting angle', T`<p>A uniform ladder of length $2a$ at angle $\theta$ to rough ground (coefficient $\mu$) against a smooth wall is in limiting equilibrium when $\mu=\tfrac12\cot\theta$.</p>`),
-  B.opt(T`<p>Resolve: $R=W$, $F=S$. Moments about the foot: $S\times2a\sin\theta=W\times a\cos\theta$, so $S=\tfrac12W\cot\theta$. Limiting: $F=\mu R$, so $\tfrac12W\cot\theta=\mu W$.</p>`),
   B.ex(1, T`A uniform ladder, $6$ m long and of weight $200$ N, rests against a smooth wall at $60^\circ$ to rough horizontal ground. Find $S$, $F$, $R$ and the least possible value of $\mu$.`, [
     T`Moments about the foot: $S\times6\sin60^\circ=200\times3\cos60^\circ\Rightarrow S=\dfrac{300}{5.196}=57.7$ N.`, T`$F=S=57.7$ N; $R=200$ N.`, T`$F\le\mu R\Rightarrow\mu\ge\frac{57.7}{200}=0.289$.`]),
   B.ex(2, T`A man of weight $800$ N climbs a uniform ladder of length $5$ m and weight $150$ N, at $65^\circ$ to the ground ($\mu=0.4$, smooth wall). How far up can he climb before it slips?`, [
@@ -109,9 +106,7 @@ BOOK.m4_imp = [
   B.why(T`<p>When a bat hits a ball the force is huge but lasts a fraction of a second, and you can't measure it directly. What you can measure is its total effect — the change in momentum. That is impulse, and it makes collisions solvable.</p>`),
   B.def('momentum and impulse', T`<ul><li><b>Momentum</b> $=m\mathbf v$ (N s or kg m s⁻¹), a vector.</li><li><b>Impulse</b> of a constant force $\mathbf F$ acting for time $t$: $\mathbf I=\mathbf Ft$ (N s).</li></ul>`),
   B.thm('Impulse–momentum principle', T`$$\mathbf I=m\mathbf v-m\mathbf u$$<p>The impulse on a body equals its change in momentum.</p>`),
-  B.opt(T`<p>Newton's second law with constant force: $\mathbf F=m\mathbf a=m\frac{\mathbf v-\mathbf u}t$, so $\mathbf Ft=m\mathbf v-m\mathbf u$.</p>`),
   B.thm('Conservation of linear momentum', T`<p>If no external impulse acts on a system (as in a collision or an explosion), its total momentum is unchanged: $$m_1u_1+m_2u_2=m_1v_1+m_2v_2.$$</p>`),
-  B.opt(T`<p>During the collision $A$ exerts an impulse $\mathbf I$ on $B$, and by Newton's third law $B$ exerts $-\mathbf I$ on $A$. So $m_2\mathbf v_2-m_2\mathbf u_2=\mathbf I$ and $m_1\mathbf v_1-m_1\mathbf u_1=-\mathbf I$. Adding: $m_1\mathbf v_1+m_2\mathbf v_2=m_1\mathbf u_1+m_2\mathbf u_2$.</p>`),
   B.ex(1, T`A ball of mass $0.15$ kg hits a wall at $12$ m s⁻¹ and rebounds at $8$ m s⁻¹. Find the impulse, and the average force if contact lasts $0.05$ s.`, [
     T`Towards the wall positive: $I=0.15(-8)-0.15(12)=-3$ N s — magnitude $3$ N s, away from the wall.`, T`Average force $=\frac{3}{0.05}=60$ N.`], T`The sign change on rebound is where most marks are lost.`),
   B.ex(2, T`Sphere $A$ ($3$ kg, $5$ m s⁻¹) meets sphere $B$ ($2$ kg, $1$ m s⁻¹ in the opposite direction) head-on. Afterwards $A$ moves at $1$ m s⁻¹ in its original direction. Find $B$'s velocity and the impulse on $B$.`, [

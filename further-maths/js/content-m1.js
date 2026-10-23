@@ -2,7 +2,6 @@
 'use strict';
 
 const D2R = Math.PI / 180;
-const isPrime = n => { if (n < 2) return false; for (let d = 2; d * d <= n; d++) if (n % d === 0) return false; return true; };
 const C2 = (n, r) => { let c = 1; for (let k = 1; k <= r; k++) c = c * (n - r + k) / k; return Math.round(c); };
 const wrap360 = x => ((x % 360) + 360) % 360;
 // All solutions in [lo, hi] (degrees) of trig(a x + b) = k, trig in sin/cos/tan
@@ -19,31 +18,6 @@ const degList = xs => xs.length ? xs.map(x => `${num(x)}^\\circ`).join(',\\ ') :
 
 topic({
   id: '_m1', title: 'AS1', points: [
-    /* ---------------- PROOF ---------------- */
-    {
-      id: 'm_proof', title: 'Proof: deduction, exhaustion, counter-example', sims: [],
-      notes: T`<ul><li><b>Deduction</b>: start from known facts and argue step by step. Represent integers algebraically: even $2n$, odd $2n+1$, consecutive $n,n+1,n+2$.</li>
-<li><b>Exhaustion</b>: split into a finite number of cases and check each (e.g. $n$ even / $n$ odd; $n=3k,3k+1,3k+2$).</li>
-<li><b>Disproof by counter-example</b>: one example where the statement fails is enough.</li></ul>`,
-      drills: [
-        () => {
-          const S = pick([[T`n^2+n+41`, n => n * n + n + 41, 0], [T`n^2-n+11`, n => n * n - n + 11, 1], [T`3^n+2`, n => 3 ** n + 2, 1], [T`n^2+n+1`, n => n * n + n + 1, 1], [T`2^n+1`, n => 2 ** n + 1, 1], [T`6n+1`, n => 6 * n + 1, 1], [T`n^2+1`, n => n * n + 1, 1]]);
-          let n = S[2]; while (isPrime(S[1](n))) n++;
-          return { q: T`Disprove by counter-example: "$${S[0]}$ is prime for every integer $n\ge ${S[2]}$". Find the smallest counter-example $n$.`, fields: [{ label: 'n', ans: n }], sol: T`Test $n=${S[2]},${S[2] + 1},\dots$: the first failure is $n=${n}$, where $${S[0]}=${S[1](n)}$, which is not prime. One counter-example disproves the statement.` };
-        },
-        () => {
-          const L = [['an odd integer', '2n+1', ['2n', 'n+1', 'n^2']], ['three consecutive even integers', '2n,\\ 2n+2,\\ 2n+4', ['n,\\ n+2,\\ n+4', '2n,\\ 2n+1,\\ 2n+2', '2n,\\ 4n,\\ 6n']],
-            ['a multiple of 5', '5n', ['n+5', 'n^5', '5+n^2']], ['an integer that leaves remainder 2 when divided by 3', '3n+2', ['2n+3', '3n-1+3', 'n+2']], ['two consecutive odd integers', '2n+1,\\ 2n+3', ['2n+1,\\ 2n+2', 'n,\\ n+2', '2n-1,\\ 2n']],
-            ['a square number', 'n^2', ['2n', 'n+n', 'n^n']]];
-          const [w, r, d] = pick(L), opts = shuffle([r, ...d.slice(0, 3)]);
-          return { q: T`In a proof by deduction, how should you represent ${w} ($n\in\mathbb Z$)?`, mc: { options: opts.map(o => `$${o}$`), correct: opts.indexOf(r) }, sol: T`${w[0].toUpperCase() + w.slice(1)}: $${r}$. Using a general $n$ (not a particular number) is what makes it a proof.` };
-        },
-        () => {
-          const a = ri(1, 3), b = ri(1, 5), k = 4 * a * b;
-          return { q: T`Show that $(${a === 1 ? '' : a}n+${b})^2-(${a === 1 ? '' : a}n-${b})^2$ is always a multiple of $k$ for integer $n$, and find the largest such constant $k$.`, fields: [{ label: 'k', ans: k }], sol: T`Expand: $(${a * a}n^2+${2 * a * b}n+${b * b})-(${a * a}n^2-${2 * a * b}n+${b * b})=${k}n$. So it's $${k}$ times an integer, and (taking $n=1$) no larger constant works: $k=${k}$.` };
-        },
-      ],
-    },
     /* ---------------- ALGEBRA ---------------- */
     {
       id: 'm_ind', title: 'Indices & surds', sims: [],
@@ -215,9 +189,9 @@ topic({
       ],
     },
     {
-      id: 'm_tid', title: 'Trig identities & proofs', sims: ['m_unitcircle'],
+      id: 'm_tid', title: 'Trig identities', sims: ['m_unitcircle'],
       notes: T`$$\tan\theta\equiv\frac{\sin\theta}{\cos\theta},\qquad\sin^2\theta+\cos^2\theta\equiv1$$
-<ul><li>Proving identities: start with the more complicated side; work towards the other. Don't move terms across an $\equiv$.</li>
+<ul><li>Showing an identity holds: start with the more complicated side; work towards the other. Don't move terms across an $\equiv$.</li>
 <li>Useful rearrangements: $1-\cos^2\theta=\sin^2\theta$, $1-\sin^2\theta=\cos^2\theta$.</li></ul>`,
       drills: [
         () => { const [a, b, c] = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25]]), quad = pick([2, 3, 4]), f = pick(['sin', 'cos']);

@@ -5,9 +5,7 @@
 BOOK.m_circ = [
   B.why(T`<p>A circle is the set of points at a fixed distance from a centre — so its equation is just the distance formula. Circle questions then combine everything from straight lines: gradients of radii, perpendicular tangents, midpoints of chords, and the discriminant to decide whether a line cuts, touches or misses.</p>`),
   B.thm('Equation of a circle', T`<p>Centre $(a,b)$, radius $r$: $$(x-a)^2+(y-b)^2=r^2.$$ Expanded form: $x^2+y^2+2gx+2fy+c=0$ has centre $(-g,-f)$ and radius $\sqrt{g^2+f^2-c}$ (a real circle only if $g^2+f^2-c\gt0$).</p>`),
-  B.opt(T`<p>$P(x,y)$ is on the circle $\iff$ its distance from $(a,b)$ is $r$ $\iff\sqrt{(x-a)^2+(y-b)^2}=r\iff(x-a)^2+(y-b)^2=r^2$.</p><p>Completing the square on the expanded form: $x^2+2gx=(x+g)^2-g^2$ and $y^2+2fy=(y+f)^2-f^2$, so the equation becomes $(x+g)^2+(y+f)^2=g^2+f^2-c$.</p>`),
   B.thm('Circle geometry you must use', T`<ul><li>The <b>tangent</b> at a point is perpendicular to the radius there.</li><li>The perpendicular from the centre to a <b>chord</b> bisects the chord (so the perpendicular bisector of any chord passes through the centre).</li><li>The <b>angle in a semicircle</b> is a right angle (so a right-angled triangle's hypotenuse is a diameter of its circumcircle).</li></ul>`),
-  B.opt(T`<p>Chord $AB$ with centre $O$: $OA=OB$ (radii), so triangle $OAB$ is isosceles and the perpendicular from $O$ meets $AB$ at its midpoint.</p>`, 'Why the perpendicular bisects a chord'),
   B.ex(1, T`Find the centre and radius of $x^2+y^2-6x+4y-12=0$.`, [
     T`Complete the square: $(x-3)^2-9+(y+2)^2-4-12=0$.`,
     T`$(x-3)^2+(y+2)^2=25$: centre $(3,-2)$, radius $5$.`]),
@@ -53,9 +51,7 @@ BOOK.m_bin = [
   B.why(T`<p>Expanding $(a+b)^{10}$ by hand would take ten multiplications. The <b>binomial theorem</b> writes down any term directly, and lets you find a single coefficient, a term independent of $x$, or an approximation like $1.02^5$ in a couple of lines.</p>`),
   B.def('factorials and combinations', T`<p>$n!=n(n-1)(n-2)\cdots2\cdot1$, with $0!=1$.</p><p>$\displaystyle\binom nr={}^nC_r=\frac{n!}{r!\,(n-r)!}$ = the number of ways of choosing $r$ objects from $n$. Note $\binom n0=\binom nn=1$ and $\binom nr=\binom n{n-r}$.</p>`),
   B.thm('Binomial theorem (positive integer n)', T`$$(a+b)^n=\sum_{r=0}^{n}\binom nr a^{n-r}b^{r}=a^n+\binom n1a^{n-1}b+\binom n2a^{n-2}b^2+\dots+b^n.$$<p>In particular $(1+x)^n=1+nx+\dfrac{n(n-1)}{2!}x^2+\dfrac{n(n-1)(n-2)}{3!}x^3+\dots+x^n$.</p>`),
-  B.opt(T`<p>$(a+b)^n=(a+b)(a+b)\cdots(a+b)$ ($n$ brackets). Each term of the expansion comes from choosing $a$ or $b$ from every bracket. A term $a^{n-r}b^r$ arises from choosing $b$ from exactly $r$ of the $n$ brackets — and there are $\binom nr$ ways to choose which $r$. So the coefficient of $a^{n-r}b^r$ is $\binom nr$.</p>`, 'Why the coefficients are ⁿCᵣ'),
   B.thm("Pascal's rule", T`<p>$\dbinom nr=\dbinom{n-1}{r-1}+\dbinom{n-1}{r}$ — each entry of Pascal's triangle is the sum of the two above it.</p>`),
-  B.opt(T`<p>Choose $r$ objects from $n$, and look at one particular object $X$. Either $X$ is chosen (then pick the other $r-1$ from the remaining $n-1$: $\binom{n-1}{r-1}$ ways) or it is not (pick all $r$ from the other $n-1$: $\binom{n-1}r$ ways). Adding the two cases counts every choice exactly once.</p>`),
   B.ex(1, T`Expand $(2+x)^4$.`, [
     T`Row 4 of Pascal: $1,4,6,4,1$.`,
     T`$2^4+4\cdot2^3x+6\cdot2^2x^2+4\cdot2x^3+x^4$.`,
@@ -102,11 +98,8 @@ BOOK.m_tri = [
   B.why(T`<p>Right-angled trigonometry (SOHCAHTOA) only works in right-angled triangles. The <b>sine rule</b> and <b>cosine rule</b> work in <i>every</i> triangle, so you can solve surveying, navigation and bearings problems directly. The one trap is the <b>ambiguous case</b>, where the given data fit two different triangles.</p>`),
   B.def('labelling', T`<p>In triangle $ABC$, side $a$ is opposite angle $A$, side $b$ opposite $B$, side $c$ opposite $C$.</p>`),
   B.thm('Sine rule', T`$$\frac{a}{\sin A}=\frac{b}{\sin B}=\frac{c}{\sin C}\qquad\text{(or }\tfrac{\sin A}{a}=\tfrac{\sin B}{b}=\tfrac{\sin C}{c}\text{ for angles).}$$`),
-  B.opt(T`<p>Drop the perpendicular from $C$ to the line $AB$; call its length $h$. In the two right-angled triangles, $h=b\sin A$ and $h=a\sin B$. So $b\sin A=a\sin B$, i.e. $\frac a{\sin A}=\frac b{\sin B}$. Dropping a perpendicular from $A$ gives the same for $c$. (If $B$ is obtuse the foot lies outside, but $\sin(180^\circ-B)=\sin B$ keeps the formula.)</p>`),
   B.thm('Cosine rule', T`$$a^2=b^2+c^2-2bc\cos A\qquad\Longleftrightarrow\qquad\cos A=\frac{b^2+c^2-a^2}{2bc}.$$`),
-  B.opt(T`<p>Put $C$ at the origin with $CB$ along the $x$-axis: $B=(a,0)$ and $A=(b\cos C,\ b\sin C)$. Then $$c^2=AB^2=(a-b\cos C)^2+(b\sin C)^2=a^2-2ab\cos C+b^2(\cos^2C+\sin^2C)=a^2+b^2-2ab\cos C.$$ Relabelling gives the version for any angle. When $C=90^\circ$ it is Pythagoras.</p>`),
   B.thm('Area of a triangle', T`$$\text{Area}=\tfrac12ab\sin C.$$<p>(Two sides and the angle <b>between</b> them.)</p>`),
-  B.opt(T`<p>With the same coordinates, the height of $A$ above $CB$ is $b\sin C$, so area $=\frac12\times\text{base}\times\text{height}=\frac12a\,b\sin C$.</p>`),
   T`<h3>Which rule?</h3><ul><li>Two angles and a side, or two sides and a non-included angle $\Rightarrow$ <b>sine rule</b>.</li><li>Three sides, or two sides and the included angle $\Rightarrow$ <b>cosine rule</b>.</li></ul>`,
   B.ex(1, T`In triangle $ABC$, $a=7$, $b=5$, $C=60^\circ$. Find $c$.`, [
     T`Two sides and the included angle: cosine rule.`,
@@ -151,7 +144,6 @@ BOOK.m_rad = [
   B.def('radian', T`<p>One radian is the angle at the centre of a circle subtended by an arc equal in length to the radius. A full turn is the circumference divided by the radius: $\frac{2\pi r}{r}=2\pi$ radians. So $$\pi\text{ rad}=180^\circ,\qquad1\text{ rad}=\frac{180^\circ}{\pi}\approx57.3^\circ.$$</p>`),
   T`<p>Key conversions: $30^\circ=\frac\pi6$, $45^\circ=\frac\pi4$, $60^\circ=\frac\pi3$, $90^\circ=\frac\pi2$, $120^\circ=\frac{2\pi}3$, $135^\circ=\frac{3\pi}4$, $150^\circ=\frac{5\pi}6$, $270^\circ=\frac{3\pi}2$.</p>`,
   B.thm('Arc length and sector area (θ in radians)', T`$$s=r\theta,\qquad A=\tfrac12r^2\theta,\qquad\text{segment area}=\tfrac12r^2(\theta-\sin\theta).$$`),
-  B.opt(T`<p>A sector of angle $\theta$ is the fraction $\frac{\theta}{2\pi}$ of the whole circle. So the arc is $\frac{\theta}{2\pi}\times2\pi r=r\theta$ and the area is $\frac\theta{2\pi}\times\pi r^2=\frac12r^2\theta$. The segment is the sector minus the triangle, whose area is $\frac12r\cdot r\sin\theta$.</p>`),
   B.ex(1, T`Convert $135^\circ$ to radians and $2.5$ rad to degrees.`, [
     T`$135\times\frac{\pi}{180}=\frac{3\pi}4$.`,
     T`$2.5\times\frac{180}{\pi}=143.2^\circ$.`]),
@@ -192,8 +184,6 @@ BOOK.m_tgraph = [
 <li>$y=\tan x$: period $180^\circ$, all real values, vertical asymptotes at $x=90^\circ+180^\circ k$ (where $\cos x=0$).</li></ul>`,
   B.thm('Symmetries (from the unit circle)', T`$$\sin(180^\circ-\theta)=\sin\theta,\quad\cos(-\theta)=\cos\theta,\quad\cos(360^\circ-\theta)=\cos\theta,\quad\tan(180^\circ+\theta)=\tan\theta.$$<p><b>CAST</b>: in quadrant 1 All are positive, quadrant 2 Sine, quadrant 3 Tan, quadrant 4 Cos.</p>`),
   T`<h3>2. Exact values</h3>`,
-  B.opt(T`<p><b>30° and 60°:</b> take an equilateral triangle of side $2$ and cut it in half. You get a right-angled triangle with hypotenuse $2$, short side $1$ and height $\sqrt{2^2-1^2}=\sqrt3$, with angles $30^\circ$ and $60^\circ$. So $\sin30^\circ=\cos60^\circ=\frac12$, $\sin60^\circ=\cos30^\circ=\frac{\sqrt3}2$, $\tan30^\circ=\frac1{\sqrt3}$, $\tan60^\circ=\sqrt3$.</p>
-<p><b>45°:</b> an isosceles right-angled triangle with legs $1$ has hypotenuse $\sqrt2$: $\sin45^\circ=\cos45^\circ=\frac1{\sqrt2}=\frac{\sqrt2}2$, $\tan45^\circ=1$.</p>`, 'Deriving the exact values'),
   T`<table class="tbl"><tr><th>$\theta$</th><th>$0^\circ$</th><th>$30^\circ$</th><th>$45^\circ$</th><th>$60^\circ$</th><th>$90^\circ$</th></tr><tr><td>$\sin$</td><td>$0$</td><td>$\frac12$</td><td>$\frac{\sqrt2}2$</td><td>$\frac{\sqrt3}2$</td><td>$1$</td></tr><tr><td>$\cos$</td><td>$1$</td><td>$\frac{\sqrt3}2$</td><td>$\frac{\sqrt2}2$</td><td>$\frac12$</td><td>$0$</td></tr><tr><td>$\tan$</td><td>$0$</td><td>$\frac1{\sqrt3}$</td><td>$1$</td><td>$\sqrt3$</td><td>not defined</td></tr></table>`,
   B.ex(1, T`Find the exact value of $\cos210^\circ$.`, [
     T`$210^\circ$ is in quadrant 3 (only tan positive), reference angle $30^\circ$.`,
@@ -231,31 +221,30 @@ BOOK.m_tgraph = [
 
 /* ===================================================================== */
 BOOK.m_tid = [
-  B.why(T`<p>An <b>identity</b> ($\equiv$) is true for <i>every</i> value of the variable; an <b>equation</b> is true only for some. Two identities do almost all the work at AS — $\tan\theta\equiv\frac{\sin\theta}{\cos\theta}$ and $\sin^2\theta+\cos^2\theta\equiv1$ — both to prove other identities and to turn awkward equations into quadratics.</p>`),
+  B.why(T`<p>An <b>identity</b> ($\equiv$) is true for <i>every</i> value of the variable; an <b>equation</b> is true only for some. Two identities do almost all the work at AS — $\tan\theta\equiv\frac{\sin\theta}{\cos\theta}$ and $\sin^2\theta+\cos^2\theta\equiv1$ — both to show other identities hold and to turn awkward equations into quadratics.</p>`),
   B.thm('The two AS identities', T`$$\tan\theta\equiv\frac{\sin\theta}{\cos\theta}\quad(\cos\theta\ne0),\qquad\sin^2\theta+\cos^2\theta\equiv1.$$<p>Rearranged: $\sin^2\theta\equiv1-\cos^2\theta$, $\cos^2\theta\equiv1-\sin^2\theta$.</p>`),
-  B.opt(T`<p>On the unit circle the point at angle $\theta$ is $(\cos\theta,\sin\theta)$. The radius has gradient $\frac{\sin\theta}{\cos\theta}$, which is $\tan\theta$. The point lies on $x^2+y^2=1$ (distance 1 from the origin — Pythagoras), so $\cos^2\theta+\sin^2\theta=1$.</p>`),
-  T`<h3>How to prove an identity</h3>
+  T`<h3>How to show an identity holds</h3>
 <ol><li>Start with the more complicated side; work on it alone until it becomes the other side. Do <b>not</b> treat it as an equation (no cross-multiplying both sides).</li>
 <li>Convert $\tan$ to $\frac{\sin}{\cos}$.</li>
 <li>Use algebra: common denominators, factorising, difference of two squares, and swapping $1-\cos^2\theta$ for $\sin^2\theta$ (and vice versa).</li></ol>`,
-  B.ex(1, T`Prove that $\dfrac{1-\cos^2\theta}{\cos\theta}\equiv\sin\theta\tan\theta$.`, [
+  B.ex(1, T`Show that $\dfrac{1-\cos^2\theta}{\cos\theta}\equiv\sin\theta\tan\theta$.`, [
     T`LHS $=\dfrac{\sin^2\theta}{\cos\theta}$ (using $1-\cos^2\theta\equiv\sin^2\theta$).`,
-    T`$=\sin\theta\cdot\dfrac{\sin\theta}{\cos\theta}=\sin\theta\tan\theta=$ RHS. $\blacksquare$`]),
-  B.ex(2, T`Prove that $(\sin\theta+\cos\theta)^2\equiv1+2\sin\theta\cos\theta$.`, [
+    T`$=\sin\theta\cdot\dfrac{\sin\theta}{\cos\theta}=\sin\theta\tan\theta=$ RHS.`]),
+  B.ex(2, T`Show that $(\sin\theta+\cos\theta)^2\equiv1+2\sin\theta\cos\theta$.`, [
     T`LHS $=\sin^2\theta+2\sin\theta\cos\theta+\cos^2\theta$.`,
-    T`$=(\sin^2\theta+\cos^2\theta)+2\sin\theta\cos\theta=1+2\sin\theta\cos\theta$. $\blacksquare$`]),
-  B.ex(3, T`Prove that $\sin^4\theta-\cos^4\theta\equiv1-2\cos^2\theta$.`, [
+    T`$=(\sin^2\theta+\cos^2\theta)+2\sin\theta\cos\theta=1+2\sin\theta\cos\theta$.`]),
+  B.ex(3, T`Show that $\sin^4\theta-\cos^4\theta\equiv1-2\cos^2\theta$.`, [
     T`Difference of two squares: LHS $=(\sin^2\theta-\cos^2\theta)(\sin^2\theta+\cos^2\theta)$.`,
-    T`$=\sin^2\theta-\cos^2\theta=(1-\cos^2\theta)-\cos^2\theta=1-2\cos^2\theta$. $\blacksquare$`]),
-  B.ex(4, T`Prove that $\dfrac{\cos\theta}{1-\sin\theta}\equiv\dfrac{1+\sin\theta}{\cos\theta}$.`, [
+    T`$=\sin^2\theta-\cos^2\theta=(1-\cos^2\theta)-\cos^2\theta=1-2\cos^2\theta$.`]),
+  B.ex(4, T`Show that $\dfrac{\cos\theta}{1-\sin\theta}\equiv\dfrac{1+\sin\theta}{\cos\theta}$.`, [
     T`Multiply top and bottom of the LHS by $(1+\sin\theta)$:`,
     T`$\dfrac{\cos\theta(1+\sin\theta)}{1-\sin^2\theta}=\dfrac{\cos\theta(1+\sin\theta)}{\cos^2\theta}$.`,
-    T`$=\dfrac{1+\sin\theta}{\cos\theta}$. $\blacksquare$`], T`Same trick as rationalising a surd: $(1-s)(1+s)=1-s^2$.`),
+    T`$=\dfrac{1+\sin\theta}{\cos\theta}$.`], T`Same trick as rationalising a surd: $(1-s)(1+s)=1-s^2$.`),
   B.ex(5, T`Given $\sin\theta=\frac35$ and $\theta$ is obtuse, find $\cos\theta$ and $\tan\theta$.`, [
     T`$\cos^2\theta=1-\frac9{25}=\frac{16}{25}$, so $\cos\theta=\pm\frac45$.`,
     T`Obtuse $\Rightarrow$ quadrant 2 $\Rightarrow\cos\theta\lt0$: $\cos\theta=-\frac45$.`,
     T`$\tan\theta=\dfrac{3/5}{-4/5}=-\dfrac34$.`]),
-  B.tip(T`<p><b>Check every identity at a test angle</b> before (or after) proving it — $\theta=0^\circ$ is quickest where everything is defined, otherwise try $30^\circ$ or $60^\circ$. In Example 3 at $\theta=0$: LHS $=0-1=-1$, RHS $=1-2=-1$ ✓. If the two sides disagree at one angle, you have misread the question or slipped.</p>`),
+  B.tip(T`<p><b>Check every identity at a test angle</b> before (or after) showing it — $\theta=0^\circ$ is quickest where everything is defined, otherwise try $30^\circ$ or $60^\circ$. In Example 3 at $\theta=0$: LHS $=0-1=-1$, RHS $=1-2=-1$ ✓. If the two sides disagree at one angle, you have misread the question or slipped.</p>`),
   B.warn([
     T`Working on both sides at once as if solving an equation.`,
     T`Writing $\sin\theta^2$ for $\sin^2\theta$ (they are different).`,
@@ -263,22 +252,21 @@ BOOK.m_tid = [
     T`Taking only the positive root from $\cos^2\theta=\frac{16}{25}$.`]),
   B.exam([
     T`Set it out as one chain: "LHS $=\dots=\dots=$ RHS". Name the identity used at each swap.`,
-    T`"Hence" usually means: use the identity you just proved to turn the next equation into a quadratic.`]),
+    T`"Hence" usually means: use the identity you just showed to turn the next equation into a quadratic.`]),
   B.checks([
     [T`Simplify $\cos\theta\tan\theta$.`, T`$\sin\theta$.`],
-    [T`Prove $\dfrac{\sin^2\theta}{1-\cos\theta}\equiv1+\cos\theta$.`, T`$\frac{1-\cos^2\theta}{1-\cos\theta}=\frac{(1-\cos\theta)(1+\cos\theta)}{1-\cos\theta}=1+\cos\theta$.`],
+    [T`Show that $\dfrac{\sin^2\theta}{1-\cos\theta}\equiv1+\cos\theta$.`, T`$\frac{1-\cos^2\theta}{1-\cos\theta}=\frac{(1-\cos\theta)(1+\cos\theta)}{1-\cos\theta}=1+\cos\theta$.`],
     [T`If $\tan\theta=2$ and $\theta$ is acute, find $\sin\theta$.`, T`Triangle $1,2,\sqrt5$: $\sin\theta=\frac2{\sqrt5}$.`]]),
-  B.examq(7, T`<p>(a) Prove that $\tan\theta+\dfrac1{\tan\theta}\equiv\dfrac1{\sin\theta\cos\theta}$. <span class="mk">[3]</span></p><p>(b) Solve $\tan\theta+\dfrac1{\tan\theta}=4$ for $0^\circ\lt\theta\lt180^\circ$. <span class="mk">[4]</span></p>`,
+  B.examq(7, T`<p>(a) Show that $\tan\theta+\dfrac1{\tan\theta}\equiv\dfrac1{\sin\theta\cos\theta}$. <span class="mk">[3]</span></p><p>(b) Solve $\tan\theta+\dfrac1{\tan\theta}=4$ for $0^\circ\lt\theta\lt180^\circ$. <span class="mk">[4]</span></p>`,
     T`<p>(a) LHS $=\dfrac{\sin\theta}{\cos\theta}+\dfrac{\cos\theta}{\sin\theta}$ <span class="mk">M1</span> $=\dfrac{\sin^2\theta+\cos^2\theta}{\sin\theta\cos\theta}$ <span class="mk">M1</span> $=\dfrac1{\sin\theta\cos\theta}$. <span class="mk">A1</span></p>
 <p>(b) Let $t=\tan\theta$: $t^2-4t+1=0$ <span class="mk">M1</span>, $t=2\pm\sqrt3$ <span class="mk">A1</span>. Both positive, so $\theta$ is in quadrant 1 only: $\theta=75^\circ$ <span class="mk">A1</span> and $\theta=15^\circ$. <span class="mk">A1</span> (Check: $\tan75^\circ=2+\sqrt3$.)</p>`),
-  B.key([T`$\tan\theta\equiv\frac{\sin\theta}{\cos\theta}$, $\sin^2\theta+\cos^2\theta\equiv1$.`, T`Prove from one side to the other.`, T`Test at $\theta=0$ (or $30^\circ$) to catch errors.`]),
+  B.key([T`$\tan\theta\equiv\frac{\sin\theta}{\cos\theta}$, $\sin^2\theta+\cos^2\theta\equiv1$.`, T`Work from one side to the other.`, T`Test at $\theta=0$ (or $30^\circ$) to catch errors.`]),
 ].join('');
 
 /* ===================================================================== */
 BOOK.m_teq = [
   B.why(T`<p>$\sin x=0.5$ has infinitely many solutions, because the graph repeats. A trig-equation question always gives an <b>interval</b>; your job is to find every solution in it — no more, no less. The method is always: principal value from the calculator, then the symmetry of the graph, then add periods.</p>`),
   B.thm('Second solutions (degrees)', T`<ul><li>$\sin x=k$: $x=\alpha$ and $x=180^\circ-\alpha$ (where $\alpha=\sin^{-1}k$).</li><li>$\cos x=k$: $x=\alpha$ and $x=360^\circ-\alpha$ (i.e. $-\alpha$).</li><li>$\tan x=k$: $x=\alpha$ and $x=\alpha+180^\circ$.</li></ul><p>Then add or subtract $360^\circ$ ($180^\circ$ for tan) to find all solutions in the interval.</p>`),
-  B.opt(T`<p>These are the symmetries of the graphs: $\sin(180^\circ-x)=\sin x$, $\cos(-x)=\cos x$, and $\tan$ has period $180^\circ$. On the unit circle, a horizontal line $y=k$ meets the circle at two points symmetric in the $y$-axis (angles $\alpha$ and $180^\circ-\alpha$), and a vertical line $x=k$ at two points symmetric in the $x$-axis ($\alpha$ and $-\alpha$).</p>`, 'Why it works'),
   B.ex(1, T`Solve $\sin x=-0.5$ for $0^\circ\le x\le360^\circ$.`, [
     T`$\alpha=\sin^{-1}(-0.5)=-30^\circ$ (outside the interval, but useful).`,
     T`Second solution $180^\circ-(-30^\circ)=210^\circ$; and $-30^\circ+360^\circ=330^\circ$.`,
@@ -332,7 +320,7 @@ BOOK.m_exp = [
   B.def('exponential function', T`<p>$y=a^x$ with $a\gt0$, $a\ne1$. Every such graph passes through $(0,1)$, lies above the $x$-axis, and has the $x$-axis ($y=0$) as an asymptote. If $a\gt1$ it increases (growth); if $0\lt a\lt1$ it decreases (decay). $y=a^{-x}$ is the reflection of $y=a^x$ in the $y$-axis.</p>`),
   T`<h3>Where does $e$ come from?</h3>
 <p>The gradient of $y=a^x$ at any point is proportional to the value there: $$\frac{a^{x+h}-a^x}{h}=a^x\cdot\frac{a^h-1}{h}.$$ For small $h$, $\frac{2^h-1}{h}\approx0.693$ and $\frac{3^h-1}{h}\approx1.099$. So for $y=2^x$ the gradient is about $0.69\times$ the value, and for $y=3^x$ about $1.10\times$ the value. Somewhere between 2 and 3 there is a base whose multiplier is exactly 1: that base is $e=2.71828\ldots$</p>`,
-  B.thm('The number e', T`<p>$e=\displaystyle\lim_{n\to\infty}\left(1+\frac1n\right)^n=2.71828\ldots$ — the result of continuously compounding 100% interest for one year (see chapter 6.3). It is also exactly the base whose gradient multiplier is 1: the gradient of $y=e^x$ equals its height. (Differentiating $e^x$ is A2 content.)</p>`),
+  B.thm('The number e', T`<p>$e=\displaystyle\lim_{n\to\infty}\left(1+\frac1n\right)^n=2.71828\ldots$ — the result of continuously compounding 100% interest for one year (see chapter 5.3). It is also exactly the base whose gradient multiplier is 1: the gradient of $y=e^x$ equals its height. (Differentiating $e^x$ is A2 content.)</p>`),
   B.def('natural logarithm', T`<p>$\ln x$ is the inverse of $e^x$: $\ y=e^x\iff x=\ln y$. So $e^{\ln x}=x$ $(x\gt0)$ and $\ln(e^x)=x$. The graph of $y=\ln x$ is the reflection of $y=e^x$ in $y=x$.</p>`),
   B.ex(1, T`Sketch $y=e^{-x}+2$.`, [
     T`$y=e^{-x}$ is decay (reflection of $e^x$ in the $y$-axis); then translate up 2.`,

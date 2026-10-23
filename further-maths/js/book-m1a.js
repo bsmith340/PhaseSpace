@@ -1,72 +1,6 @@
-// BCS Academy textbook — Maths AS 1, part 1: Proof; Algebra & functions; Straight lines.
-// Same chapter shape as the Further Maths book: big picture → definitions → theory (B.proofReq for proofs the Maths spec asks for, B.opt for the rest) → worked examples → mistakes → exam technique → check yourself → exam-style question.
+// BCS Academy textbook — Maths AS 1, part 1: Algebra & functions; Straight lines.
+// Same chapter shape as the Further Maths book: big picture → definitions → theory → worked examples → mistakes → exam technique → check yourself → exam-style question.
 'use strict';
-
-/* ===================================================================== */
-BOOK.m_proof = [
-  B.why(T`<p>In everyday life "true" means "it worked every time I tried". In mathematics a statement is only true once it is <b>proved for every case it claims to cover</b>. At AS you need three tools: <b>proof by deduction</b> (a chain of logical steps from known facts), <b>proof by exhaustion</b> (split into finitely many cases and check each one), and <b>disproof by counter-example</b> (one case where it fails).</p>`),
-  B.pre(T`<p>Algebra you will lean on: an <b>even</b> integer can be written $2k$, an <b>odd</b> integer $2k+1$ (with $k$ an integer); consecutive integers are $n,\ n+1,\ n+2$; a multiple of $m$ is $mk$. Completing the square is the main tool for "show that … is always positive".</p>`),
-  B.def('notation', T`<ul><li>$P\Rightarrow Q$: "if $P$ then $Q$" ($P$ implies $Q$).</li><li>$P\Leftarrow Q$: $Q$ implies $P$.</li><li>$P\iff Q$: each implies the other ("if and only if").</li><li>$\therefore$ "therefore"; $\in$ "is a member of"; $\mathbb Z$ integers, $\mathbb R$ real numbers.</li></ul>`),
-  T`<h3>1. Proof by deduction</h3>
-<p>Start from definitions or known results and move forward one justified step at a time until you reach the statement. Every step must be valid for <i>all</i> the cases at once, which is why we use letters ($n$, $k$, $a$, $b$) rather than numbers.</p>`,
-  B.ex(1, T`Prove that the sum of any two odd numbers is even.`, [
-    T`Let the odd numbers be $2a+1$ and $2b+1$, where $a,b\in\mathbb Z$. (Use <i>different</i> letters — they need not be equal.)`,
-    T`Sum $=(2a+1)+(2b+1)=2a+2b+2=2(a+b+1)$.`,
-    T`$a+b+1$ is an integer, so the sum is $2\times$ (an integer), which is even. $\blacksquare$`]),
-  B.ex(2, T`Prove that the difference between the squares of two consecutive odd numbers is a multiple of $8$.`, [
-    T`Let the consecutive odd numbers be $2n-1$ and $2n+1$, $n\in\mathbb Z$.`,
-    T`$(2n+1)^2-(2n-1)^2=(4n^2+4n+1)-(4n^2-4n+1)=8n$.`,
-    T`$8n$ is a multiple of $8$ for every integer $n$. $\blacksquare$`], T`Faster: difference of two squares, $(2n+1-(2n-1))(2n+1+2n-1)=2\cdot4n=8n$.`),
-  B.ex(3, T`Prove that $n^3-n$ is divisible by $6$ for every integer $n$.`, [
-    T`Factorise: $n^3-n=n(n^2-1)=(n-1)\,n\,(n+1)$ — the product of three <b>consecutive</b> integers.`,
-    T`Among any two consecutive integers one is even, so the product is divisible by $2$.`,
-    T`Among any three consecutive integers one is a multiple of $3$, so the product is divisible by $3$.`,
-    T`Divisible by both $2$ and $3$ (which share no factor) $\Rightarrow$ divisible by $6$. $\blacksquare$`]),
-  B.ex(4, T`Prove that $x^2-6x+10\gt0$ for all real $x$.`, [
-    T`Complete the square: $x^2-6x+10=(x-3)^2-9+10=(x-3)^2+1$.`,
-    T`$(x-3)^2\ge0$ for all real $x$ (a square is never negative).`,
-    T`So $(x-3)^2+1\ge1\gt0$. $\blacksquare$`], T`This "complete the square, then a square is $\ge0$" argument is the standard way to prove an expression is always positive.`),
-  B.thm('AM–GM for two numbers', T`<p>For $a,b\ge0$: $\dfrac{a+b}{2}\ge\sqrt{ab}$, with equality only when $a=b$.</p>`),
-  B.proofReq(T`<p>$\left(\sqrt a-\sqrt b\right)^2\ge0$ because it is a square. Expanding, $a-2\sqrt{ab}+b\ge0$, so $a+b\ge2\sqrt{ab}$; divide by $2$. Equality needs $\sqrt a-\sqrt b=0$, i.e. $a=b$.</p>`, 'Proof by deduction'),
-  B.tip(T`<p>Notice the direction of that proof: it <b>starts from something certainly true</b> ($(\sqrt a-\sqrt b)^2\ge0$) and works forward to the result. If you discover a proof by working backwards from the result, rewrite it forwards — or make sure every step is reversible ($\iff$).</p>`),
-  T`<h3>2. Proof by exhaustion</h3>
-<p>Split <i>all</i> possibilities into a finite number of cases, then prove the statement in each. The cases must cover everything: even/odd, remainders $0,1,2$ on division by $3$, last digits $0$–$9$, or a short list of values.</p>`,
-  B.ex(5, T`Prove that every square number is either a multiple of $4$ or one more than a multiple of $4$.`, [
-    T`Every integer $n$ is even or odd. <b>Case 1</b>, $n=2k$: $n^2=4k^2$, a multiple of $4$.`,
-    T`<b>Case 2</b>, $n=2k+1$: $n^2=4k^2+4k+1=4(k^2+k)+1$, one more than a multiple of $4$.`,
-    T`The two cases cover every integer, so the result holds for all square numbers. $\blacksquare$`]),
-  B.ex(6, T`Prove that no square number ends in the digit $7$.`, [
-    T`The last digit of $n^2$ depends only on the last digit of $n$. Check all ten cases:`,
-    T`$0^2\to0,\ 1^2\to1,\ 2^2\to4,\ 3^2\to9,\ 4^2\to6,\ 5^2\to5,\ 6^2\to6,\ 7^2\to9,\ 8^2\to4,\ 9^2\to1$.`,
-    T`The possible last digits are $0,1,4,5,6,9$ — never $7$. $\blacksquare$`]),
-  T`<h3>3. Disproof by counter-example</h3>
-<p>To show a claim "for all …" is <b>false</b>, one specific case where it fails is enough. Give the actual numbers and show the failure clearly.</p>`,
-  B.ex(7, T`Disprove: "if $a\gt b$ then $a^2\gt b^2$".`, [
-    T`Take $a=1$, $b=-2$. Then $a\gt b$ is true.`,
-    T`But $a^2=1$ and $b^2=4$, so $a^2\lt b^2$. The statement is false. $\blacksquare$`]),
-  B.ex(8, T`Disprove: "$n^2+n+41$ is prime for every positive integer $n$".`, [
-    T`It is prime for $n=1,2,\dots,39$, but take $n=40$:`,
-    T`$40^2+40+41=40(40+1)+41=41\times40+41=41\times41$, which is not prime. $\blacksquare$`], T`39 successes proved nothing. This is why checking examples is never a proof.`),
-  B.warn([
-    T`Checking a few numbers and writing "so it's true". Examples can only <i>disprove</i>, never prove a "for all" statement.`,
-    T`Using the same letter for two different numbers, e.g. calling two odd numbers $2n+1$ and $2n+1$ (that proves it only for equal numbers).`,
-    T`Starting from the statement to be proved and deducing something true — that is circular unless each step is reversible.`,
-    T`In exhaustion, missing a case (e.g. forgetting $n=0$ or negative values when the claim is about all integers).`,
-    T`A counter-example that isn't shown to fail: always compute both sides.`]),
-  B.exam([
-    T`Finish with a concluding sentence that repeats the claim: "… hence $n^3-n$ is divisible by $6$ for all integers $n$." It is often worth a mark.`,
-    T`Define your letters at the start ("let $n\in\mathbb Z$").`,
-    T`"Show that" means every step must be visible: don't skip from the expression to the conclusion.`]),
-  B.checks([
-    [T`Prove that the sum of three consecutive integers is a multiple of $3$.`, T`$n+(n+1)+(n+2)=3n+3=3(n+1)$, and $n+1\in\mathbb Z$.`],
-    [T`Disprove: "$2^n-1$ is prime for every prime $n$".`, T`$n=11$: $2^{11}-1=2047=23\times89$. (Any explicit failing case is fine.)`],
-    [T`Prove that $n^2+n$ is even for every integer $n$.`, T`$n^2+n=n(n+1)$, a product of consecutive integers, one of which is even. (Or exhaustion: $n$ even / $n$ odd.)`]]),
-  B.examq(7, T`<p>(a) Prove that the sum of the squares of any two consecutive integers is odd. <span class="mk">[3]</span></p><p>(b) Disprove the statement "$2^n+1$ is prime for every positive integer $n$". <span class="mk">[2]</span></p><p>(c) Prove by exhaustion that $n^2-n+1$ is odd for every integer $n$. <span class="mk">[2]</span></p>`,
-    T`<p>(a) Let the integers be $n$ and $n+1$. <span class="mk">M1</span> $n^2+(n+1)^2=2n^2+2n+1=2(n^2+n)+1$ <span class="mk">M1</span>, which is $2\times$ integer $+1$, so odd. <span class="mk">A1</span></p>
-<p>(b) $n=3$: $2^3+1=9=3\times3$ <span class="mk">M1</span>, not prime, so the statement is false. <span class="mk">A1</span></p>
-<p>(c) $n=2k$: $4k^2-2k+1=2(2k^2-k)+1$, odd. $n=2k+1$: $4k^2+4k+1-2k-1+1=2(2k^2+k)+1$, odd. <span class="mk">M1</span> Every integer is even or odd, so true for all $n$. <span class="mk">A1</span></p>`),
-  B.key([T`Deduction: letters, not numbers; one justified step at a time.`, T`Exhaustion: finite list of cases that covers everything.`, T`Counter-example: one explicit failing case disproves a "for all" claim.`, T`"Always positive": complete the square, then use (square) $\ge0$.`]),
-].join('');
 
 /* ===================================================================== */
 BOOK.m_ind = [
@@ -75,10 +9,6 @@ BOOK.m_ind = [
 <p>For a positive whole number $m$, $a^m$ means $a\times a\times\dots\times a$ ($m$ factors). Counting factors gives the first three laws immediately:</p>`,
   B.thm('Laws of indices', T`$$a^m\times a^n=a^{m+n},\qquad \frac{a^m}{a^n}=a^{m-n},\qquad (a^m)^n=a^{mn},\qquad (ab)^n=a^nb^n.$$`),
   T`<p>We then <b>define</b> zero, negative and fractional powers so that these laws keep working:</p>`,
-  B.opt(T`<ul><li><b>Zero:</b> $\dfrac{a^n}{a^n}=1$, but the division law gives $a^{n-n}=a^0$. So $a^0=1$ ($a\ne0$).</li>
-<li><b>Negative:</b> $a^{-n}\times a^n=a^0=1$, so $a^{-n}=\dfrac1{a^n}$.</li>
-<li><b>Unit fraction:</b> $\left(a^{1/n}\right)^n=a^{n/n}=a$, so $a^{1/n}$ is the number whose $n$th power is $a$: $a^{1/n}=\sqrt[n]a$.</li>
-<li><b>General fraction:</b> $a^{m/n}=\left(a^{1/n}\right)^m=\left(\sqrt[n]a\right)^m$ (or $\sqrt[n]{a^m}$ — the root first is usually easier).</li></ul>`, 'Where the other rules come from'),
   B.ex(1, T`Evaluate $27^{-2/3}$ without a calculator.`, [
     T`Negative power $\Rightarrow$ reciprocal: $27^{-2/3}=\dfrac{1}{27^{2/3}}$.`,
     T`Denominator: root first, $27^{1/3}=3$, then square: $3^2=9$.`,
@@ -101,7 +31,6 @@ BOOK.m_ind = [
   T`<h3>2. Surds</h3>
 <p>A <b>surd</b> is an irrational root such as $\sqrt2$ or $\sqrt[3]5$. Leaving answers in surd form keeps them exact. For $a,b\gt0$:</p>`,
   B.thm('Surd rules', T`$$\sqrt{ab}=\sqrt a\,\sqrt b,\qquad \sqrt{\frac ab}=\frac{\sqrt a}{\sqrt b},\qquad (\sqrt a)^2=a,\qquad (a+\sqrt b)(a-\sqrt b)=a^2-b.$$`),
-  B.opt(T`<p>$(\sqrt a\sqrt b)^2=(\sqrt a)^2(\sqrt b)^2=ab$ and $\sqrt a\sqrt b\gt0$, so $\sqrt a\sqrt b$ is the positive square root of $ab$. The last rule is the difference of two squares: $(a+\sqrt b)(a-\sqrt b)=a^2-(\sqrt b)^2=a^2-b$.</p>`),
   T`<p><b>Simplify</b> by pulling out the largest square factor: $\sqrt{72}=\sqrt{36\times2}=6\sqrt2$.<br><b>Rationalise</b> a denominator (remove the surd from it): for $\dfrac{1}{\sqrt a}$ multiply top and bottom by $\sqrt a$; for $\dfrac{1}{a+\sqrt b}$ multiply by the <b>conjugate</b> $a-\sqrt b$.</p>`,
   B.ex(6, T`Simplify $\sqrt{50}+\sqrt{18}-\sqrt8$.`, [
     T`$\sqrt{50}=5\sqrt2$, $\sqrt{18}=3\sqrt2$, $\sqrt8=2\sqrt2$.`,
@@ -138,15 +67,12 @@ BOOK.m_quad = [
   T`<h3>1. Completing the square</h3>
 <p>The identity $(x+p)^2=x^2+2px+p^2$ means $x^2+2px=(x+p)^2-p^2$: <b>halve the coefficient of $x$, square-bracket it, subtract its square.</b></p>`,
   B.thm('Completed-square form', T`$$ax^2+bx+c=a\left(x+\frac{b}{2a}\right)^2+c-\frac{b^2}{4a}.$$<p>So the turning point (vertex) is $\left(-\dfrac{b}{2a},\ c-\dfrac{b^2}{4a}\right)$; it is a minimum if $a\gt0$ and a maximum if $a\lt0$. The line of symmetry is $x=-\dfrac b{2a}$.</p>`),
-  B.opt(T`<p>$ax^2+bx+c=a\left(x^2+\dfrac bax\right)+c=a\left[\left(x+\dfrac b{2a}\right)^2-\dfrac{b^2}{4a^2}\right]+c=a\left(x+\dfrac b{2a}\right)^2-\dfrac{b^2}{4a}+c.$</p>
-<p>The squared bracket is $\ge0$ and equals $0$ only at $x=-\frac b{2a}$, which gives the vertex.</p>`),
   B.ex(1, T`Write $2x^2-12x+7$ in the form $a(x+p)^2+q$ and state the minimum point.`, [
     T`Take out the $2$ from the $x$ terms only: $2(x^2-6x)+7$.`,
     T`$x^2-6x=(x-3)^2-9$, so $2[(x-3)^2-9]+7=2(x-3)^2-18+7$.`,
     T`$=2(x-3)^2-11$. Minimum point $(3,-11)$.`], T`The $-9$ is multiplied by the $2$ — the most common slip.`),
   T`<h3>2. The quadratic formula</h3>`,
   B.thm('Quadratic formula', T`<p>The roots of $ax^2+bx+c=0$ ($a\ne0$) are $$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}.$$</p>`),
-  B.opt(T`<p>From the completed-square form, $ax^2+bx+c=0\iff a\left(x+\frac b{2a}\right)^2=\frac{b^2}{4a}-c=\frac{b^2-4ac}{4a}$, so $\left(x+\frac b{2a}\right)^2=\frac{b^2-4ac}{4a^2}$.</p><p>Square-root both sides (both signs): $x+\frac b{2a}=\pm\frac{\sqrt{b^2-4ac}}{2a}$, which rearranges to the formula.</p>`),
   B.ex(2, T`Solve $x^2+4x-1=0$, giving exact answers.`, [
     T`Complete the square: $(x+2)^2-4-1=0\Rightarrow(x+2)^2=5$.`,
     T`$x+2=\pm\sqrt5\Rightarrow x=-2\pm\sqrt5$.`], T`The formula gives the same: $x=\frac{-4\pm\sqrt{16+4}}{2}=\frac{-4\pm2\sqrt5}{2}$.`),
@@ -171,7 +97,7 @@ BOOK.m_quad = [
     T`Forgetting $a\ne0$ when the leading coefficient contains the unknown.`,
     T`Reading the vertex of $(x+3)^2-2$ as $(3,-2)$; it is $(-3,-2)$.`]),
   B.exam([
-    T`"Hence" after completing the square means use that form — e.g. read off the minimum or prove positivity — not start again.`,
+    T`"Hence" after completing the square means use that form — e.g. read off the minimum or show the expression is always positive — not start again.`,
     T`For discriminant questions write the condition first ($b^2-4ac\gt0$) then substitute; it earns the method mark even if the algebra slips.`,
     T`Exact answers: leave surds, e.g. $-2\pm\sqrt5$.`]),
   B.checks([
@@ -242,7 +168,6 @@ BOOK.m_sim = [
 BOOK.m_ineq = [
   B.why(T`<p>An inequality asks for a whole <b>range</b> of values, not a single answer. Linear inequalities behave almost like equations; quadratic ones need a sketch. They are also the end-point of many other questions: "for which $k$ does … have two roots?", "where is $f$ increasing?".</p>`),
   T`<h3>1. Linear inequalities</h3><p>You may add or subtract anything, and multiply or divide by a <b>positive</b> number. Multiplying or dividing by a <b>negative</b> number <b>reverses</b> the inequality.</p>`,
-  B.opt(T`<p>$a\lt b\iff b-a\gt0$. Multiplying by $-1$: $a-b\lt0$, i.e. $(-b)-(-a)\lt0$, i.e. $-b\lt-a$, which is $-a\gt-b$. The order flips.</p>`, 'Why the sign flips'),
   B.ex(1, T`Solve $5-3x\lt2x+20$.`, [
     T`Collect $x$ on the side where it is positive: $5-20\lt2x+3x$.`,
     T`$-15\lt5x\Rightarrow x\gt-3$.`], T`Moving $x$ to the right avoids dividing by a negative.`),
@@ -297,9 +222,7 @@ BOOK.m_poly = [
   B.why(T`<p>Cubics and quartics can't be solved with a formula you're expected to know. Instead, you find one root by inspection, use it to peel off a factor, and finish with a quadratic. The <b>factor theorem</b> tells you when a guess is a root; the <b>remainder theorem</b> tells you what's left over when it isn't.</p>`),
   B.def('polynomial division', T`<p>Dividing $f(x)$ by $(x-a)$ gives a <b>quotient</b> $q(x)$ (one degree lower) and a constant <b>remainder</b> $r$: $$f(x)=(x-a)\,q(x)+r.$$</p>`),
   B.thm('Remainder theorem', T`<p>When $f(x)$ is divided by $(x-a)$ the remainder is $f(a)$. More generally, dividing by $(ax-b)$ leaves remainder $f\!\left(\tfrac ba\right)$.</p>`),
-  B.opt(T`<p>Put $x=a$ in $f(x)=(x-a)q(x)+r$: $f(a)=0\cdot q(a)+r=r$. For $(ax-b)$: $f(x)=(ax-b)q(x)+r$ and $x=\tfrac ba$ makes the bracket zero.</p>`),
   B.thm('Factor theorem', T`<p>$(x-a)$ is a factor of $f(x)\iff f(a)=0$. Likewise $(ax-b)$ is a factor $\iff f\!\left(\tfrac ba\right)=0$.</p>`),
-  B.opt(T`<p>A factor means remainder $0$; by the remainder theorem the remainder is $f(a)$.</p>`),
   T`<h3>Finding the quotient</h3>
 <p><b>Comparing coefficients</b> is the cleanest method. If $(x-3)$ is a factor of $2x^3-3x^2-11x+6$, write $2x^3-3x^2-11x+6=(x-3)(ax^2+bx+c)$: the $x^3$ terms give $a=2$, the constants give $-3c=6\Rightarrow c=-2$, and the $x^2$ terms give $b-3a=-3\Rightarrow b=3$. (Long division gives the same; include $0x^2$ etc. for any missing powers.)</p>
 <p><b>Which roots to try?</b> Integer roots must divide the constant term. Try $\pm1,\pm2,\pm3,\dots$; if the leading coefficient is $2$, also try $\pm\tfrac12$, etc.</p>`,
@@ -359,7 +282,6 @@ BOOK.m_graph = [
 <tr><td>$y=f(ax)$</td><td>stretch parallel to the $x$-axis, factor $\frac1a$</td><td>$(\frac pa,\ q)$</td></tr>
 <tr><td>$y=-f(x)$</td><td>reflection in the $x$-axis</td><td>$(p,\ -q)$</td></tr>
 <tr><td>$y=f(-x)$</td><td>reflection in the $y$-axis</td><td>$(-p,\ q)$</td></tr></table>`),
-  B.opt(T`<p>Take $y=f(x+a)$. At $x=p-a$: $y=f(p-a+a)=f(p)=q$. So $(p-a,q)$ is on the new graph: everything shifts $a$ to the <b>left</b>. Similarly for $y=f(ax)$ at $x=\frac pa$: $y=f(p)=q$, so $x$-coordinates are divided by $a$. Changes <b>inside</b> the bracket act on $x$ "the opposite way"; changes <b>outside</b> act on $y$ as you'd expect.</p>`, 'Why "inside the bracket" works backwards'),
   B.ex(2, T`$y=f(x)$ has a maximum at $(2,5)$. Find the maximum (or minimum) of: (a) $y=f(x-3)$ (b) $y=2f(x)$ (c) $y=f(2x)$ (d) $y=-f(x)$ (e) $y=f(x)+4$.`, [
     T`(a) right 3: $(5,5)$, maximum.`,
     T`(b) $y$-values doubled: $(2,10)$, maximum.`,
@@ -401,7 +323,6 @@ BOOK.m_line = [
   B.why(T`<p>Straight lines are the simplest graphs, but they carry the key ideas of coordinate geometry: gradient as a rate, parallel and perpendicular directions, distances and midpoints. Circles, tangents and normals all build on this chapter.</p>`),
   B.def('gradient & equations', T`<p>Through $(x_1,y_1)$ and $(x_2,y_2)$: gradient $m=\dfrac{y_2-y_1}{x_2-x_1}$.</p><ul><li>Point–gradient form: $y-y_1=m(x-x_1)$.</li><li>Gradient–intercept form: $y=mx+c$.</li><li>General form: $ax+by+c=0$ (usually with integer $a,b,c$).</li><li>Midpoint $\left(\frac{x_1+x_2}{2},\frac{y_1+y_2}{2}\right)$; distance $\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}$ (Pythagoras).</li></ul>`),
   B.thm('Parallel and perpendicular lines', T`<p>Parallel lines have equal gradients. Lines with gradients $m_1$, $m_2$ (neither vertical) are perpendicular $\iff m_1m_2=-1$, i.e. $m_2=-\dfrac1{m_1}$.</p>`),
-  B.opt(T`<p>A line of gradient $m$ has direction "1 across, $m$ up", i.e. the step $(1,m)$. Rotating a step $(a,b)$ by $90^\circ$ gives $(-b,a)$, so $(1,m)$ becomes $(-m,1)$, whose gradient is $\dfrac{1}{-m}=-\dfrac1m$. Hence the product of the gradients is $m\cdot\left(-\frac1m\right)=-1$.</p>`),
   B.ex(1, T`Find the equation of the line through $(2,-1)$ and $(6,7)$.`, [
     T`$m=\dfrac{7-(-1)}{6-2}=\dfrac84=2$.`,
     T`$y-(-1)=2(x-2)\Rightarrow y=2x-5$.`]),

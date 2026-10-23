@@ -1,4 +1,4 @@
-// CCEA GCE Mathematics A2 1 Pure Mathematics, part 1: proof, algebra & functions, parametric equations, sequences & series, trigonometry.
+// CCEA GCE Mathematics A2 1 Pure Mathematics, part 1: algebra & functions, parametric equations, sequences & series, trigonometry.
 'use strict';
 
 const gbin = (n, k) => { let c = 1; for (let i = 0; i < k; i++) c *= (n - i) / (i + 1); return c; }; // generalised binomial coefficient
@@ -8,29 +8,6 @@ const c1 = c => (c === 1 ? '' : c === -1 ? '-' : c); // coefficient with 1 suppr
 
 topic({
   id: '_m3a', title: 'A2 1a', points: [
-    /* ---------------- PROOF ---------------- */
-    {
-      id: 'm3_contra', title: 'Proof by contradiction', sims: [],
-      notes: T`<ul><li>To prove a statement $P$: <b>assume $P$ is false</b>, reason correctly, and reach something impossible (a contradiction). So $P$ must be true.</li>
-<li>Classic results: $\sqrt2$ is irrational; there are infinitely many primes; if $n^2$ is even then $n$ is even; there is no largest even number; $\log_2 3$ is irrational.</li>
-<li>Write the assumption precisely ("suppose $\sqrt2=\frac ab$ with $a,b$ integers with no common factor") and say clearly where the contradiction is.</li></ul>`,
-      drills: [
-        () => { const L = [['$\\sqrt2$ is irrational', 'Assume $\\sqrt2=\\frac ab$ where $a,b$ are integers with no common factors', ['Assume $\\sqrt2$ is rational and equal to $1.414$', 'Assume $\\sqrt2=\\frac ab$ for some real numbers $a,b$', 'Assume $\\sqrt2$ is irrational']],
-            ['there are infinitely many prime numbers', 'Assume there are finitely many primes $p_1,p_2,\\dots,p_n$', ['Assume every number is prime', 'Assume there are infinitely many primes', 'Assume $2$ is the only even prime']],
-            ['if $n^2$ is even then $n$ is even', 'Assume $n^2$ is even and $n$ is odd', ['Assume $n^2$ is odd and $n$ is even', 'Assume $n$ is even', 'Assume $n^2$ is even and $n$ is even']],
-            ['there is no greatest odd integer', 'Assume there is a greatest odd integer $N$', ['Assume every odd integer is greatest', 'Assume $N=2n+1$ is even', 'Assume there are no odd integers']],
-            ['$\\log_2 3$ is irrational', 'Assume $\\log_2 3=\\frac pq$ with $p,q$ positive integers', ['Assume $\\log_2 3$ is an integer', 'Assume $\\log_23=1.585$', 'Assume $\\log_2 3=\\frac pq$ with $p,q$ irrational']]];
-          const [s, r, d] = pick(L), opts = shuffle([r, ...d]); return { q: T`In a proof by contradiction that ${s}, what is the correct opening assumption?`, mc: { options: opts, correct: opts.indexOf(r) }, sol: T`Assume the <b>negation</b> of the statement: ${r}. Then derive a contradiction.` }; },
-        () => { const L = [['$\\sqrt2=\\frac ab$ (lowest terms) gives $a^2=2b^2$', 'so $a$ is even; writing $a=2c$ gives $b^2=2c^2$, so $b$ is even too — contradicting "no common factors"'],
-            ['$N=p_1p_2\\cdots p_n+1$ is considered', 'dividing $N$ by any $p_i$ leaves remainder $1$, so $N$ has a prime factor not in the list — contradicting "these are all the primes"'],
-            ['$\\log_23=\\frac pq$ gives $2^p=3^q$', 'the left side is even and the right side is odd — impossible']];
-          const [setup, r] = pick(L), opts = shuffle([r, ...shuffle(L.filter(x => x[1] !== r).map(x => x[1])).slice(0, 1), 'so the statement is false', 'which proves the assumption is true']);
-          return { q: T`In a proof by contradiction, ${setup}. How does the argument finish?`, mc: { options: opts, correct: opts.indexOf(r) }, sol: T`The contradiction: ${r}. Hence the original assumption was false.` }; },
-        () => { const k = pick([3, 5, 7]), a = pick([6, 10, 14, 15, 21].filter(x => x % k === 0)), b = pick([9, 15, 21, 35, 49].filter(x => x % k === 0)), c = k * ri(2, 9) + ri(1, k - 1);
-          return { q: T`Prove there are no integers $x,y$ with $${a}x+${b}y=${c}$. By contradiction: suppose such integers exist. Which integer divides the left-hand side but not ${c}? (Enter the largest such divisor.)`, fields: [{ label: 'divisor', ans: gcd(a, b) }],
-            sol: T`$${a}x+${b}y=${gcd(a, b)}\left(${a / gcd(a, b)}x+${b / gcd(a, b)}y\right)$ is a multiple of $${gcd(a, b)}$, but $${c}$ is not (remainder $${c % gcd(a, b)}$). Contradiction, so no such integers exist.` }; },
-      ],
-    },
     /* ---------------- ALGEBRA & FUNCTIONS ---------------- */
     {
       id: 'm3_ratx', title: 'Rational expressions & algebraic division', sims: [],
@@ -176,7 +153,7 @@ topic({
     {
       id: 'm3_ap', title: 'Arithmetic sequences & series', sims: ['m3_seq'],
       notes: T`$$u_n=a+(n-1)d,\qquad S_n=\frac n2\big(2a+(n-1)d\big)=\frac n2(a+l)$$
-<ul><li>$a$ = first term, $d$ = common difference, $l$ = last term.</li><li><b>Proof</b> of $S_n$: write the sum forwards and backwards and add — each pair sums to $a+l$, and there are $n$ pairs.</li><li>Two terms given: set up simultaneous equations in $a$ and $d$.</li><li>"How many terms": $S_n\gt K$ gives a quadratic inequality in $n$; $n$ must be a positive integer.</li></ul>`,
+<ul><li>$a$ = first term, $d$ = common difference, $l$ = last term.</li><li>Two terms given: set up simultaneous equations in $a$ and $d$.</li><li>"How many terms": $S_n\gt K$ gives a quadratic inequality in $n$; $n$ must be a positive integer.</li></ul>`,
       drills: [
         () => { const a = ri(-10, 20), d = rnz(-5, 6), n = ri(10, 40); return { q: T`An arithmetic sequence has first term $${a}$ and common difference $${d}$. Find the $${n}$th term and the sum of the first $${n}$ terms.`, fields: [{ label: 'uₙ', ans: a + (n - 1) * d }, { label: 'Sₙ', ans: n / 2 * (2 * a + (n - 1) * d) }],
           sol: T`$u_{${n}}=${a}+${n - 1}(${d})=${a + (n - 1) * d}$. $S_{${n}}=\frac{${n}}{2}\big(${2 * a}+${n - 1}(${d})\big)=${n / 2 * (2 * a + (n - 1) * d)}$.` }; },
@@ -189,7 +166,7 @@ topic({
     {
       id: 'm3_gp', title: 'Geometric sequences & series; sum to infinity', sims: ['m3_seq'],
       notes: T`$$u_n=ar^{n-1},\qquad S_n=\frac{a(1-r^n)}{1-r}\ (r\ne1),\qquad S_\infty=\frac a{1-r}\ \text{ when }|r|\lt1$$
-<ul><li><b>Proof</b> of $S_n$: $S_n-rS_n=a-ar^n$, so $S_n(1-r)=a(1-r^n)$.</li><li>The series converges only for $|r|\lt1$: then $r^n\to0$.</li><li>Problems with $r^n\gt K$ or $S_n\gt K$: take logs; remember $\ln r\lt0$ when $0\lt r\lt1$ flips the inequality.</li></ul>`,
+<ul><li>The series converges only for $|r|\lt1$: then $r^n\to0$.</li><li>Problems with $r^n\gt K$ or $S_n\gt K$: take logs; remember $\ln r\lt0$ when $0\lt r\lt1$ flips the inequality.</li></ul>`,
       drills: [
         () => { const a = rnz(-6, 8), r = pick([2, 3, -2, 0.5, -0.5, 1.5]), n = ri(5, 10); return { q: T`A geometric sequence has first term $${a}$ and common ratio $${r}$. Find $u_{${n}}$ and $S_{${n}}$.`, fields: [{ label: 'uₙ', ans: a * r ** (n - 1) }, { label: 'Sₙ', ans: a * (1 - r ** n) / (1 - r) }],
           sol: T`$u_{${n}}=${a}(${r})^{${n - 1}}=${num(a * r ** (n - 1), 6)}$. $S_{${n}}=\dfrac{${a}(1-(${r})^{${n}})}{1-(${r})}=${num(a * (1 - r ** n) / (1 - r), 6)}$.` }; },
@@ -251,9 +228,9 @@ topic({
       ],
     },
     {
-      id: 'm3_tid', title: 'sec²θ = 1 + tan²θ, proofs & equations', sims: [],
+      id: 'm3_tid', title: 'sec²θ = 1 + tan²θ & equations', sims: [],
       notes: T`$$\sec^2\theta=1+\tan^2\theta\qquad\operatorname{cosec}^2\theta=1+\cot^2\theta$$
-<ul><li>Proof: divide $\sin^2\theta+\cos^2\theta=1$ by $\cos^2\theta$ (or by $\sin^2\theta$).</li><li>Equations mixing $\tan$ and $\sec$ (or $\cot$ and $\operatorname{cosec}$): use the identity to get a quadratic in one function.</li>
+<ul><li>Equations mixing $\tan$ and $\sec$ (or $\cot$ and $\operatorname{cosec}$): use the identity to get a quadratic in one function.</li>
 <li><b>Proving identities</b>: start from the more complicated side; convert to $\sin$ and $\cos$; use the identities; work towards the other side. Don't "do the same to both sides".</li></ul>`,
       drills: [
         () => { const opt = pick([[2, 1, -1], [1, -1, -2], [2, -3, 1], [1, 1, -2], [3, -2, -1]]); // a sec^2 + b sec + c = 0 via tan^2 = sec^2 - 1
@@ -266,14 +243,14 @@ topic({
         () => { const L = [['$\\dfrac{1}{\\cos\\theta}-\\cos\\theta\\equiv\\sin\\theta\\tan\\theta$', 'Write over a common denominator: $\\frac{1-\\cos^2\\theta}{\\cos\\theta}=\\frac{\\sin^2\\theta}{\\cos\\theta}$'],
             ['$\\sec^2\\theta+\\operatorname{cosec}^2\\theta\\equiv\\sec^2\\theta\\operatorname{cosec}^2\\theta$', 'Write as $\\frac{1}{\\cos^2\\theta}+\\frac{1}{\\sin^2\\theta}=\\frac{\\sin^2\\theta+\\cos^2\\theta}{\\cos^2\\theta\\sin^2\\theta}$'],
             ['$\\tan\\theta+\\cot\\theta\\equiv\\sec\\theta\\operatorname{cosec}\\theta$', 'Write as $\\frac{\\sin\\theta}{\\cos\\theta}+\\frac{\\cos\\theta}{\\sin\\theta}=\\frac{\\sin^2\\theta+\\cos^2\\theta}{\\sin\\theta\\cos\\theta}$']];
-          const [id, r] = pick(L), opts = shuffle([r, 'Multiply both sides by $\\cos\\theta$ and check the results are equal', 'Substitute $\\theta=45^\\circ$ into both sides', 'Square both sides']); return { q: T`What is the best first step to prove ${id}?`, mc: { options: opts, correct: opts.indexOf(r) }, sol: T`${r}, then use $\sin^2\theta+\cos^2\theta=1$. Work on one side only; substituting values checks but doesn't prove.` }; },
+          const [id, r] = pick(L), opts = shuffle([r, 'Multiply both sides by $\\cos\\theta$ and check the results are equal', 'Substitute $\\theta=45^\\circ$ into both sides', 'Square both sides']); return { q: T`What is the best first step to show that ${id}?`, mc: { options: opts, correct: opts.indexOf(r) }, sol: T`${r}, then use $\sin^2\theta+\cos^2\theta=1$. Work on one side only; substituting values only checks particular angles.` }; },
       ],
     },
     {
       id: 'm3_comp', title: 'Compound & double angle formulae', sims: [],
       notes: T`$$\sin(A\pm B)=\sin A\cos B\pm\cos A\sin B\qquad\cos(A\pm B)=\cos A\cos B\mp\sin A\sin B\qquad\tan(A\pm B)=\frac{\tan A\pm\tan B}{1\mp\tan A\tan B}$$
 $$\sin2A=2\sin A\cos A\qquad\cos2A=\cos^2A-\sin^2A=2\cos^2A-1=1-2\sin^2A\qquad\tan2A=\frac{2\tan A}{1-\tan^2A}$$
-<ul><li>Exact values: $\sin75^\circ=\sin(45^\circ+30^\circ)=\frac{\sqrt6+\sqrt2}4$.</li><li>Double angle formulae follow by putting $B=A$; you must be able to prove them.</li><li>Equations like $\cos2x=\sin x$: choose the form of $\cos2x$ that leaves one function.</li></ul>`,
+<ul><li>Exact values: $\sin75^\circ=\sin(45^\circ+30^\circ)=\frac{\sqrt6+\sqrt2}4$.</li><li>Double angle formulae are the case $B=A$; they are not in the formula booklet, so learn them.</li><li>Equations like $\cos2x=\sin x$: choose the form of $\cos2x$ that leaves one function.</li></ul>`,
       drills: [
         () => { const L = [['\\sin75^\\circ', Math.sin(75 * D2R), '\\sin(45^\\circ+30^\\circ)'], ['\\cos15^\\circ', Math.cos(15 * D2R), '\\cos(45^\\circ-30^\\circ)'], ['\\tan75^\\circ', Math.tan(75 * D2R), '\\tan(45^\\circ+30^\\circ)'], ['\\cos105^\\circ', Math.cos(105 * D2R), '\\cos(60^\\circ+45^\\circ)'], ['\\sin15^\\circ', Math.sin(15 * D2R), '\\sin(45^\\circ-30^\\circ)'], ['\\tan15^\\circ', Math.tan(15 * D2R), '\\tan(45^\\circ-30^\\circ)']];
           const [e, v, how] = pick(L); return { q: T`Find the exact value of $${e}$ (decimal checks are accepted).`, fields: [{ label: 'value', ans: v }], sol: T`$${e}=${how}$; expand with the compound angle formula to get $${num(v, 6)}$ (e.g. $\sin75^\circ=\frac{\sqrt6+\sqrt2}{4}$, $\tan75^\circ=2+\sqrt3$).` }; },
