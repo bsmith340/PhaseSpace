@@ -540,7 +540,7 @@ function toggleTheme() {
 }
 
 window.toggleCalc = setupCalcDrawer();
-function boot() { if (!location.hash || location.hash === '#' || location.hash === '#/') { const s = PREFS.start === 'last' ? DB.lastCourse : PREFS.start; if (s && COURSES[s]) { location.replace('#/' + s); return; } if (s === 'physics') { location.replace('#/physics/' + PHYS.lastUnit().id); return; } } route(); }
+function boot() { if (window.CHAT) CHAT.init(); if (!location.hash || location.hash === '#' || location.hash === '#/') { const s = PREFS.start === 'last' ? DB.lastCourse : PREFS.start; if (s && COURSES[s]) { location.replace('#/' + s); return; } if (s === 'physics') { location.replace('#/physics/' + PHYS.lastUnit().id); return; } } route(); }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 window.addEventListener('load', () => renderMath(app()));
 
