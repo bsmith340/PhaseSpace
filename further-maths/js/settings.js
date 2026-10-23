@@ -35,6 +35,7 @@ function mergeDB(cur, inc) {
   out.bank = byId(out.bank, inc.bank); out.notes = byId(out.notes, inc.notes); out.sprints = byId(out.sprints, inc.sprints, 'd');
   const ip = Array.isArray(inc.papers) ? { fm: inc.papers } : (inc.papers || {});
   for (const [c, list] of Object.entries(ip)) out.papers[c] = byId(out.papers[c] || [], list);
+  for (const [k, s] of Object.entries(inc.bcsp || {})) { out.bcsp ||= {}; const m = out.bcsp[k] ||= { attempts: [] }; m.attempts = byId(m.attempts || [], s.attempts); }
   out.best = Math.max(out.best || 0, inc.best || 0);
   return out;
 }

@@ -23,7 +23,7 @@ let DB;
 try { DB = JSON.parse(localStorage.getItem(STORE)) || JSON.parse(localStorage.getItem(OLD_STORE)) || {}; } catch { DB = {}; }
 function normDB() {
   DB.stats ||= {}; DB.days ||= {}; DB.best ||= 0; DB.streak ||= 0; DB.read ||= {}; DB.bank ||= []; DB.notes ||= []; DB.sprints ||= []; DB.conf ||= {};
-  if (Array.isArray(DB.papers)) DB.papers = { fm: DB.papers }; DB.papers ||= {};
+  if (Array.isArray(DB.papers)) DB.papers = { fm: DB.papers }; DB.papers ||= {}; DB.bcsp ||= {};
 }
 normDB();
 const save = () => { try { localStorage.setItem(STORE, JSON.stringify(DB)); } catch { /* private mode */ } if (typeof CLOUD !== 'undefined') CLOUD.touch(); };
@@ -109,11 +109,11 @@ function renderNav(inCourse, qual) {
 function renderPhysNav(sub) {
   const u = PHYS.unitFor(sub), [a, b] = sub;
   renderNav(false, 'physics'); document.body.classList.add('in-course');
-  const key = PHYS.UNITS.some(x => x.id === a) ? `physics/${a}${b === 'spec' || b === 'equations' ? '/' + b : ''}` : a === 'practice' || a === 'tutor' ? `physics/${a}` : `physics/${u.id}`;
+  const key = PHYS.UNITS.some(x => x.id === a) ? `physics/${a}${b === 'spec' || b === 'equations' || b === 'papers' ? '/' + b : ''}` : a === 'practice' || a === 'tutor' ? `physics/${a}` : `physics/${u.id}`;
   const ln = $('#lnav'); ln.hidden = false;
   ln.innerHTML = `<div class="lnav-in"><a class="lnav-title" href="#/physics">Physics</a>
     <div class="cswitch useg" role="group" aria-label="Unit">${PHYS.UNITS.map(x => `<a href="#/physics/${x.id}" class="${x === u ? 'on' : ''}" title="${esc(x.title)}">${x.no}</a>`).join('')}</div>
-    <div class="lnav-links">${[['', 'Overview'], ['/spec', 'Spec'], ['/equations', 'Equations']].map(([p, l]) => `<a href="#/physics/${u.id}${p}" data-r="physics/${u.id}${p}">${l}</a>`).join('')}<a href="#/physics/practice" data-r="physics/practice">Practice</a><a href="#/physics/tutor" data-r="physics/tutor">Tutor</a></div>
+    <div class="lnav-links">${[['', 'Overview'], ['/spec', 'Spec'], ['/equations', 'Equations'], ['/papers', 'Papers']].map(([p, l]) => `<a href="#/physics/${u.id}${p}" data-r="physics/${u.id}${p}">${l}</a>`).join('')}<a href="#/physics/practice" data-r="physics/practice">Practice</a><a href="#/physics/tutor" data-r="physics/tutor">Tutor</a></div>
     <a class="btn primary small lnav-cta" href="#/physics/practice/${u.id}">Mock test</a></div>`;
   $('#tabbar').innerHTML = [[`#/physics/${u.id}`, `physics/${u.id}`, 'overview', 'Overview'], [`#/physics/${u.id}/spec`, `physics/${u.id}/spec`, 'spec', 'Spec'], ['#/physics/practice', 'physics/practice', 'drill', 'Practice'], ['#/physics/tutor', 'physics/tutor', 'chat', 'Tutor'], ['#/calc', 'calc', 'calc', 'Calculator']]
     .map(([h, r, i, l]) => `<a href="${h}" data-r="${r}"${r === 'calc' ? ' class="tcalc"' : ''}>${ico(i)}<span>${l}</span></a>`).join('');
@@ -268,7 +268,7 @@ function viewPoint(id, tab = 'learn') {
   const p = PT[id]; if (!p) return viewHome();
   if (p.course !== C.id) { C = courseOf(p); renderNav(true); }
   const t = TP[p.topic], list = p.status === 'beyond' ? C.archiveTopic.points : C.points, idx = list.indexOf(p), prev = list[idx - 1], next = list[idx + 1];
-  const nPP = DB.bank.filter(b => b.pid === id).length + DB.notes.filter(b => b.pid === id).length;
+  const nPP = PAPERS.countForPoint(C.id, id) + DB.bank.filter(b => b.pid === id).length + DB.notes.filter(b => b.pid === id).length;
   const hasDes = typeof GRAPH_PRESETS !== 'undefined' && GRAPH_PRESETS[p.id];
   if (tab === 'desmos') tab = 'graph';
   const tabs = [['learn', 'Textbook'], ['summary', 'Summary'], ...(p.sims.length ? [['sim', 'Simulate']] : []), ...(hasDes ? [['graph', 'Graph']] : []), ['drill', 'Drill'], ['papers', `Past papers${nPP ? ` (${nPP})` : ''}`]];
@@ -290,7 +290,7 @@ function viewPoint(id, tab = 'learn') {
     const toc = pane.querySelector('.ctoc'), hs = [...pane.querySelectorAll('.bookc h3')];
     if (hs.length > 2) toc.innerHTML = `<b>In this chapter:</b> ` + hs.map((h, i) => { h.id = 'sec' + i; return `<a href="javascript:void 0" data-sec="sec${i}">${esc(h.textContent)}</a>`; }).join('');
     toc.addEventListener('click', e => { const s = e.target.dataset.sec; if (s) document.getElementById(s).scrollIntoView({ behavior: 'smooth', block: 'start' }); });
-    renderMath(pane);
+    renderMath(pane); WALK.enhance(pane);
     $('#markread').onclick = () => { if (isRead(p.id)) delete DB.read[p.id]; else DB.read[p.id] = Date.now(); save(); viewPoint(id, 'learn'); };
   } else if (tab === 'summary') {
     pane.innerHTML = `<article class="notes card">${p.notes}</article><p class="muted center">The one-page summary. For full explanations use the Textbook tab.</p>`;
@@ -300,7 +300,7 @@ function viewPoint(id, tab = 'learn') {
   } else if (tab === 'graph') {
     const box = document.createElement('div'); box.className = 'card'; pane.append(box); cleanup.push(mountGraphTab(box, GRAPH_PRESETS[p.id]));
   } else if (tab === 'papers') {
-    papersForPoint(pane, p);
+    PAPERS.forPoint(pane, C.id, p.id);
   } else {
     drillPanel(pane, { pool: [p.id] });
   }
@@ -491,7 +491,7 @@ function route() {
   document.body.dataset.route = r || 'home';
   const subj = COURSES[r] ? COURSES[r].qual : QUALS[r] ? r : '';
   if (subj) document.documentElement.dataset.subject = subj; else delete document.documentElement.dataset.subject;
-  if (r === 'physics' && parts.length > 1) { unmount(); DB.lastCourse = 'physics'; save(); const sub = parts.slice(1); renderPhysNav(sub); return PHYS.route(sub); }
+  if (r === 'physics' && parts.length > 1) { unmount(); DB.lastCourse = 'physics'; save(); const sub = parts.slice(1); renderPhysNav(sub); if (sub[1] === 'papers' && PHYS.UNITS.some(x => x.id === sub[0])) { PHYS.leave(); highlight('physics/' + sub[0] + '/papers'); return PAPERS.route(sub[0], sub.slice(2), mount); } return PHYS.route(sub); }
   PHYS.leave();
   if (COURSES[r]) {
     C = COURSES[r]; DB.lastCourse = r; save(); renderNav(true);
@@ -505,7 +505,7 @@ function route() {
     if (v === 'drill') return viewDrill(qs);
     if (v === 'sprint') return viewSprint();
     if (v === 'formulae') return viewFormulae();
-    if (v === 'papers') return viewPapers();
+    if (v === 'papers') return PAPERS.route(r, parts.slice(2), mount);
     if (v === 'progress') return viewProgress();
     if (v === 'archive') return viewArchive();
     return viewHome();
