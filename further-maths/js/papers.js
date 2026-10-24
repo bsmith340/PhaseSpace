@@ -151,9 +151,9 @@ const PAPERS = (() => {
     const subj = typeof CCEA_PAPERS !== 'undefined' && CCEA_PAPERS.UNITS[u.id] ? CCEA_PAPERS.SUBJ[CCEA_PAPERS.UNITS[u.id].subj] : null;
     const done = cc.filter(c => { const r = recFor(u.id, c.key); return r && r.status === 'done'; }).length;
     const bcsCard = p => {
-      const tot = totalOf(p), st = DB.bcsp[p.id], at = (st && st.attempts) || [], bst = best(p.id), draft = st && st.draft;
+      const tot = totalOf(eff(p, (DB.bcsp[p.id] || {}).route)), st = DB.bcsp[p.id], at = (st && st.attempts) || [], bst = best(p.id), draft = st && st.draft;
       return `<article class="pp-card card lvl-${h(p.level)}"><div class="pp-card-h"><span class="pp-lvl">${h((LEVELS.find(l => l[0] === p.level) || [, p.level])[1])}</span>${p.calc === false ? '<span class="pp-chip">No calculator</span>' : ''}</div>
-        <h3>${h(p.title)}</h3><p class="muted small">${mins(+p.minutes || 0)} · ${tot} marks · ${p.questions.length} questions</p>
+        <h3>${h(p.title)}</h3><p class="muted small">${mins(+p.minutes || 0)} · ${tot} marks${routesOf(p) ? chooseLabel(p) : ` · ${p.questions.length} questions`}</p>
         <p class="pp-orig">${ORIGINAL}</p>
         ${bst ? `<div class="pp-best"><b>${bst.score}/${bst.out}</b> best · ${pct(bst.score, bst.out)}% ${meter(pct(bst.score, bst.out))}<span class="muted small">${at.length} attempt${at.length > 1 ? 's' : ''}</span></div>` : '<div class="pp-best muted small">Not attempted yet</div>'}
         <div class="pp-acts"><a class="btn primary small" href="${u.base}/bcs/${encodeURIComponent(p.id)}">${draft ? 'Resume' : at.length ? 'Open' : 'Start'}</a><button class="btn small ghost" data-print="${h(p.id)}">Print</button></div></article>`;
@@ -179,7 +179,7 @@ const PAPERS = (() => {
       ${legacy.length ? `<details class="pp-legacy card"><summary>Questions saved with the old tracker (${legacy.length})</summary><ul>${legacy.map(b => { const p = resolve(u, b.pid); return `<li><b>${h(b.src)}</b>${b.mk ? ` · ${h(b.mk)} marks` : ''} · <a href="${p.href}">${h(p.code)} ${h(p.title)}</a> · ${h(b.status || 'todo')}</li>`; }).join('')}</ul><p class="muted small">Still on each point's Past papers tab.</p></details>` : ''}
     </div>`);
     root.querySelector('#pp-add').onclick = () => { const r = { id: id8(), v: 2, key: '', name: 'New paper', status: '', date: '', notes: '', score: '', out: '', qs: [] }; recs(u.id).push(r); persist(); location.hash = recRoute(u, r); };
-    root.querySelectorAll('[data-print]').forEach(b => b.onclick = () => { const p = papersFor(u.id).find(x => x.id === b.dataset.print); if (p) printPaper(u, p, true); });
+    root.querySelectorAll('[data-print]').forEach(b => b.onclick = () => { const p = papersFor(u.id).find(x => x.id === b.dataset.print); if (p) printPaper(u, eff(p, (DB.bcsp[p.id] || {}).route), true); });
   }
 
   /* ---------- one real paper ---------- */
@@ -240,6 +240,17 @@ const PAPERS = (() => {
   const secHead = (paper, cls = 'pp-sec') => { let prev = null; return q => { if (!paper.sections || !paper.sections.length || q.section === prev) return ''; prev = q.section; const S = secOf(paper, q.section); return S ? `<h2 class="${cls}" data-sec="${h(S.id)}">${h(S.title || 'Section ' + S.id)} <span class="muted pp-sub">${secMarks(paper, S.id)} marks</span></h2>` : ''; }; };
   const secGot = (paper, parts) => (paper.sections || []).map(S => { let g = 0, o = 0; paper.questions.filter(q => q.section === S.id).forEach(q => (q.parts || []).forEach((p, j) => { g += (parts || {})[partKey(q, p, j)] || 0; o += +p.marks || 0; })); return { S, g, o }; });
 
+  // "choose" papers (e.g. FM AS 2: answer one route of two sections): every view works on the chosen route only
+  const routesOf = paper => (paper.choose && Array.isArray(paper.choose.routes) && paper.choose.routes.length) ? paper.choose.routes : null;
+  const routeName = (paper, r) => r.map(id => { const S = secOf(paper, id); return S ? (S.title || 'Section ' + id) : 'Section ' + id; }).join(' + ');
+  function eff(paper, route) {
+    const base = paper.base || paper, rs = routesOf(base);
+    if (!rs) return base;
+    const r = rs.find(x => route && x.join() === [].concat(route).join()) || rs[0];
+    return { ...base, base, route: r, questions: base.questions.filter(q => !q.section || r.includes(q.section)), sections: (base.sections || []).filter(S => r.includes(S.id)) };
+  }
+  const chooseLabel = paper => { const b = paper.base || paper; return routesOf(b) ? ` · choose ${b.choose.count || routesOf(b)[0].length} of ${(b.sections || []).length} sections` : ''; };
+
   function viewBcs(u, pid, mount) {
     const paper = papersFor(u.id).find(p => p.id === pid);
     if (!paper) return put(mount, `<div class="pp">${crumbs(u, 'Not found')}<p>That BCS Academy paper isn't available. <a href="${u.base}">Back to past papers</a></p></div>`);
@@ -249,24 +260,28 @@ const PAPERS = (() => {
     return intro(u, paper, mount);
   }
   const head = (u, paper, sub) => `<div class="pp">${crumbs(u, h(paper.title))}
-    <header class="phead slim"><div><h1>${h(paper.title)}</h1><p><span class="pp-orig">${ORIGINAL}</span> · ${mins(+paper.minutes || 0)} · ${totalOf(paper)} marks${paper.calc === false ? ' · no calculator' : ''}${sub ? ' · ' + sub : ''}</p></div></header>`;
+    <header class="phead slim"><div><h1>${h(paper.title)}</h1><p><span class="pp-orig">${ORIGINAL}</span> · ${mins(+paper.minutes || 0)} · ${totalOf(routesOf(paper.base || paper) && !paper.route ? eff(paper) : paper)} marks${paper.route ? ' · ' + h(routeName(paper, paper.route)) : chooseLabel(paper)}${paper.calc === false ? ' · no calculator' : ''}${sub ? ' · ' + sub : ''}</p></div></header>`;
 
   function intro(u, paper, mount, showAttempt) {
-    const S = store(paper.id), at = S.attempts || [];
+    paper = paper.base || paper;
+    const S = store(paper.id), at = S.attempts || [], rs = routesOf(paper);
+    let pick = eff(paper, S.route); // the route the student plans to answer (remembered per paper)
     const a = showAttempt ? at.find(x => x.id === showAttempt) : null;
     if (a) return results(u, paper, mount, a);
     const root = put(mount, `${head(u, paper)}
-      <section class="card pp-intro"><h2>Before you start</h2><ul>${paper.sections && paper.sections.length ? `<li>${paper.sections.map(S => `${h(S.title || 'Section ' + S.id)} (${secMarks(paper, S.id)} marks)`).join(' · ')}.</li>` : ''}<li>Answer every question. Show your working: method marks need it.</li><li>The clock runs from ${mins(+paper.minutes || 0)}; you can pause it, and you can keep going after time is up (overtime is shown).</li><li>${paper.calc === false ? 'No calculator.' : 'You may use a calculator.'} Have CCEA's formula booklet ready if the unit uses one.</li><li>When you submit, you mark your own answers against the mark scheme, then watch any part worked through.</li></ul>
+      <section class="card pp-intro"><h2>Before you start</h2>${rs ? `<div class="pp-choose"><p><b>${h(paper.choose.note || 'Choose which sections to answer.')}</b></p><div class="seg" role="group" aria-label="Sections you will answer" id="pp-route">${rs.map(r => `<button data-r="${h(r.join())}" class="${r === pick.route ? 'on' : ''}" aria-pressed="${r === pick.route}">${r.map(h).join(' + ')}</button>`).join('')}</div><p class="muted small" id="pp-routet">${h(routeName(paper, pick.route))} · ${totalOf(pick)} marks</p></div>` : ''}<ul>${!rs && paper.sections && paper.sections.length ? `<li>${paper.sections.map(S => `${h(S.title || 'Section ' + S.id)} (${secMarks(paper, S.id)} marks)`).join(' · ')}.</li>` : ''}<li>Answer every question. Show your working: method marks need it.</li><li>The clock runs from ${mins(+paper.minutes || 0)}; you can pause it, and you can keep going after time is up (overtime is shown).</li><li>${paper.calc === false ? 'No calculator.' : 'You may use a calculator.'} Have CCEA's formula booklet ready if the unit uses one.</li><li>When you submit, you mark your own answers against the mark scheme, then watch any part worked through.</li></ul>
         <div class="pp-acts"><button class="btn primary" id="pp-start">Start the exam</button><button class="btn" data-pr="0">Print paper</button><button class="btn ghost" data-pr="1">Print with mark scheme</button></div></section>
-      ${at.length ? `<h2 class="sech pp-h">Your attempts</h2><ul class="pp-list card">${at.slice().reverse().map(x => `<li class="pp-row"><a class="pp-row-main" href="javascript:void 0" data-att="${h(x.id)}"><span class="pp-yr">${pct(x.score, x.out)}%</span><span class="pp-row-t"><b>${x.score}/${x.out}</b> · ${day(x.at)} · ${fmtT(x.secs || 0)}</span><span class="pp-st st2">Review</span></a></li>`).join('')}</ul>` : ''}
+      ${at.length ? `<h2 class="sech pp-h">Your attempts</h2><ul class="pp-list card">${at.slice().reverse().map(x => `<li class="pp-row"><a class="pp-row-main" href="javascript:void 0" data-att="${h(x.id)}"><span class="pp-yr">${pct(x.score, x.out)}%</span><span class="pp-row-t"><b>${x.score}/${x.out}</b>${x.route ? ' · ' + x.route.map(h).join(' + ') : ''} · ${day(x.at)} · ${fmtT(x.secs || 0)}</span><span class="pp-st st2">Review</span></a></li>`).join('')}</ul>` : ''}
       <p><a href="${u.base}">← All past papers</a></p></div>`);
-    root.querySelector('#pp-start').onclick = () => { S.draft = { phase: 'exam', started: Date.now(), elapsed: 0, ans: {}, ticks: {}, running: true }; persist(); exam(u, paper, mount); };
-    root.querySelectorAll('[data-pr]').forEach(b => b.onclick = () => printPaper(u, paper, b.dataset.pr === '1'));
+    const rp = root.querySelector('#pp-route');
+    if (rp) rp.onclick = e => { const b = e.target.closest('button[data-r]'); if (!b) return; pick = eff(paper, b.dataset.r.split(',')); S.route = pick.route; persist(); rp.querySelectorAll('button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); }); root.querySelector('#pp-routet').textContent = `${routeName(paper, pick.route)} · ${totalOf(pick)} marks`; };
+    root.querySelector('#pp-start').onclick = () => { S.draft = { phase: 'exam', started: Date.now(), elapsed: 0, ans: {}, ticks: {}, running: true, route: pick.route || null }; persist(); exam(u, paper, mount); };
+    root.querySelectorAll('[data-pr]').forEach(b => b.onclick = () => printPaper(u, pick, b.dataset.pr === '1'));
     root.querySelectorAll('[data-att]').forEach(b => b.onclick = () => results(u, paper, mount, at.find(x => x.id === b.dataset.att)));
   }
 
   function exam(u, paper, mount) {
-    const S = store(paper.id), d = S.draft, limit = (+paper.minutes || 0) * 60;
+    const S = store(paper.id), d = S.draft; paper = eff(paper, d.route); const limit = (+paper.minutes || 0) * 60;
     let since = d.running ? performance.now() : 0; // resumes running only when started this visit
     const elapsed = () => d.elapsed + (since ? (performance.now() - since) / 1000 : 0);
     const root = put(mount, `${head(u, paper, 'exam mode')}
@@ -306,6 +321,7 @@ const PAPERS = (() => {
 
   function mark(u, paper, mount, editAttempt) {
     const S = store(paper.id), d = editAttempt ? { phase: 'mark', elapsed: editAttempt.secs || 0, ans: editAttempt.ans || {}, ticks: JSON.parse(JSON.stringify(editAttempt.ticks || {})) } : S.draft;
+    paper = eff(paper, d.route || (editAttempt && editAttempt.route));
     const total = totalOf(paper);
     const root = put(mount, `${head(u, paper, 'mark your answers')}
       <div class="box notice">Tick each mark-scheme line your answer earns. M = method, A = accuracy (needs the method), B = independent mark. A part can't score more than its marks.</div>
@@ -331,7 +347,7 @@ const PAPERS = (() => {
       const got = {}; let s = 0; for (const k in parts) { got[k] = partGot(parts[k].p, d.ticks[k]); s += got[k]; }
       let a;
       if (editAttempt) { a = editAttempt; Object.assign(a, { score: s, out: total, parts: got, ticks: d.ticks }); }
-      else { a = { id: id8(), at: Date.now(), secs: Math.round(d.elapsed || 0), score: s, out: total, parts: got, ticks: d.ticks, ans: d.ans }; (S.attempts ||= []).push(a); delete S.draft; }
+      else { a = { id: id8(), at: Date.now(), secs: Math.round(d.elapsed || 0), score: s, out: total, parts: got, ticks: d.ticks, ans: d.ans, route: paper.route || null }; (S.attempts ||= []).push(a); delete S.draft; }
       persist(); results(u, paper, mount, a);
     };
   }
@@ -343,6 +359,7 @@ const PAPERS = (() => {
   }
 
   function results(u, paper, mount, a) {
+    paper = eff(paper, a.route);
     const by = new Map(); const rows = [];
     paper.questions.forEach(q => { let g = 0, o = 0; (q.parts || []).forEach((p, j) => { const k = partKey(q, p, j), got = (a.parts || {})[k] || 0; g += got; o += +p.marks || 0; qPoints(u, q, p).forEach(pt => { const t = by.get(pt.id) || { pt, g: 0, o: 0 }; t.g += got; t.o += +p.marks || 0; by.set(pt.id, t); }); }); rows.push({ q, g, o }); });
     const topics = [...by.values()].sort((x, y) => x.g / x.o - y.g / y.o), P = pct(a.score, a.out);
@@ -357,7 +374,7 @@ const PAPERS = (() => {
       </div>
       <p><a href="${u.base}/bcs/${encodeURIComponent(paper.id)}" id="pp-tointro">← This paper</a> · <a href="${u.base}">All past papers</a></p></div>`);
     root.querySelector('#pp-remark').onclick = () => mark(u, paper, mount, a);
-    root.querySelector('#pp-retake').onclick = () => { store(paper.id).draft = { phase: 'exam', started: Date.now(), elapsed: 0, ans: {}, ticks: {}, running: true }; persist(); exam(u, paper, mount); };
+    root.querySelector('#pp-retake').onclick = () => { store(paper.id).draft = { phase: 'exam', started: Date.now(), elapsed: 0, ans: {}, ticks: {}, running: true, route: paper.route || null }; persist(); exam(u, paper, mount); };
     root.querySelector('#pp-tointro').onclick = e => { e.preventDefault(); intro(u, paper, mount); };
     root.querySelectorAll('[data-wq]').forEach(b => b.onclick = () => {
       const q = paper.questions.find(x => String(x.n) === b.dataset.wq); if (!q || typeof WALK === 'undefined') return;

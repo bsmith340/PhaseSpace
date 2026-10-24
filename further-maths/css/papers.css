@@ -227,3 +227,4 @@ body.walk-open { overflow: hidden; }
 @media print { .pp-psec { font: 700 14pt var(--sans, sans-serif); margin: 10pt 0 6pt; border-bottom: 1px solid #000; } }
 .pp-bands { list-style: disc; padding-left: 1.2em; font-size: .92rem; } .pp-bands li { margin: 4px 0; }
 .pp-bandsel { margin-top: 8px; } .pp-bandsel select { font: inherit; color: var(--text); background: var(--ctl); border: 0; border-radius: 10px; padding: 8px 10px; width: 5em; }
+.pp-choose { margin: 0 0 12px; } .pp-choose .seg { margin: 6px 0; }
