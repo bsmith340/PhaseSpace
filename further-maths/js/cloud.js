@@ -62,14 +62,14 @@ const CLOUD = (() => {
     applying = true;
     try { applyPayload(pl, mode); } finally { applying = false; }
     return before !== JSON.stringify(DB) + JSON.stringify(PHYS.exportData());
-  }
+  } // callers must await ensurePhysics() first — see onSignIn()
   function rerender() {
     // don't throw someone out of a question they are answering
     if (typeof route === 'function' && !/^#\/([^/]+\/)?(drill|sprint|calc|lab|sim|papers|physics\/practice|account|admin)/.test(location.hash)) { try { route(); } catch { } }
   }
 
   async function write(c, base) {
-    const data = progressPayload(), uid = user().id;
+    const data = await progressPayload(), uid = user().id;
     if (!base) {
       const r = await c.from('progress').insert({ user_id: uid, data, version: 1 });
       if (r.error) { if (r.error.code === '23505') return null; throw r.error; } // another device created it first
@@ -103,6 +103,7 @@ const CLOUD = (() => {
   }
 
   async function onSignIn() {
+    await ensurePhysics(); // absorb()/blank() below read and write physics progress
     const c = await acct().client(), uid = user().id; set('syncing');
     try {
       const row = await pull(c), other = meta.uid && meta.uid !== uid;
@@ -133,7 +134,7 @@ const CLOUD = (() => {
 
   async function syncNow() { if (!ready()) return; dirty = true; await onSignIn(); }
 
-  function blank() { applying = true; try { DB = {}; normDB(); save(); PHYS.resetAll(); } catch { } finally { applying = false; } }
+  function blank() { applying = true; try { DB = {}; normDB(); save(); if (typeof PHYS !== 'undefined') PHYS.resetAll(); } catch { } finally { applying = false; } } // caller awaits ensurePhysics() first — see onSignIn()
   function wipeLocal() { blank(); forget(); } // "delete account → also erase this browser"
   function forget() { clearTimeout(timer); meta = {}; saveMeta(); dirty = false; } // account deleted: local progress becomes plain local progress
 

@@ -90,6 +90,10 @@ a.card:active, .stat.wide:active, .tab:active, .ctoc a:active, .olink:active, .f
 .opt:active, .ck:active, .tabbar a:active, .gx-zoom button:active, .cd-x:active { transform: scale(.96); transition: transform .1s ease-out; }
 html.theming, html.theming *, html.theming *::before { transition: background-color .4s var(--ease), color .4s var(--ease), border-color .4s, box-shadow .4s, fill .4s !important; }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-bundle { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 72px 0; }
+.loading-bundle .spinner { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--hair); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .loading-bundle .spinner { animation-duration: 1.6s; } }
 
 /* ============ 3. Global bar (frosted glass) ============ */
 .top { position: sticky; top: 0; z-index: 40; height: var(--top-h); background: var(--glass); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid transparent; transition: border-color .2s; }
@@ -685,8 +689,10 @@ body[data-route="calc"] .calc-fab, body[data-route="calc"] .calc-drawer, body[da
   .tabbar a.on, body.calc-open .tabbar a.tcalc { color: var(--accent); }
   body.calc-open .tabbar a.on:not(.tcalc) { color: var(--muted); }
   .tabbar .ico { width: 25px; height: 25px; }
-  main { padding-bottom: 100px; }
-  .foot { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  /* The floating Ask-tutor button sits fixed at 68px + its own 46px height above the tabbar (see .chat-fab in
+     chat.css) — content's bottom padding has to clear that 114px footprint, not just the tabbar underneath it. */
+  main { padding-bottom: 132px; }
+  .foot { padding-bottom: calc(128px + env(safe-area-inset-bottom)); }
   .calc-fab { display: none; }
   /* a modal sheet: dims what is behind it, slides up from the bottom edge and is dismissed back down it */
   .calc-scrim { display: block; position: fixed; inset: 0; z-index: 49; background: rgba(0, 0, 0, .32); opacity: 0; visibility: hidden; touch-action: none; }
@@ -726,7 +732,7 @@ body[data-route="calc"] .calc-fab, body[data-route="calc"] .calc-drawer, body[da
   .gx-zoom { right: auto; left: 12px; }
 }
 @media (max-width: 600px) {
-  main { padding: 20px 16px 96px; }
+  main { padding: 20px 16px 132px; } /* keep clear of the floating Ask button — see the 700px breakpoint above */
   .card { padding: 18px; }
   .book { padding: 22px 18px; font-size: 1.02rem; overflow-x: auto; }
   .topics { grid-template-columns: 1fr; }
