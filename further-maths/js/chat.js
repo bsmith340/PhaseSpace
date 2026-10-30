@@ -52,8 +52,11 @@ window.CHAT = (() => {
     ctx.pageText = pageText();
     return ctx;
   }
-  // visible text of the content root (main#app), with rendered KaTeX swapped back to its TeX source
+  // visible text of the content root (main#app), with rendered KaTeX swapped back to its TeX source.
+  // Never on the admin reports page: it shows other students' report messages and reply emails, which must
+  // not be sent to the (third-party) tutor API just because an admin happened to have the chat widget open.
   function pageText() {
+    if (document.body.dataset.route === 'admin') return '';
     const root = document.querySelector('main#app') || document.querySelector('main') || document.getElementById('app');
     if (!root) return '';
     const c = root.cloneNode(true);
