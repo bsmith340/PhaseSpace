@@ -67,6 +67,8 @@ body { background: var(--bg); color: var(--text); font: 400 1.0625rem/1.5 var(--
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: .18em; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; border-radius: 6px; }
+.skip-link { position: absolute; top: -40px; left: 8px; z-index: 100; padding: 10px 16px; border-radius: 10px; background: var(--accent-fill); color: var(--on-accent); font: 600 .9rem var(--sans); transition: top .15s var(--ease); }
+.skip-link:focus-visible { top: 8px; outline-offset: 3px; }
 code { font: .86em var(--mono); background: var(--ctl); padding: 1px 6px; border-radius: 6px; letter-spacing: 0; }
 h1, h2, h3, h4 { line-height: 1.12; margin: 0 0 .4em; letter-spacing: -.02em; font-weight: 700; }
 h1 { font-size: clamp(2rem, 4.2vw, 3rem); letter-spacing: -.028em; }
