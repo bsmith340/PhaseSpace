@@ -12,7 +12,9 @@ const ABOUT = {
 };
 
 function viewAbout() {
-  const ps = PHYS.stats(), nUnits = COURSE_ORDER.length + PHYS.UNITS.length, nPts = COURSE_ORDER.reduce((s, id) => s + COURSES[id].points.length, 0);
+  const physReady = typeof PHYS !== 'undefined';
+  if (!physReady) ensurePhysics().then(() => { if (document.body.dataset.route === 'about') viewAbout(); });
+  const ps = physReady ? PHYS.stats() : { labs: 0, sections: 0 }, nUnits = COURSE_ORDER.length + (physReady ? PHYS.UNITS.length : 4), nPts = COURSE_ORDER.reduce((s, id) => s + COURSES[id].points.length, 0);
   const feat = ([i, c, t, d]) => `<div class="card tile" style="--tc:${c}"><span class="ti">${ico(i)}</span><b>${t}</b><small>${d}</small></div>`;
   mount(`<nav class="crumbs"><a href="#/">Courses</a> / About</nav>
   <section class="hero about-hero"><p class="kicker">About BCS Academy</p><h1>Built by a student who <span class="grad">needed it</span>.</h1>

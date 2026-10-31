@@ -2,3 +2,7 @@ dist/
 *.zip
 further-maths/learn/
 further-maths/sitemap.xml
+node_modules/
+test-results/
+playwright-report/
+tests/routes.generated.json

@@ -15,8 +15,10 @@ const THEME_KEY = 'bcsfm-v1-theme';
 const getTheme = () => { try { return localStorage.getItem(THEME_KEY) || ''; } catch { return ''; } };
 
 /* ---------- progress payloads ---------- */
-const hasProgress = () => Object.keys(DB.stats).length + Object.keys(DB.read).length + DB.bank.length + DB.notes.length > 0 || PHYS.hasData();
-function progressPayload() {
+const hasProgress = () => Object.keys(DB.stats).length + Object.keys(DB.read).length + DB.bank.length + DB.notes.length > 0 || (typeof PHYS !== 'undefined' && PHYS.hasData());
+// Exporting/sharing progress must not silently drop physics progress just because physics.js hasn't loaded yet.
+async function progressPayload() {
+  await ensurePhysics();
   return { app: 'BCS Academy', v: 2, saved: new Date().toISOString(), db: DB, calc: typeof CALC_STATE !== 'undefined' ? CALC_STATE : {}, prefs: { ...PREFS, lastBackup: undefined }, theme: getTheme(), physics: PHYS.exportData() };
 }
 function readPayload(obj) {
@@ -41,7 +43,7 @@ function mergeDB(cur, inc) {
 }
 function applyPayload(pl, mode) {
   if (pl.db) { DB = mode === 'merge' ? mergeDB(DB, pl.db) : pl.db; normDB(); save(); }
-  if (pl.physics) PHYS.importData(pl.physics, mode === 'merge');
+  if (pl.physics && typeof PHYS !== 'undefined') PHYS.importData(pl.physics, mode === 'merge');
   if (!pl.db) return; // a physics-only file leaves the maths progress and preferences alone
   if (mode !== 'merge') {
     if (pl.calc && typeof CALC_STATE !== 'undefined') { Object.assign(CALC_STATE, pl.calc); saveCalc(); }
@@ -51,8 +53,8 @@ function applyPayload(pl, mode) {
 }
 const markBackup = () => { PREFS.lastBackup = Date.now(); savePrefs(); };
 
-function downloadProgress() {
-  const blob = new Blob([JSON.stringify(progressPayload(), null, 1)], { type: 'application/json' });
+async function downloadProgress() {
+  const blob = new Blob([JSON.stringify(await progressPayload(), null, 1)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bcs-academy-progress-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1500); markBackup();
 }
@@ -60,7 +62,7 @@ function downloadProgress() {
 const b64u = bytes => { let s = ''; bytes.forEach(b => (s += String.fromCharCode(b))); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
 const unb64u = str => { const s = atob(str.replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, c => c.charCodeAt(0)); };
 async function makeCode() {
-  const bytes = new TextEncoder().encode(JSON.stringify(progressPayload()));
+  const bytes = new TextEncoder().encode(JSON.stringify(await progressPayload()));
   if (typeof CompressionStream !== 'undefined') { const gz = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()); return 'BCSA1.' + b64u(gz); }
   return 'BCSA0.' + b64u(bytes);
 }
@@ -122,7 +124,7 @@ function viewSettings() {
       <p class="muted small">Desmos issues API keys to developers on request. Without one, the BCS Academy grapher is used and each preset has an "Open in Desmos" button that copies the expressions.</p></div>
   </section>
 
-  <section class="card setsec"><h2>Physics</h2><div id="physset"></div></section>
+  <section class="card setsec"><h2>Physics</h2><div id="physset">${typeof PHYS === 'undefined' ? loadingHTML() : ''}</div></section>
 
   <section class="card setsec danger"><h2>Reset</h2>
     <div class="row">${COURSE_ORDER.map(id => `<button class="btn small" data-reset="${id}">Reset ${COURSES[id].short} progress</button>`).join('')}<button class="btn small" id="resetphys">Reset Physics progress</button><button class="btn small bad" id="resetall">Erase everything on this device</button></div>
@@ -135,8 +137,8 @@ function viewSettings() {
   $('#mkcode').onclick = async () => { const code = await makeCode(), ta = $('#codeout'); ta.hidden = false; ta.value = code; ta.select(); try { await navigator.clipboard.writeText(code); msg(`Code copied (${code.length} characters).`); } catch { document.execCommand && document.execCommand('copy'); msg('Code shown above — copy it.'); } markBackup(); };
   const mode = () => app().querySelector('input[name=mode]:checked').value;
   const done = (pl, m) => { const when = pl.saved ? ` — copy saved ${new Date(pl.saved).toLocaleString()}` : ''; viewSettings(); $('#pmsg').textContent = `✓ Progress loaded (${m === 'merge' ? 'merged' : 'replaced'})${when}.`; };
-  $('#ul').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const pl = readPayload(JSON.parse(t)), m = mode(); if (m === 'replace' && !confirm('Replace all progress on this device with this file?')) return; applyPayload(pl, m); done(pl, m); } catch { msg('✘ That file is not a BCS Academy progress file.'); } }); };
-  $('#ldcode').onclick = async () => { try { const pl = await readCode($('#codein').value), m = mode(); if (m === 'replace' && !confirm('Replace all progress on this device with this code?')) return; applyPayload(pl, m); done(pl, m); } catch (e) { msg('✘ ' + e.message); } };
+  $('#ul').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(async t => { try { const pl = readPayload(JSON.parse(t)), m = mode(); if (m === 'replace' && !confirm('Replace all progress on this device with this file?')) return; await ensurePhysics(); applyPayload(pl, m); done(pl, m); } catch { msg('✘ That file is not a BCS Academy progress file.'); } }); };
+  $('#ldcode').onclick = async () => { try { const pl = await readCode($('#codein').value), m = mode(); if (m === 'replace' && !confirm('Replace all progress on this device with this code?')) return; await ensurePhysics(); applyPayload(pl, m); done(pl, m); } catch (e) { msg('✘ ' + e.message); } };
   $('#remind').onchange = e => { PREFS.remind = +e.target.value; savePrefs(); };
   $('#persist').onclick = async () => { const ok = navigator.storage && navigator.storage.persist ? await navigator.storage.persist() : false; $('#persistmsg').textContent = ok ? '✓ The browser will keep BCS Academy data unless you clear it yourself.' : 'The browser declined (common on some phones) — keep downloading copies.'; };
   app().querySelectorAll('input[name=theme]').forEach(r => r.onchange = () => { try { r.value ? localStorage.setItem(THEME_KEY, r.value) : localStorage.removeItem(THEME_KEY); } catch { } applyTheme(r.value); });
@@ -150,7 +152,8 @@ function viewSettings() {
   $('#clrhist').onclick = () => { CALC_STATE.hist = []; saveCalc(); viewSettings(); };
   $('#dsave').onclick = () => { try { const k = $('#dkey').value.trim(); k ? localStorage.setItem(DESMOS_KEY_STORE, k) : localStorage.removeItem(DESMOS_KEY_STORE); } catch { } $('#dsave').textContent = 'Saved ✓'; };
   app().querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { const c = COURSES[b.dataset.reset]; if (!confirm(`Reset drill progress and reading for ${c.short}? (Past-paper questions and quotes are kept.)`)) return; [...c.points, ...c.archiveTopic.points].forEach(p => { delete DB.stats[p.id]; delete DB.read[p.id]; delete DB.conf[p.id]; }); DB.sprints = DB.sprints.filter(s => (s.c || 'fm') !== c.id); save(); viewSettings(); });
-  $('#resetphys').onclick = () => { if (!confirm('Reset Physics scores, mock-test history and the spec checklist?')) return; PHYS.resetAll(); viewSettings(); };
-  $('#resetall').onclick = () => { if (prompt('This erases ALL progress, questions and quotes on this device. Type ERASE to confirm.') !== 'ERASE') return; DB = {}; normDB(); save(); PHYS.resetAll(); viewSettings(); };
-  PHYS.settingsInto($('#physset'));
+  $('#resetphys').onclick = async () => { if (!confirm('Reset Physics scores, mock-test history and the spec checklist?')) return; await ensurePhysics(); PHYS.resetAll(); viewSettings(); };
+  $('#resetall').onclick = async () => { if (prompt('This erases ALL progress, questions and quotes on this device. Type ERASE to confirm.') !== 'ERASE') return; await ensurePhysics(); DB = {}; normDB(); save(); PHYS.resetAll(); viewSettings(); };
+  if (typeof PHYS === 'undefined') ensurePhysics().then(() => { if (document.body.dataset.route === 'settings') PHYS.settingsInto($('#physset')); });
+  else PHYS.settingsInto($('#physset'));
 }

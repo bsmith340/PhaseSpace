@@ -11,6 +11,9 @@ body.chat-on .phys.fab, body.chat-on .phys.chat-pop { display: none !important; 
 .chat-fab[aria-expanded="true"] { background: var(--text); color: var(--bg); }
 body.calc-open .chat-fab { opacity: 0; pointer-events: none; }
 body[data-route="calc"] .chat-fab { bottom: calc(20px + env(safe-area-inset-bottom)); }
+/* The admin reports page shows other students' report text and reply emails — keep the tutor off it
+   (pageText() in chat.js also refuses to read this page, in case the widget is reached another way). */
+body[data-route="admin"] .chat-fab { display: none; }
 
 .chat-scrim { position: fixed; inset: 0; z-index: 46; background: rgba(0, 0, 0, .18); opacity: 0; transition: opacity .25s var(--ease); }
 .chat-scrim.open { opacity: 1; }

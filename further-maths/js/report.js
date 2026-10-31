@@ -63,9 +63,10 @@ const REPORT = (() => {
   };
 
   /* ---------- the sheet ---------- */
-  let lastFocus = null;
+  let lastFocus = null, releaseBack = null;
   function close() {
     const el = document.getElementById('rep-sheet'); if (!el) return;
+    if (releaseBack) { releaseBack(); releaseBack = null; }
     el.classList.remove('show'); document.removeEventListener('keydown', onKey, true);
     setTimeout(() => el.remove(), 220);
     if (lastFocus && lastFocus.focus) lastFocus.focus();
@@ -104,6 +105,7 @@ const REPORT = (() => {
     document.body.append(wrap);
     requestAnimationFrame(() => wrap.classList.add('show'));
     document.addEventListener('keydown', onKey, true);
+    releaseBack = trapBack(() => close());
     wrap.addEventListener('click', e => { if (e.target === wrap) close(); });
     wrap.querySelector('.rep-x').onclick = close; wrap.querySelector('#rep-cancel').onclick = close;
     const ta = wrap.querySelector('#rep-msg'), cnt = wrap.querySelector('#rep-count'), out = wrap.querySelector('#rep-out');

@@ -101,12 +101,12 @@ Alternative: **PWABuilder** (pwabuilder.com > enter the URL > Package for stores
 
 ---
 
-## 4. Store listing assets (made in `further-maths/assets/`)
+## 4. Store listing assets
 
 | Asset | Play requirement | Our file |
 |---|---|---|
-| App icon | 512 x 512, 32-bit PNG, up to 1 MB, full-bleed square (Play rounds the corners itself) | `assets/play-icon-512.png` (1024 master: `play-icon-1024.png`) |
-| Feature graphic | 1024 x 500, JPEG or 24-bit PNG (no transparency) | `assets/play-feature.png` |
+| App icon | 512 x 512, 32-bit PNG, up to 1 MB, full-bleed square (Play rounds the corners itself) | `docs/play-store/assets/play-icon-512.png` (1024 master: `play-icon-1024.png`) — kept out of `further-maths/` so it isn't shipped to every visitor; the feature graphic below doubles as the site's social-share image, which is why it stays in the deployed `assets/` folder |
+| Feature graphic | 1024 x 500, JPEG or 24-bit PNG (no transparency) | `further-maths/assets/play-feature.png` |
 | Phone screenshots | 2 to 8; PNG or JPEG; each side 320 to 3840 px; 16:9 or 9:16. Use at least 4 at 1080 x 1920 or more to be eligible for promotion | **To make**: 1080 x 1920 portrait of Home, a textbook chapter with maths, a simulation, a practice paper/walkthrough, progress, AI tutor |
 | 7-inch tablet screenshots | Optional but recommended, same file rules (e.g. 1200 x 1920) | **To make** |
 | 10-inch tablet screenshots | Optional but recommended (e.g. 1600 x 2560 or 2560 x 1600) | **To make** |

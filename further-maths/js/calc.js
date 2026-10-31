@@ -118,7 +118,7 @@ function setupCalcDrawer() {
   document.body.append(scrim, d, fab);
   const c = mountCalc(d.querySelector('.cd-body'), { compact: true });
   const sheet = () => matchMedia('(max-width: 700px)').matches;
-  let open = false, H = 480, drag = null;
+  let open = false, H = 480, drag = null, releaseBack = null;
   // p is openness: 0 hidden … 1 open (a sheet dragged past open goes slightly above 1, rubber-banded)
   const paint = p => {
     const vis = p > 0.002, q = Math.min(1, Math.max(0, p));
@@ -131,6 +131,8 @@ function setupCalcDrawer() {
   const setOpen = v => { open = v; d.classList.toggle('open', v); fab.setAttribute('aria-expanded', String(v)); document.body.classList.toggle('calc-open', v); };
   const toggle = want => {
     want = want ?? !open; if (want === open && !drag) return;
+    if (want && !open) releaseBack = trapBack(() => toggle(false));
+    else if (!want && releaseBack) { releaseBack(); releaseBack = null; }
     setOpen(want); H = d.offsetHeight || H;
     // re-targeting keeps the current position and velocity, so a second press mid-flight simply reverses it
     S.to(want ? 1 : 0, { damping: 1, response: sheet() ? 0.4 : 0.32 });

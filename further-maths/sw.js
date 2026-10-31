@@ -7,7 +7,7 @@
  * - Updates: a new worker waits until the page posts {type:'SKIP_WAITING'}, so the
  *   page can show "Update available" and reload when the student chooses.
  * Bump VERSION whenever you deploy to force a fresh shell download. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = 'bcs-shell-' + VERSION;
 const CDN = 'bcs-cdn-v1';
 const CORE = [
@@ -15,6 +15,15 @@ const CORE = [
   './assets/favicon.svg', './assets/logo.svg', './assets/logo-mono.svg',
   './assets/icon-32.png', './assets/icon-192.png', './assets/icon-512.png',
   './assets/icon-maskable-512.png', './assets/apple-touch-icon.png'
+];
+// app.js loads these on demand (see loadBundle() in js/app.js) instead of index.html referencing them directly,
+// so localRefs() below won't find them — list them explicitly or they'd silently drop out of the offline cache.
+const LAZY = [
+  './js/physics.js',
+  './js/bcsp.js', './js/bcsp-m1.js', './js/bcsp-m2.js', './js/bcsp-m3.js', './js/bcsp-m4.js',
+  './js/bcsp-f1.js', './js/bcsp-f2.js', './js/bcsp-fm.js', './js/bcsp-f4.js',
+  './js/bcsp-as1.js', './js/bcsp-as2.js', './js/bcsp-a21.js', './js/bcsp-a22.js',
+  './js/ccea-papers.js', './js/walkthrough.js', './js/papers.js',
 ];
 const CDN_HOSTS = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
@@ -43,7 +52,7 @@ self.addEventListener('install', (event) => {
         await cache.put('./', res);
       }
     } catch (e) { /* offline install: CORE only */ }
-    const list = [...new Set([...CORE, ...refs])].filter((u) => u !== './' && u !== './index.html');
+    const list = [...new Set([...CORE, ...LAZY, ...refs])].filter((u) => u !== './' && u !== './index.html');
     // One missing file must not abort the whole install.
     await Promise.allSettled(list.map(async (u) => {
       const res = await fetch(u, { cache: 'reload' });

@@ -18,6 +18,52 @@ const tidy = s => s.replace(/([+\-]) 1(?=[a-zA-Z\\])/g, '$1 ').replace(/(^|[=(\s
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+/* ---------- lazy bundles ----------
+ * physics.js (PHYS) and the past-papers bundle (PAPERS/BCSP/WALK) are big and only
+ * needed on some routes, so they aren't in index.html's <script> list — they're
+ * fetched on demand here and cached by the service worker like everything else. */
+const _bundles = {};
+function loadBundle(name, srcs) {
+  return _bundles[name] || (_bundles[name] = new Promise((resolve, reject) => {
+    let left = srcs.length;
+    srcs.forEach(src => {
+      const s = document.createElement('script');
+      s.src = src; s.async = false; // keep relative load order (bcsp.js before bcsp-m1.js, etc.)
+      s.onload = () => { if (--left === 0) resolve(); };
+      s.onerror = () => reject(new Error('Failed to load ' + src));
+      document.head.appendChild(s);
+    });
+  }));
+}
+const ensurePhysics = () => loadBundle('physics', ['js/physics.js']);
+const ensurePapers = () => loadBundle('papers', [
+  'js/bcsp.js', 'js/bcsp-m1.js', 'js/bcsp-m2.js', 'js/bcsp-m3.js', 'js/bcsp-m4.js',
+  'js/bcsp-f1.js', 'js/bcsp-f2.js', 'js/bcsp-fm.js', 'js/bcsp-f4.js',
+  'js/bcsp-as1.js', 'js/bcsp-as2.js', 'js/bcsp-a21.js', 'js/bcsp-a22.js',
+  'js/ccea-papers.js', 'js/walkthrough.js', 'js/papers.js',
+]);
+const loadingHTML = () => '<section class="loading-bundle"><div class="spinner" aria-hidden="true"></div><p class="muted center">Loading…</p></section>';
+
+/* ---------- back-gesture-aware overlays ----------
+ * Android's back gesture/button fires a 'popstate' with nothing to consume, so it falls through to the hash
+ * router instead of closing whatever sheet is open. Any sheet/drawer (chat, report, calculator) calls trapBack()
+ * when it opens and the returned function when it closes, so one back press closes it instead of navigating. */
+function trapBack(onBack) {
+  history.pushState({ bcsOverlay: true }, '');
+  let released = false;
+  const onPop = () => { released = true; window.removeEventListener('popstate', onPop); onBack(); };
+  window.addEventListener('popstate', onPop);
+  return () => {
+    if (released) return; released = true;
+    window.removeEventListener('popstate', onPop);
+    if (history.state && history.state.bcsOverlay) history.back();
+  };
+}
+// Prefetch both in the background once the page is idle, so the first click into
+// Physics or Past papers is usually instant rather than waiting on a fetch.
+const idle = window.requestIdleCallback || (fn => setTimeout(fn, 1500));
+idle(() => { ensurePhysics().catch(() => {}); ensurePapers().catch(() => {}); });
+
 /* ---------- storage ---------- */
 let DB;
 try { DB = JSON.parse(localStorage.getItem(STORE)) || JSON.parse(localStorage.getItem(OLD_STORE)) || {}; } catch { DB = {}; }
@@ -138,7 +184,10 @@ function physUnitCard(u) {
 function subjectCard(k) {
   const Q = QUALS[k];
   let units, m, line;
-  if (k === 'physics') {
+  if (k === 'physics' && typeof PHYS === 'undefined') {
+    units = []; m = 0; line = 'Loading…';
+    ensurePhysics().then(() => { if (!location.hash || location.hash === '#' || location.hash === '#/') viewChooser(); });
+  } else if (k === 'physics') {
     const t = PHYS.stats(); units = PHYS.UNITS.map(u => [`#/physics/${u.id}`, u.no]); m = t.outs ? t.ticked / t.outs : 0;
     line = `${t.sections} sections · ${t.labs} live labs · ${t.ticked}/${t.outs} outcomes ticked`;
   } else {
@@ -150,7 +199,10 @@ function subjectCard(k) {
     <div class="cmeter">${bar(m)}<span>${Math.round(m * 100)}%</span></div><small>${line}</small></article>`;
 }
 function continueLink() {
-  if (DB.lastCourse === 'physics') { const u = PHYS.lastUnit(); return [`#/physics/${u.id}`, `Continue Physics ${u.no}`]; }
+  if (DB.lastCourse === 'physics') {
+    if (typeof PHYS === 'undefined') return ['#/physics', 'Continue Physics'];
+    const u = PHYS.lastUnit(); return [`#/physics/${u.id}`, `Continue Physics ${u.no}`];
+  }
   const last = COURSES[DB.lastCourse];
   return last ? [`#/${last.id}`, `Continue ${last.short}`] : ['#/m1', 'Start with Maths AS 1'];
 }
@@ -268,7 +320,9 @@ function viewPoint(id, tab = 'learn') {
   const p = PT[id]; if (!p) return viewHome();
   if (p.course !== C.id) { C = courseOf(p); renderNav(true); }
   const t = TP[p.topic], list = p.status === 'beyond' ? C.archiveTopic.points : C.points, idx = list.indexOf(p), prev = list[idx - 1], next = list[idx + 1];
-  const nPP = PAPERS.countForPoint(C.id, id) + DB.bank.filter(b => b.pid === id).length + DB.notes.filter(b => b.pid === id).length;
+  const papersReady = typeof PAPERS !== 'undefined';
+  if (!papersReady) ensurePapers().then(route); // re-render this point (badge count + walkthrough) once loaded, if still here
+  const nPP = (papersReady ? PAPERS.countForPoint(C.id, id) : 0) + DB.bank.filter(b => b.pid === id).length + DB.notes.filter(b => b.pid === id).length;
   const hasDes = typeof GRAPH_PRESETS !== 'undefined' && GRAPH_PRESETS[p.id];
   if (tab === 'desmos') tab = 'graph';
   const tabs = [['learn', 'Textbook'], ['summary', 'Summary'], ...(p.sims.length ? [['sim', 'Simulate']] : []), ...(hasDes ? [['graph', 'Graph']] : []), ['drill', 'Drill'], ['papers', `Past papers${nPP ? ` (${nPP})` : ''}`]];
@@ -290,7 +344,7 @@ function viewPoint(id, tab = 'learn') {
     const toc = pane.querySelector('.ctoc'), hs = [...pane.querySelectorAll('.bookc h3')];
     if (hs.length > 2) toc.innerHTML = `<b>In this chapter:</b> ` + hs.map((h, i) => { h.id = 'sec' + i; return `<a href="javascript:void 0" data-sec="sec${i}">${esc(h.textContent)}</a>`; }).join('');
     toc.addEventListener('click', e => { const s = e.target.dataset.sec; if (s) document.getElementById(s).scrollIntoView({ behavior: 'smooth', block: 'start' }); });
-    renderMath(pane); WALK.enhance(pane);
+    renderMath(pane); if (typeof WALK !== 'undefined') WALK.enhance(pane);
     $('#markread').onclick = () => { if (isRead(p.id)) delete DB.read[p.id]; else DB.read[p.id] = Date.now(); save(); viewPoint(id, 'learn'); };
   } else if (tab === 'summary') {
     pane.innerHTML = `<article class="notes card">${p.notes}</article><p class="muted center">The one-page summary. For full explanations use the Textbook tab.</p>`;
@@ -300,7 +354,7 @@ function viewPoint(id, tab = 'learn') {
   } else if (tab === 'graph') {
     const box = document.createElement('div'); box.className = 'card'; pane.append(box); cleanup.push(mountGraphTab(box, GRAPH_PRESETS[p.id]));
   } else if (tab === 'papers') {
-    PAPERS.forPoint(pane, C.id, p.id);
+    if (typeof PAPERS === 'undefined') { pane.innerHTML = loadingHTML(); ensurePapers().then(route); } else PAPERS.forPoint(pane, C.id, p.id);
   } else {
     drillPanel(pane, { pool: [p.id] });
   }
@@ -340,11 +394,12 @@ function viewSims() {
   const used = {}; POINTS.filter(p => p.status !== 'beyond').forEach(p => p.sims.forEach(s => { const k = s.split(':')[0]; (used[k] ||= []).push(p); }));
   const groups = COURSE_ORDER.map(id => [id, Object.keys(SIMS).filter(k => (used[k] || []).some(p => p.course === id))]);
   const tile = k => { const S = SIMS[k]; return `<a class="card simtile" href="#/sim/${k}"><h3>${S.title}</h3><p>${S.desc}</p><small>${[...new Set((used[k] || []).map(p => `${COURSES[p.course].short} ${p.code}`))].join(' · ')}</small></a>`; };
+  if (typeof PHYS === 'undefined') ensurePhysics().then(() => { if (document.body.dataset.route === 'sims') viewSims(); });
   mount(`<nav class="crumbs"><a href="#/">Courses</a> / Simulations</nav>
   <header class="phead slim"><div><h1>Simulations</h1><p>Interactive models, each linked to the spec points it supports. For free-form exploration use the <a href="#/lab">Lab</a> (including Desmos).</p></div></header>
   ${groups.map(([id, ks]) => ks.length ? `<h2 class="sech">${COURSES[id].name} · ${COURSES[id].unit}</h2><section class="grid sims">${ks.map(tile).join('')}</section>` : '').join('')}
   <h2 class="sech">Physics</h2><p class="muted">Every physics section is built around its own live labs. Open a unit to see them.</p>
-  <section class="grid sims">${PHYS.UNITS.map(u => { const t = PHYS.stats().by[u.id]; return `<a class="card simtile" href="#/physics/${u.id}"><h3>Physics ${u.no}</h3><p>${u.title}</p><small>${t.labs} live labs across ${t.sections} sections</small></a>`; }).join('')}</section>`);
+  <section class="grid sims">${typeof PHYS === 'undefined' ? loadingHTML() : PHYS.UNITS.map(u => { const t = PHYS.stats().by[u.id]; return `<a class="card simtile" href="#/physics/${u.id}"><h3>Physics ${u.no}</h3><p>${u.title}</p><small>${t.labs} live labs across ${t.sections} sections</small></a>`; }).join('')}</section>`);
 }
 function viewSim(k) {
   const S = SIMS[k]; if (!S) return viewSims();
@@ -468,7 +523,7 @@ function viewPapers() {
   $('#addp').onclick = () => { papers.push({ id: uid(), name: 'New paper', score: '', out: '', date: '', notes: '' }); save(); viewPapers(); };
   bindCards(root, viewPapers); bindForms(root, viewPapers);
   $('#exp').onclick = downloadProgress;
-  $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const pl = readPayload(JSON.parse(t)); if (confirm('Merge this progress file with the progress on this device? (Cancel to stop. To replace instead, use Settings.)')) { applyPayload(pl, 'merge'); viewPapers(); } } catch { alert('That file is not a BCS Academy progress file.'); } }); };
+  $('#imp').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(async t => { try { const pl = readPayload(JSON.parse(t)); if (confirm('Merge this progress file with the progress on this device? (Cancel to stop. To replace instead, use Settings.)')) { await ensurePhysics(); applyPayload(pl, 'merge'); viewPapers(); } } catch { alert('That file is not a BCS Academy progress file.'); } }); };
 }
 
 /* ---------- PROGRESS ---------- */
@@ -491,8 +546,13 @@ function route() {
   document.body.dataset.route = r || 'home';
   const subj = COURSES[r] ? COURSES[r].qual : QUALS[r] ? r : '';
   if (subj) document.documentElement.dataset.subject = subj; else delete document.documentElement.dataset.subject;
-  if (r === 'physics' && parts.length > 1) { unmount(); DB.lastCourse = 'physics'; save(); const sub = parts.slice(1); renderPhysNav(sub); if (sub[1] === 'papers' && PHYS.UNITS.some(x => x.id === sub[0])) { PHYS.leave(); highlight('physics/' + sub[0] + '/papers'); return PAPERS.route(sub[0], sub.slice(2), mount); } return PHYS.route(sub); }
-  PHYS.leave();
+  if (r === 'physics' && typeof PHYS === 'undefined') { unmount(); mount(loadingHTML()); ensurePhysics().then(route); return; }
+  if (r === 'physics' && parts.length > 1) {
+    const sub = parts.slice(1);
+    if (sub[1] === 'papers' && PHYS.UNITS.some(x => x.id === sub[0]) && typeof PAPERS === 'undefined') { unmount(); mount(loadingHTML()); ensurePapers().then(route); return; }
+    unmount(); DB.lastCourse = 'physics'; save(); renderPhysNav(sub); if (sub[1] === 'papers' && PHYS.UNITS.some(x => x.id === sub[0])) { PHYS.leave(); highlight('physics/' + sub[0] + '/papers'); return PAPERS.route(sub[0], sub.slice(2), mount); } return PHYS.route(sub);
+  }
+  if (typeof PHYS !== 'undefined') PHYS.leave();
   if (COURSES[r]) {
     C = COURSES[r]; DB.lastCourse = r; save(); renderNav(true);
     const v = parts[1];
@@ -505,7 +565,7 @@ function route() {
     if (v === 'drill') return viewDrill(qs);
     if (v === 'sprint') return viewSprint();
     if (v === 'formulae') return viewFormulae();
-    if (v === 'papers') return PAPERS.route(r, parts.slice(2), mount);
+    if (v === 'papers') { if (typeof PAPERS === 'undefined') { mount(loadingHTML()); ensurePapers().then(route); return; } return PAPERS.route(r, parts.slice(2), mount); }
     if (v === 'progress') return viewProgress();
     if (v === 'archive') return viewArchive();
     return viewHome();
@@ -542,7 +602,7 @@ function toggleTheme() {
 }
 
 window.toggleCalc = setupCalcDrawer();
-function boot() { if (window.CHAT) CHAT.init(); if (!location.hash || location.hash === '#' || location.hash === '#/') { const s = PREFS.start === 'last' ? DB.lastCourse : PREFS.start; if (s && COURSES[s]) { location.replace('#/' + s); return; } if (s === 'physics') { location.replace('#/physics/' + PHYS.lastUnit().id); return; } } route(); }
+function boot() { if (window.CHAT) CHAT.init(); if (!location.hash || location.hash === '#' || location.hash === '#/') { const s = PREFS.start === 'last' ? DB.lastCourse : PREFS.start; if (s && COURSES[s]) { location.replace('#/' + s); return; } if (s === 'physics') { ensurePhysics().then(() => location.replace('#/physics/' + PHYS.lastUnit().id)); return; } } route(); }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 window.addEventListener('load', () => renderMath(app()));
 

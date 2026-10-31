@@ -1,0 +1,13 @@
+{
+  "name": "bcs-academy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pretest": "node tests/gen-routes.mjs",
+    "test": "playwright test",
+    "build-seo": "node tools/build-seo.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

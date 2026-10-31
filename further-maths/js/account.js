@@ -78,6 +78,12 @@ const ACCOUNT = (() => {
     if (!error) profile = data || null;
     return profile;
   }
+  // the signed-in user's current access token, for chat.js to send as a Bearer token so the tutor API can
+  // tell them apart from a guest (their own daily allowance, not the shared anonymous one)
+  async function session() {
+    if (!client) return '';
+    try { const { data } = await client.auth.getSession(); return (data && data.session && data.session.access_token) || ''; } catch { return ''; }
+  }
 
   /* ---------- errors ---------- */
   const isNetErr = e => !navigator.onLine || /fetch|network|load failed|offline|timed? ?out/i.test(String((e && (e.message || e.name)) || e));
@@ -383,7 +389,7 @@ const ACCOUNT = (() => {
   if (configured() && (hasSavedSession() || hasCallback())) init().catch(() => { });
 
   return {
-    configured, init, client: () => init(), route, navButton, refreshPills,
+    configured, init, client: () => init(), route, navButton, refreshPills, session,
     get user() { return user; }, get profile() { return profile; }, get lastEvent() { return lastEvent; },
     isAdmin: () => !!(profile && profile.role === 'admin'),
     onChange(fn) { subs.add(fn); return () => subs.delete(fn); },

@@ -59,6 +59,16 @@ export function loadData(siteDir) {
   const scripts = [...html.matchAll(/<script[^>]*\ssrc="(js\/[^"]+)"/g)].map(m => m[1]).filter(s => s !== 'js/app.js');
   if (!scripts.length) throw new Error('No local <script src="js/…"> tags found in index.html');
   if (!scripts.includes('js/config.js')) scripts.unshift('js/config.js'); // config is lead-owned; load it if present
+  // physics.js and the past-papers bundle are loaded on demand by the app (see loadBundle() in js/app.js), so
+  // index.html no longer references them directly — add them back here, the SEO build still needs their data.
+  const LAZY = [
+    'js/physics.js',
+    'js/bcsp.js', 'js/bcsp-m1.js', 'js/bcsp-m2.js', 'js/bcsp-m3.js', 'js/bcsp-m4.js',
+    'js/bcsp-f1.js', 'js/bcsp-f2.js', 'js/bcsp-fm.js', 'js/bcsp-f4.js',
+    'js/bcsp-as1.js', 'js/bcsp-as2.js', 'js/bcsp-a21.js', 'js/bcsp-a22.js',
+    'js/ccea-papers.js', 'js/walkthrough.js', 'js/papers.js',
+  ];
+  for (const s of LAZY) if (!scripts.includes(s)) scripts.push(s);
   const ctx = makeContext();
   // only these must load: everything else is UI (sims, labs, calculator) and may fail harmlessly under stubs
   const required = s => /^js\/(config|util|mathengine|content-|spec|book-|figs|physics)/.test(s);

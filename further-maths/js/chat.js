@@ -22,7 +22,7 @@ window.CHAT = (() => {
   const SIGNPOST = `<div class="chat-help" role="note"><p><b>You don't have to deal with this alone.</b> This is an AI study tool and can't help with this, but these people can, right now:</p><ul><li><b>Childline</b>: call <a href="tel:08001111">0800 1111</a> (free, 24/7) or <a href="https://www.childline.org.uk" target="_blank" rel="noopener">childline.org.uk</a></li><li><b>Samaritans</b>: call <a href="tel:116123">116 123</a> (free, 24/7)</li><li><b>NHS 111</b> for urgent health help, or <b>999</b> in an emergency</li><li>A trusted adult or a teacher at school</li></ul></div>`;
   const BREAK_MS = 45 * 60e3;
   let usage = null, breakShown = false;
-  let fab, scrim, sheet, list, input, sendBtn, chips, notice, sub, physLink, ready = false, busy = null, lastFocus = null;
+  let fab, scrim, sheet, list, input, sendBtn, chips, notice, sub, physLink, ready = false, busy = null, lastFocus = null, releaseBack = null;
   let hist = load();
 
   /* ---------- storage (per browser, capped) ---------- */
@@ -52,8 +52,11 @@ window.CHAT = (() => {
     ctx.pageText = pageText();
     return ctx;
   }
-  // visible text of the content root (main#app), with rendered KaTeX swapped back to its TeX source
+  // visible text of the content root (main#app), with rendered KaTeX swapped back to its TeX source.
+  // Never on the admin reports page: it shows other students' report messages and reply emails, which must
+  // not be sent to the (third-party) tutor API just because an admin happened to have the chat widget open.
   function pageText() {
+    if (document.body.dataset.route === 'admin') return '';
     const root = document.querySelector('main#app') || document.querySelector('main') || document.getElementById('app');
     if (!root) return '';
     const c = root.cloneNode(true);
@@ -198,12 +201,14 @@ window.CHAT = (() => {
     sheet.hidden = false; scrim.hidden = false;
     requestAnimationFrame(() => { sheet.classList.add('open'); scrim.classList.add('open'); });
     document.body.classList.add('chat-open'); fab.setAttribute('aria-expanded', 'true');
+    releaseBack = trapBack(() => close());
     if (typeof prefill === 'string' && prefill) { input.value = prefill.slice(0, 2000); grow(); }
     showUsage(); sessionNote();
     setTimeout(() => { input.focus(); scrollDown(); }, 30);
   }
   function close(restore = true) {
     if (!ready || !sheet.classList.contains('open')) return;
+    if (releaseBack) { releaseBack(); releaseBack = null; }
     sheet.classList.remove('open'); scrim.classList.remove('open');
     document.body.classList.remove('chat-open'); fab.setAttribute('aria-expanded', 'false');
     const done = () => { if (!sheet.classList.contains('open')) { sheet.hidden = true; scrim.hidden = true; } };
