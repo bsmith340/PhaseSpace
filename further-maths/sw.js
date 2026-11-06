@@ -7,7 +7,7 @@
  * - Updates: a new worker waits until the page posts {type:'SKIP_WAITING'}, so the
  *   page can show "Update available" and reload when the student chooses.
  * Bump VERSION whenever you deploy to force a fresh shell download. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = 'bcs-shell-' + VERSION;
 const CDN = 'bcs-cdn-v1';
 const CORE = [

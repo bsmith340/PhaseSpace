@@ -150,6 +150,7 @@ function Stage(parent, o = {}) {
     const asp = (mobileAspect && w < 560) ? mobileAspect : aspect;
     let h = Math.round(clamp(w / asp, minH, maxH));
     if (S.fill) { const ft = fillTarget(); if (ft > h) h = Math.round(Math.min(ft, 1100)); }
+    if (S.forceH) h = Math.round(S.forceH());
     if (w === S.w && h === S.h) return;
     S.dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = Math.round(w * S.dpr); cv.height = Math.round(h * S.dpr); cv.style.height = h + 'px';
@@ -165,6 +166,7 @@ function Stage(parent, o = {}) {
     others -= wrap.getBoundingClientRect().height;
     return sideH - (tb ? tb.getBoundingClientRect().height : 0) - others;
   }
+  S.resize = () => { S.w = 0; resize(); };
   S.setFill = () => { S.fill = true; S.w = 0; resize(); S.fillTimer = setInterval(resize, 500); };
   const ro = new ResizeObserver(resize); ro.observe(wrap);
   const io = new IntersectionObserver(es => { S.visible = es[es.length - 1].isIntersecting; }); io.observe(wrap);
@@ -5319,150 +5321,817 @@ topic({
 })();
 
 /* ================= 4.5 The nucleus ================= */
+// Three labs, all in SI units under the hood:
+//  A  Rutherford scattering: a real-physics, multi-scale lab. One camera zooms continuously over 13 orders of magnitude,
+//     from the vacuum chamber (~0.2 m) through the foil (10⁻⁷ m) and the gold lattice (10⁻¹⁰ m) to a single nucleus
+//     (10⁻¹⁴ m). Counting statistics come from the Rutherford cross-section; the zoomed-in tracks are integrated
+//     numerically through a screened-Coulomb lattice (or Thomson's plum-pudding spheres), so every curve you see is computed.
+//  B  Nuclear radius and density: any A from 1 to 260, a packed 3D nucleus you can spin and zoom, five graph views.
+//  C  Find r₀ from data: a ln R against ln A analysis with a draggable best-fit line, the way CCEA asks it.
 (() => {
-const KE = 8.99e9, E_C = 1.60e-19, U_KG = 1.66e-27, R0 = 1.2e-15;
+const KE = 8.99e9, E_C = 1.60e-19, U_KG = 1.66e-27, R0 = 1.2e-15, NA = 6.02e23, A0 = 5.29e-11, MEV = 1.60e-13;
+const R_ALPHA = R0 * Math.cbrt(4);
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+// lengths with an SI prefix: 2.5e-14 → "25.0 fm"
+function lenStr(m, sf = 3) {
+  const a = Math.abs(m);
+  const P = [[1, 'm'], [1e-2, 'cm'], [1e-3, 'mm'], [1e-6, 'µm'], [1e-9, 'nm'], [1e-12, 'pm'], [1e-15, 'fm']];
+  for (const [f, u] of P) if (a >= f * 0.9999) return `${num(m / f, sf)} ${u}`;
+  return `${num(m / 1e-15, sf)} fm`;
+}
+// the nicest 1/2/5 × 10ⁿ length near x
+function niceLen(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; }
+function scaleBar(c, x, y, pxPerM, maxPx, color) {
+  const Lm = niceLen(maxPx / pxPerM), L = Lm * pxPerM;
+  c.save(); c.strokeStyle = color; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y - 5); c.lineTo(x, y); c.lineTo(x + L, y); c.lineTo(x + L, y - 5); c.stroke(); c.restore();
+  rich(c, lenStr(Lm, 2).replace('.0 ', ' '), x + L / 2, y - 12, { align: 'center', size: 11.5, color, w: 600, mono: true, fit: false });
+}
+const TARGETS = [
+  { id: 'Au', n: 'Gold', Z: 79, A: 197, rho: 19300, M: 0.197, a: 2.88e-10, ra: 1.44e-10 },
+  { id: 'Pt', n: 'Platinum', Z: 78, A: 195, rho: 21450, M: 0.195, a: 2.77e-10, ra: 1.39e-10 },
+  { id: 'Ag', n: 'Silver', Z: 47, A: 108, rho: 10490, M: 0.108, a: 2.89e-10, ra: 1.44e-10 },
+  { id: 'Cu', n: 'Copper', Z: 29, A: 64, rho: 8960, M: 0.0635, a: 2.56e-10, ra: 1.28e-10 },
+  { id: 'Al', n: 'Aluminium', Z: 13, A: 27, rho: 2700, M: 0.027, a: 2.86e-10, ra: 1.43e-10 },
+  { id: 'C', n: 'Carbon', Z: 6, A: 12, rho: 2267, M: 0.012, a: 1.42e-10, ra: 0.71e-10 },
+];
+const SOURCES = [['Am-241', 5.49], ['Po-210', 5.30], ['Ra-226', 4.78], ['Po-214', 7.69]];
+// Rutherford kinematics. d = head-on distance of closest approach (where all the α's kinetic energy is potential energy)
+const dHead = (Z, Ek) => KE * 2 * Z * E_C * E_C / (Ek * MEV);
+const thetaOfB = (b, d) => 2 * Math.atan(d / (2 * b));
+const bOfTheta = (th, d) => (d / 2) / Math.tan(th / 2);
+const rMinOfB = (b, d) => d / 2 + Math.sqrt(d * d / 4 + b * b);
 
-/* ---------- Lab A: alpha-particle scattering ---------- */
-function mountRutherford(P, L) {
-  const S = L.stage(P.stageBox, { aspect: 1.55, minH: 380, maxH: 560, mobileAspect: 0.95 });
-  let Z = 79, Ek = 5.0, rate = 1, run = true, tracks = [], counts = { fwd: 0, small: 0, big: 0, back: 0 }, model = 'nuclear', showAll = true;
-  const alphas = [];
-  function fire() {
-    const b = (Math.random() * 2 - 1) * 1.0; // impact parameter (arb units)
-    alphas.push({ x: -1.6, y: b, vx: 1, vy: 0, trail: [], done: false });
+// FCC-packed nucleons for a nucleus of mass number A (cached): positions in fm, protons flagged
+const PACK = {};
+function packNucleus(A, Z) {
+  const key = A + ':' + Z; if (PACK[key]) return PACK[key];
+  const rn = 1.2 * Math.cbrt(0.74); // 1.09 fm: A close-packed spheres (74% filling) exactly fill R = r₀A^⅓
+  const s = Math.SQRT2 * rn, pts = [], off = [0.21, 0.13, 0.07], n = Math.ceil(Math.cbrt(A)) + 3;
+  for (let i = -n; i <= n; i++) for (let j = -n; j <= n; j++) for (let k = -n; k <= n; k++) if (((i + j + k) & 1) === 0) {
+    const x = (i + off[0]) * s, y = (j + off[1]) * s, z = (k + off[2]) * s; pts.push([x, y, z, x * x + y * y + z * z]);
   }
-  L.loop(dt => {
-    const c = S.begin(), C = Theme.c, W = S.w, H = S.h;
-    const cx = W * 0.52, cy = H * 0.5, sc = Math.min(W * 0.25, H * 0.42);
-    if (run) { if (Math.random() < dt * rate * 6) fire(); }
-    // physics: dimensionless Coulomb with strength from Z and Ek
-    const K = (Z * 2 * KE * E_C * E_C) / (Ek * 1e6 * E_C); // closest-approach distance (m) head-on
-    const strength = clamp(K / 1e-13, 0.02, 3) * (model === 'nuclear' ? 0.07 : 0.0015);
-    for (const a of alphas) {
-      if (a.done) continue;
-      const sub = 4;
-      for (let i = 0; i < sub; i++) {
-        const h = dt * 1.6 / sub; const r2 = a.x * a.x + a.y * a.y, r = Math.sqrt(r2) || 1e-6;
-        const f = strength / Math.max(r2, 0.0009);
-        a.vx += f * (a.x / r) * h; a.vy += f * (a.y / r) * h;
-        a.x += a.vx * h; a.y += a.vy * h;
-      }
-      a.trail.push([a.x, a.y]); if (a.trail.length > 400) a.trail.shift();
-      if (Math.abs(a.x) > 1.95 || Math.abs(a.y) > 1.15) {
-        a.done = true;
-        const ang = Math.abs(Math.atan2(a.vy, a.vx)) / DEG;
-        if (ang < 10) counts.fwd++; else if (ang < 45) counts.small++; else if (ang < 90) counts.big++; else counts.back++;
-        tracks.push(a.trail); if (tracks.length > 90) tracks.shift();
+  pts.sort((p, q) => p[3] - q[3]);
+  const sel = pts.slice(0, A); let mx = 0, my = 0, mz = 0; for (const p of sel) { mx += p[0]; my += p[1]; mz += p[2]; }
+  mx /= A; my /= A; mz /= A;
+  const order = sel.map((p, i) => [((i + 1) * 2654435761 >>> 0) % 1000003, i]).sort((a, b) => a[0] - b[0]);
+  const isP = new Array(A).fill(false); for (let q = 0; q < Z; q++) isP[order[q][1]] = true;
+  const out = { rn, list: sel.map((p, i) => ({ x: p[0] - mx, y: p[1] - my, z: p[2] - mz, p: isP[i] })) };
+  return (PACK[key] = out);
+}
+// pre-rendered shaded sphere sprites (proton, neutron, alpha) keyed by theme colour
+const SPR = {};
+function sphere(color) {
+  if (SPR[color]) return SPR[color];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d');
+  const g = c.createRadialGradient(24, 22, 3, 32, 32, 31);
+  g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(0.3, color); g.addColorStop(1, color);
+  c.fillStyle = g; c.beginPath(); c.arc(32, 32, 31, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(0,0,0,0.22)'; c.beginPath(); c.arc(32, 32, 31, 0, TAU); c.arc(28, 28, 27, 0, TAU, true); c.fill('evenodd');
+  return (SPR[color] = cv);
+}
+// soft electron-cloud sprite for atoms
+function cloud(color, plum) {
+  const key = 'cl' + color + plum; if (SPR[key]) return SPR[key];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d');
+  const g = c.createRadialGradient(64, 64, 0, 64, 64, 64);
+  if (plum) { g.addColorStop(0, alpha(color, .30)); g.addColorStop(0.92, alpha(color, .26)); g.addColorStop(1, alpha(color, 0)); }
+  else { g.addColorStop(0, alpha(color, .34)); g.addColorStop(0.35, alpha(color, .16)); g.addColorStop(0.75, alpha(color, .06)); g.addColorStop(1, alpha(color, 0)); }
+  c.fillStyle = g; c.fillRect(0, 0, 128, 128);
+  return (SPR[key] = cv);
+}
+function drawNucleus3D(c, cx, cy, pxPerFm, pack, yaw, pitch, C, o = {}) {
+  const cy_ = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const items = pack.list.map(n => { const x1 = n.x * cy_ + n.z * sy, z1 = -n.x * sy + n.z * cy_; const y2 = n.y * cp - z1 * sp, z2 = n.y * sp + z1 * cp; return [x1, y2, z2, n.p]; });
+  items.sort((a, b) => a[2] - b[2]);
+  const rpx = pack.rn * pxPerFm * 1.08, red = sphere(o.pc || C.red), blue = sphere(o.nc || C.blue);
+  if (rpx < 0.8) { dot(c, cx, cy, Math.max(1.2, Math.cbrt(pack.list.length) * R0 * 1e15 * pxPerFm), o.pc || C.red); return; }
+  for (const [x, y, z, p] of items) { const s = 1 + z * 0.012; c.drawImage(p ? red : blue, cx + x * pxPerFm - rpx * s, cy - y * pxPerFm - rpx * s, 2 * rpx * s, 2 * rpx * s); }
+}
+
+/* ---------- Lab A: alpha-particle scattering, from the bench to the nucleus ---------- */
+function mountRutherford(P, L) {
+  const S = L.stage(P.stageBox, { aspect: 1.5, minH: 400, maxH: 640, mobileAspect: 0.9 });
+  const S2 = L.stage(P.stageBox, { aspect: 2.6, minH: 230, maxH: 320, mobileAspect: 1.3, plain: true });
+  const cv = S.cv; cv.tabIndex = 0; cv.setAttribute('aria-label', 'Rutherford scattering simulation. Scroll or pinch to zoom, drag to pan, plus and minus keys zoom, arrow keys pan.');
+  // ---- state ----
+  let warnEl = null, noteBox = null, ro = null;
+  let tg = TARGETS[0], Ek = 5.49, tFoil = 1e-7, model = 'nuclear', lgRate = 5, run = true, showFaint = true, phi = 45, plotMode = 'omega', aimB = 30e-15;
+  const DET_W = 2.5; // detector half-width, degrees
+  let d, nDens, bmax, sMS, sPP, Rn, bContact, as;
+  function derive() {
+    d = dHead(tg.Z, Ek); nDens = tg.rho * NA / tg.M; Rn = R0 * Math.cbrt(tg.A);
+    bmax = 1 / Math.sqrt(Math.PI * nDens * tFoil); as = 0.885 * A0 / Math.cbrt(tg.Z);
+    sMS = as > bmax ? Math.sqrt(2 * Math.PI * nDens * tFoil * d * d * Math.log(as / bmax) / 2) : 0;
+    sPP = Math.sqrt(Math.PI * nDens * tFoil * d * d / 6 / 2);
+    const Rc = Rn + R_ALPHA; bContact = Rc > d ? Math.sqrt(Rc * (Rc - d)) : 0;
+    if (typeof updRO === 'function' && ro) updRO();
+    if (warnEl) { if (bContact && !warnEl.isConnected) noteBox.prepend(warnEl); else if (!bContact && warnEl.isConnected) warnEl.remove(); }
+  }
+  derive();
+  // ---- counting statistics ----
+  const hist = new Float64Array(180); let N = 0, n1 = 0, n10 = 0, n90 = 0, nBack = 0, nDet = 0, nContact = 0, carry = 0;
+  const reset = () => { hist.fill(0); N = n1 = n10 = n90 = nBack = nDet = nContact = detN0 = 0; macro.length = 0; micro.length = 0; sel = null; if (ro) { updRO(); syncSel(); } };
+  function sample() {
+    let th;
+    if (model === 'nuclear') {
+      const b = bmax * Math.sqrt(Math.random() || 1e-12); th = thetaOfB(b, d);
+      if (b < bContact) nContact++;
+      if (th < 0.35 && sMS) { const ph = Math.random() * TAU; th = Math.hypot(th * Math.cos(ph) + gauss() * sMS, th * Math.sin(ph) + gauss() * sMS); }
+    } else th = Math.hypot(gauss(), gauss()) * sPP;
+    return Math.min(th, Math.PI - 1e-9);
+  }
+  // ---- camera: one continuous zoom from 0.24 m to 30 fm ----
+  const W_MAX = 0.34, W_MIN = 2.5e-14, HOME = { cx: -0.004, cy: 0, w: 0.3 };
+  const cam = { cx: HOME.cx, cy: HOME.cy, w: HOME.w }, goal = { on: false, cx: 0, cy: 0, w: 0, then: null };
+  const kpx = () => S.w / cam.w;
+  const X = x => S.w / 2 + (x - cam.cx) * kpx(), Y = y => S.h / 2 - (y - cam.cy) * kpx();
+  const wx = px => cam.cx + (px - S.w / 2) / kpx(), wy = py => cam.cy - (py - S.h / 2) / kpx();
+  function clampCam() { cam.w = clamp(cam.w, W_MIN, W_MAX); cam.cx = clamp(cam.cx, -0.12, 0.12); cam.cy = clamp(cam.cy, -0.1, 0.1); }
+  function zoomAt(px, py, f) { const x = wx(px), y = wy(py); cam.w = clamp(cam.w * f, W_MIN, W_MAX); cam.cx = x - (px - S.w / 2) / kpx(); cam.cy = y + (py - S.h / 2) / kpx(); goal.on = false; tour = false; clampCam(); syncZoom(); }
+  function flyTo(cx, cy, w, then) { Object.assign(goal, { on: true, cx, cy, w: clamp(w, W_MIN, W_MAX), then: then || null }); }
+  const LEVELS = [
+    ['app', 'Apparatus', () => [HOME.cx, 0, HOME.w]],
+    ['foil', 'Foil', () => [0, 0, Math.max(1.2e-6, tFoil * 6)]],
+    ['lattice', 'Atoms', () => [-tFoil / 2 + 1.1e-9, 0, 4.5e-9]],
+    ['atom', 'One atom', () => [0, 0, 7e-10]],
+    ['nuc', 'Nucleus', () => [0, 0, Math.max(1.6e-13, 3.2 * d)]],
+  ];
+  const lvW = l => l[2]()[2];
+  const regimeOf = w => w > 2.2e-3 ? 'app' : w > 8e-9 ? 'foil' : 'micro';
+  function describe(w) {
+    const Lg = Math.log10(w);
+    if (Lg > -2.6) return ['Apparatus', 'evacuated chamber, α source, collimator, foil, movable ZnS detector'];
+    if (Lg > -5.2) return ['The beam meets the foil', `${tg.n.toLowerCase()} foil ${lenStr(tFoil, 2)} thick`];
+    if (Lg > -8.3) return ['Inside the foil', `≈ ${Math.round(tFoil / tg.a)} atoms thick`];
+    if (Lg > -9.6) return [`${tg.n} atoms`, `spacing ${lenStr(tg.a, 2)}: the atom is mostly empty space`];
+    if (Lg > -11.6) return ['A single atom', model === 'nuclear' ? `electron cloud ${lenStr(2 * tg.ra, 2)} across; the nucleus is a speck ${Math.round(tg.ra / Rn).toLocaleString()}× smaller in radius` : 'Thomson: positive charge spread through the whole atom'];
+    return model === 'nuclear' ? [`The ${tg.id} nucleus`, `R = r₀A^⅓ = ${lenStr(Rn, 2)}; head-on closest approach d = ${lenStr(d, 3)}`] : ['Inside a plum-pudding atom', 'no concentrated charge: nothing here can turn an α back'];
+  }
+  // ---- visual tracks ----
+  const macro = [], micro = []; let sel = null, spawnClock = 0, highClock = 0, flashes = [];
+  const CH_R = 0.09, SRC_X = -0.072, DET_R = 0.062;
+  let budget = 0;
+  function spawnMacro(th, big) {
+    const sg = Math.random() < 0.5 ? -1 : 1, reg = regimeOf(cam.w);
+    if (reg === 'micro' || budget <= 0) return; budget--;
+    if (reg === 'app') {
+      const y0 = (Math.random() - 0.5) * 1.2e-3, xk = (Math.random() - 0.5) * tFoil;
+      // ray from (xk,y0) at angle th to the chamber wall
+      const ux = Math.cos(th), uy = sg * Math.sin(th), bq = xk * ux + y0 * uy, cq = xk * xk + y0 * y0 - CH_R * CH_R, s = -bq + Math.sqrt(bq * bq - cq);
+      macro.push({ pts: [[SRC_X, y0], [xk, y0], [xk + ux * s, y0 + uy * s]], th, sg, big, age: 0, dur: 0.9, det: Math.abs(th / DEG - phi) <= DET_W, reg });
+    } else {
+      const hv = cam.w * S.h / S.w, y0 = cam.cy + (Math.random() - 0.5) * hv * 0.9, xk = (Math.random() - 0.5) * tFoil, Lx = cam.w * 1.4;
+      macro.push({ pts: [[cam.cx - Lx, y0], [xk, y0], [xk + Math.cos(th) * Lx * 1.5, y0 + sg * Math.sin(th) * Lx * 1.5]], th, sg, big, age: 0, dur: 1.4, reg });
+    }
+    if (macro.length > 160) macro.splice(0, macro.length - 160);
+  }
+  // lattice: triangular slice through the foil, nearest-neighbour spacing a, atom 0 at the origin
+  function accel(x, y, acc) {
+    const a = tg.a, dx = a * Math.sqrt(3) / 2, half = tFoil / 2, hd = d / 2;
+    let ax = 0, ay = 0, rn = Infinity, nx = 0, ny = 0;
+    const i0 = Math.round(x / dx);
+    for (let i = i0 - 1; i <= i0 + 1; i++) {
+      const X0 = i * dx; if (Math.abs(X0) > half) continue;
+      const off = (i & 1) / 2, j0 = Math.round(y / a - off);
+      for (let j = j0 - 1; j <= j0 + 1; j++) {
+        const Y0 = (j + off) * a, rx = x - X0, ry = y - Y0, r = Math.hypot(rx, ry) || 1e-30;
+        if (r < rn) { rn = r; nx = X0; ny = Y0; }
+        let g = 0;
+        if (model === 'nuclear') { if (r < 9 * as) g = r < Rn ? r / (Rn * Rn * Rn) : Math.exp(-r / as) * (1 / (r * r) + 1 / (as * r)); }
+        else if (r < tg.ra) g = r / (tg.ra * tg.ra * tg.ra);
+        if (g) { const f = hd * g / r; ax += f * rx; ay += f * ry; }
       }
     }
-    for (let i = alphas.length - 1; i >= 0; i--) if (alphas[i].done) alphas.splice(i, 1);
-    // gold foil
-    c.fillStyle = alpha(C.orange, .09); c.fillRect(cx - sc * 0.22, 0, sc * 0.44, H);
-    rich(c, 'gold foil', cx, H - 14, { align: 'center', size: 11.5, color: C.orange });
-    // source
-    c.fillStyle = C.ink2; rrect(c, 6, cy - 22, 44, 44, 5); c.fill();
-    rich(c, 'α', 28, cy, { align: 'center', size: 18, color: C.paper2, w: 700 });
-    rich(c, `${fix(Ek, 1)} MeV`, 28, cy + 32, { align: 'center', size: 11, color: C.muted, mono: true });
-    // detector arc
-    c.beginPath(); c.arc(cx, cy, sc * 1.55, 0, TAU); c.strokeStyle = alpha(C.muted, .35); c.lineWidth = 1; c.setLineDash([3, 5]); c.stroke(); c.setLineDash([]);
-    for (const a of [30, 90, 150]) { const p = [cx + sc * 1.55 * Math.cos(a * DEG), cy - sc * 1.55 * Math.sin(a * DEG)]; rich(c, `${a}°`, p[0], p[1], { align: 'center', size: 10.5, color: C.muted }); }
-    // nucleus
-    if (model === 'nuclear') { c.beginPath(); c.arc(cx, cy, Math.max(4, sc * 0.035), 0, TAU); c.fillStyle = C.red; c.fill(); rich(c, `nucleus (+${Z}e)`, cx, cy - 16, { align: 'center', size: 11.5, color: C.red, w: 600 }); }
-    else { c.beginPath(); c.arc(cx, cy, sc * 0.5, 0, TAU); c.fillStyle = alpha(C.red, .12); c.fill(); c.strokeStyle = alpha(C.red, .5); c.setLineDash([4, 4]); c.stroke(); c.setLineDash([]); rich(c, 'charge spread out (plum pudding)', cx, cy - sc * 0.5 - 10, { align: 'center', size: 11.5, color: C.red }); }
-    // tracks
-    const toPx = p => [cx + p[0] * sc, cy - p[1] * sc];
-    if (showAll) for (const tr of tracks) line(c, tr.map(toPx), { color: alpha(C.blue, .22), width: 1 });
-    for (const a of alphas) { line(c, a.trail.map(toPx), { color: C.blue, width: 1.6 }); const p = toPx([a.x, a.y]); dot(c, p[0], p[1], 3.5, C.violet); }
-    const tot = counts.fwd + counts.small + counts.big + counts.back || 1;
-    ro.set('n', String(tot)); ro.set('fwd', `${fix(counts.fwd / tot * 100, 1)}%`); ro.set('sm', `${fix(counts.small / tot * 100, 1)}%`);
-    ro.set('bg', `${fix((counts.big + counts.back) / tot * 100, 2)}%`); ro.set('bk', `${counts.back}`);
-    ro.set('d', `${sci(K, 2)} m`);
+    acc[0] = ax; acc[1] = ay; acc[2] = rn; acc[3] = nx; acc[4] = ny;
+  }
+  // electric potential energy ÷ initial kinetic energy at (x, y), from the nearby nuclei (or plum-pudding spheres)
+  function pot(x, y) {
+    const a = tg.a, dx = a * Math.sqrt(3) / 2, half = tFoil / 2; let U = 0; const i0 = Math.round(x / dx);
+    for (let i = i0 - 1; i <= i0 + 1; i++) {
+      const X0 = i * dx; if (Math.abs(X0) > half) continue; const off = (i & 1) / 2, j0 = Math.round(y / a - off);
+      for (let j = j0 - 1; j <= j0 + 1; j++) {
+        const r = Math.hypot(x - X0, y - (j + off) * a);
+        if (model === 'nuclear') { if (r < 9 * as) U += d / Math.max(r, Rn) * Math.exp(-r / as); }
+        else if (r < tg.ra) U += d * (tg.ra * tg.ra - r * r) / (2 * tg.ra ** 3);
+      }
+    }
+    return U;
+  }
+  // trace one α through the lattice with adaptive RK4. Units: metres, with the α's speed far from any atom set to 1.
+  // The α starts far enough out (U < 1% of E_k) that b really is the impact parameter, but points are stored only on screen.
+  function trace(xv, y0, w) {
+    const hv = w * S.h / Math.max(1, S.w), left = cam.cx - w * 0.75, right = cam.cx + w * 0.75, top = cam.cy + hv * 0.75, bot = cam.cy - hv * 0.75;
+    let x = xv; for (let i = 0; i < 60 && pot(x, y0) > 0.01; i++) x -= Math.max(w, Math.abs(x - xv) + w);
+    let y = y0, vx = Math.sqrt(Math.max(0.02, 1 - pot(x, y0))), vy = 0, t = 0, started = false; const pts = [], A = [0, 0, 0, 0, 0], k = [0, 0, 0, 0, 0];
+    let rmin = Infinity, nx = 0, ny = 0, contact = false, exited = false, tEnd = 0, xe = 0, ye = 0; const hmax = w / 260;
+    for (let step = 0; step < 12000; step++) {
+      accel(x, y, A); if (A[2] < rmin) { rmin = A[2]; nx = A[3]; ny = A[4]; }
+      if (model === 'nuclear' && A[2] < Rn + R_ALPHA) { contact = true; break; }
+      if (!started && x >= xv) { started = true; t = 0; pts.push([x, y, 0]); }
+      const outBy = Math.max(left - x, x - right, y - top, bot - y);
+      const far = model === 'nuclear' ? 9 * as : tg.ra, hm = !started ? Math.max(hmax, 0.2 * (xv - x)) : exited ? Math.max(hmax, 0.2 * outBy) : hmax;
+      let h = model === 'nuclear' ? Math.min(hm, Math.max(0.025 * A[2], A[2] - far)) : hm;
+      if (!started) h = Math.min(h, xv - x + hmax);
+      h = Math.max(h, 1e-19);
+      // RK4
+      const ax1 = A[0], ay1 = A[1];
+      accel(x + vx * h / 2, y + vy * h / 2, k); const ax2 = k[0], ay2 = k[1];
+      const vx2 = vx + ax1 * h / 2, vy2 = vy + ay1 * h / 2;
+      accel(x + vx2 * h / 2, y + vy2 * h / 2, k); const ax3 = k[0], ay3 = k[1];
+      const vx3 = vx + ax2 * h / 2, vy3 = vy + ay2 * h / 2;
+      accel(x + vx3 * h, y + vy3 * h, k); const ax4 = k[0], ay4 = k[1];
+      const vx4 = vx + ax3 * h, vy4 = vy + ay3 * h;
+      x += h / 6 * (vx + 2 * vx2 + 2 * vx3 + vx4); y += h / 6 * (vy + 2 * vy2 + 2 * vy3 + vy4);
+      vx += h / 6 * (ax1 + 2 * ax2 + 2 * ax3 + ax4); vy += h / 6 * (ay1 + 2 * ay2 + 2 * ay3 + ay4); t += h;
+      if (!started) continue;
+      // once off screen, keep integrating (without storing) until the α is out of the field, so θ is the true final angle
+      if (exited) { if (pot(x, y) < 0.002 || step > 11000) break; continue; }
+      const lp = pts[pts.length - 1]; if (Math.hypot(x - lp[0], y - lp[1]) > w / 900 || A[2] < 4 * Rn) pts.push([x, y, t]);
+      if (x > right || (x < left && vx < 0) || y > top || y < bot) { exited = true; tEnd = t; xe = x; ye = y; pts.push([x, y, t]); }
+    }
+    if (!pts.length) pts.push([x, y, 0]);
+    if (!exited) { pts.push([x, y, t]); tEnd = t; }
+    t = tEnd;
+    const b = Math.abs(y0 - ny), th = Math.atan2(Math.abs(vy), vx);
+    return { pts, T: t, b, th, rmin, nx, ny, contact, w, age: 0, ip: 0, done: false, model, Z: tg.Z, d, Rn };
+  }
+  function spawnMicro(y0) {
+    const hv = cam.w * S.h / Math.max(1, S.w);
+    if (y0 == null) y0 = cam.cy + (Math.random() - 0.5) * hv;
+    const a = trace(cam.cx - cam.w * 0.62, y0, cam.w); a.rate = cam.w / 1.9;
+    micro.push(a); if (micro.length > 60) micro.splice(0, micro.length - 60);
+    return a;
+  }
+  function fan() {
+    const go = () => { const n = 17, span = cam.w * S.h / S.w * 0.46; for (let i = 0; i < n; i++) { const b = (i - (n - 1) / 2) / ((n - 1) / 2) * span; const a = spawnMicro(b + 1e-18); a.fan = true; } };
+    if (cam.w > 3e-13 || Math.hypot(cam.cx, cam.cy) > cam.w) flyTo(0, 0, 1.6e-13, go); else go();
+  }
+  function aimOne() {
+    const go = () => { const a = spawnMicro(aimB); sel = a; syncSel(); };
+    const need = Math.max(4 * aimB, 2.5 * d, 6e-14);
+    if (cam.w > need * 3 || cam.w < need * 0.6 || Math.hypot(cam.cx, cam.cy) > cam.w * 0.3) flyTo(0, 0, need * 1.4, go); else go();
+  }
+  let tour = false, tourK = 0, hintT = 7, detN0 = 0;
+  // ---- counting loop: keeps firing while you scroll to read the numbers ----
+  L.loop(dt => {
+    if (run) {
+      budget = 6; carry += Math.pow(10, lgRate) * dt; let n = Math.floor(carry); carry -= n; n = Math.min(n, 60000);
+      for (let i = 0; i < n; i++) {
+        const th = sample(), deg = th / DEG; N++; hist[Math.min(179, Math.floor(deg))]++;
+        if (deg < 1) n1++; else if (deg < 10) n10++; else if (deg < 90) n90++; else nBack++;
+        if (Math.abs(deg - phi) <= DET_W) nDet++;
+        if (deg > 45) spawnMacro(th, true);
+        else if (deg > 8 && highClock <= 0) { spawnMacro(th, true); highClock = 0.12; }
+      }
+      highClock -= dt; spawnClock -= dt;
+      const reg = regimeOf(cam.w);
+      if (spawnClock <= 0) {
+        spawnClock = 1 / (reg === 'micro' ? 5 : 9);
+        if (reg === 'micro') { if (S.visible && S.w) spawnMicro(); } else if (showFaint) spawnMacro(sample(), false);
+      }
+    }
+    updRO();
+  }, []);
+  // ---- main loop ----
+  L.loop(dt => {
+    const C = Theme.c, c = S.begin(), W = S.w, H = S.h; if (!W) return;
+    // camera animation
+    if (goal.on) {
+      // zoom exponentially in log space; shrink the pan offset in screen units, so the target stays framed at every scale
+      const f = 1 - Math.exp(-dt * (tour ? 1.15 : 4.2)), lw = Math.log(cam.w), lg = Math.log(goal.w), w0 = cam.w;
+      cam.w = Math.exp(lw + (lg - lw) * f); const shrink = (1 - Math.max(f, 0.08)) * Math.min(1, cam.w / w0);
+      cam.cx = goal.cx - (goal.cx - cam.cx) * shrink; cam.cy = goal.cy - (goal.cy - cam.cy) * shrink;
+      if (Math.abs(lw - lg) < 0.01 && Math.abs(goal.cx - cam.cx) < cam.w * 0.002 && Math.abs(goal.cy - cam.cy) < cam.w * 0.002) {
+        Object.assign(cam, { cx: goal.cx, cy: goal.cy, w: goal.w }); goal.on = false; const t = goal.then; goal.then = null; if (t) t();
+      }
+      syncZoom();
+    }
+    for (const m of macro) m.age += dt;
+    for (let i = macro.length - 1; i >= 0; i--) if (macro[i].age > macro[i].dur + (macro[i].big ? 3.5 : 1.2)) macro.splice(i, 1);
+    for (const a of micro) { a.age += dt; if (!a.done) { a.tt = (a.tt || 0) + dt * a.rate; if (a.tt >= a.T) { a.tt = a.T; a.done = true; a.doneAt = a.age; } } }
+    for (let i = micro.length - 1; i >= 0; i--) { const a = micro[i]; if (a.done && a !== sel && a.age - a.doneAt > (a.fan ? 9 : 3)) micro.splice(i, 1); }
+    // ---------- draw ----------
+    const k = kpx(), Lg = Math.log10(cam.w), hv = cam.w * H / W;
+    c.fillStyle = C.paper2; c.fillRect(0, 0, W, H);
+    // faint vacuum grid that rescales with the zoom (powers of ten)
+    { const g = niceLen(cam.w / 8), x0 = Math.floor(wx(0) / g) * g; c.strokeStyle = alpha(C.muted, .08); c.lineWidth = 1; c.beginPath();
+      for (let x = x0; x <= wx(W); x += g) { const px = Math.round(X(x)) + .5; c.moveTo(px, 0); c.lineTo(px, H); }
+      for (let y = Math.floor(wy(H) / g) * g; y <= wy(0); y += g) { const py = Math.round(Y(y)) + .5; c.moveTo(0, py); c.lineTo(W, py); } c.stroke(); }
+    const aApp = smooth(-3.1, -2.5, Lg);
+    // foil band
+    const fx0 = X(-tFoil / 2), fx1 = X(tFoil / 2), fy0 = Y(0.006), fy1 = Y(-0.006);
+    { const xa = clamp(Math.min(fx0, fx1 - 1.5), -10, W + 10), xb = clamp(Math.max(fx1, fx0 + 1.5), -10, W + 10), ya = clamp(fy0, -10, H + 10), yb = clamp(fy1, -10, H + 10);
+      if (xb > xa && yb > ya) { c.fillStyle = alpha(C.orange, Lg < -8 ? 0.05 : 0.16); c.fillRect(xa, ya, xb - xa, yb - ya); } }
+    if (Lg < -2.6 && Lg > -8.4 && fx1 - fx0 > 6) { c.strokeStyle = alpha(C.orange, .55); c.lineWidth = 1; c.beginPath(); c.moveTo(fx0, 0); c.lineTo(fx0, H); c.moveTo(fx1, 0); c.lineTo(fx1, H); c.stroke(); }
+    // apparatus
+    if (aApp > 0.01) {
+      c.save(); c.globalAlpha = aApp;
+      c.beginPath(); c.arc(X(0), Y(0), CH_R * k, 0, TAU); c.fillStyle = alpha(C.ink, Theme.isDark() ? .12 : .035); c.fill(); c.strokeStyle = C.ink2; c.lineWidth = 3; c.stroke();
+      rich(c, 'vacuum chamber (evacuated: α are absorbed by a few cm of air)', X(0), Y(CH_R) - 12, { align: 'center', size: 11.5, color: C.muted });
+      // pump line
+      c.fillStyle = C.ink2; c.fillRect(X(-0.012), Y(-CH_R), 0.024 * k, 0.025 * k); rich(c, 'to vacuum pump', X(0), Y(-CH_R - 0.03), { align: 'center', size: 11, color: C.muted });
+      // lead block + source
+      c.fillStyle = C.ink2; rrect(c, X(-0.084), Y(0.011), 0.024 * k, 0.022 * k, 4); c.fill();
+      c.fillStyle = C.paper2; c.fillRect(X(-0.072), Y(0.0007), 0.012 * k, 0.0014 * k);
+      dot(c, X(SRC_X), Y(0), Math.max(3, 0.002 * k), C.violet);
+      rich(c, `α source in lead · ${fix(Ek, 2)} MeV`, X(-0.072), Y(0.011) - 12, { align: 'center', size: 11.5, color: C.ink2, w: 600 });
+      // collimator
+      c.fillStyle = C.ink2; c.fillRect(X(-0.042), Y(0.012), 0.003 * k, 0.0113 * k); c.fillRect(X(-0.042), Y(-0.0007), 0.003 * k, 0.0113 * k);
+      rich(c, 'collimator slit', X(-0.0405), Y(-0.012) + 12, { align: 'center', size: 11, color: C.muted });
+      // beam
+      c.fillStyle = alpha(C.violet, .14); c.fillRect(X(SRC_X), Y(0.0006), (0 - SRC_X) * k, 0.0012 * k);
+      // foil + holder
+      c.fillStyle = C.orange; c.fillRect(X(0) - 1.5, Y(0.006), 3, 0.012 * k); c.fillStyle = C.ink2; c.fillRect(X(-0.0015), Y(-0.006), 0.003 * k, 0.003 * k);
+      rich(c, `${tg.n} foil`, X(0), Y(0.006) - 12, { align: 'center', size: 11.5, color: C.orange, w: 600 });
+      // detector: ZnS screen + microscope on a rotating arm
+      for (const sg of [1]) {
+        const ph = phi * DEG * sg, ux = Math.cos(ph), uy = Math.sin(ph), px = X(DET_R * ux), py = Y(DET_R * uy);
+        line(c, [[X(0), Y(0)], [px, py]], { color: alpha(C.muted, .45), width: 1, dash: [3, 5] });
+        c.save(); c.translate(px, py); c.rotate(-ph);
+        c.fillStyle = alpha(C.green, .9); c.fillRect(-2, -0.004 * k, 4, 0.008 * k);
+        c.fillStyle = C.ink2; rrect(c, 2, -0.0025 * k, 0.018 * k, 0.005 * k, 3); c.fill(); c.restore();
+        // aperture arc
+        c.beginPath(); c.arc(X(0), Y(0), DET_R * k, -(phi + DET_W) * DEG, -(phi - DET_W) * DEG); c.strokeStyle = alpha(C.green, .7); c.lineWidth = 4; c.stroke();
+        rich(c, `ZnS screen + microscope at ${Math.round(phi)}°`, X(DET_R * 1.32 * ux), Y(DET_R * 1.32 * uy) - (uy > 0.2 ? 0 : 14), { align: ux > 0.3 ? 'left' : ux < -0.3 ? 'right' : 'center', size: 11.5, color: C.green, w: 600 });
+        handle(c, px, py, C.green, dragDet);
+      }
+      for (const a of [30, 60, 90, 120, 150]) { const r = CH_R * 0.9; rich(c, `${a}°`, X(r * Math.cos(a * DEG)), Y(-r * Math.sin(a * DEG)), { align: 'center', size: 10.5, color: C.muted }); }
+      c.restore();
+    }
+    // flashes (scintillations at the detector)
+    for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i]; f.t += dt; if (f.t > 0.6) { flashes.splice(i, 1); continue; } c.beginPath(); c.arc(X(f.x), Y(f.y), 4 + f.t * 24, 0, TAU); c.strokeStyle = alpha(C.green, 1 - f.t / 0.6); c.lineWidth = 2; c.stroke(); }
+    // macro tracks
+    for (const m of macro) {
+      if (m.reg === 'app' && aApp < 0.05) continue; if (m.reg === 'foil' && (Lg > -2.4 || Lg < -8.1)) continue;
+      const pts = m.pts.map(p => [X(p[0]), Y(p[1])]); const L1 = hyp(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]), L2 = hyp(pts[2][0] - pts[1][0], pts[2][1] - pts[1][1]);
+      const prog = clamp(m.age / m.dur, 0, 1) * (L1 + L2), fade = m.age > m.dur ? 1 - (m.age - m.dur) / (m.big ? 3.5 : 1.2) : 1;
+      let path = [pts[0]], head;
+      if (prog <= L1) { head = [pts[0][0] + (pts[1][0] - pts[0][0]) * prog / (L1 || 1), pts[0][1] + (pts[1][1] - pts[0][1]) * prog / (L1 || 1)]; path.push(head); }
+      else { const q = (prog - L1) / (L2 || 1); head = [pts[1][0] + (pts[2][0] - pts[1][0]) * q, pts[1][1] + (pts[2][1] - pts[1][1]) * q]; path.push(pts[1], head); }
+      const col = m.big ? (m.th > Math.PI / 2 ? C.red : C.orange) : C.blue;
+      line(c, path, { color: alpha(col, (m.big ? 0.9 : 0.35) * Math.max(0, fade)), width: m.big ? 1.8 : 1 });
+      if (m.age < m.dur) dot(c, head[0], head[1], m.big ? 3.2 : 2.2, col);
+      if (m.det && !m.flashed && m.age >= m.dur) { m.flashed = true; flashes.push({ x: m.pts[2][0], y: m.pts[2][1], t: 0 }); }
+    }
+    // lattice + atoms
+    const aAtoms = smooth(-7.9, -8.6, Lg);
+    if (aAtoms > 0.01) {
+      const a = tg.a, dxl = a * Math.sqrt(3) / 2, half = tFoil / 2;
+      const ix0 = Math.max(Math.ceil(-half / dxl), Math.floor(wx(-tg.ra * k) / dxl) - 1), ix1 = Math.min(Math.floor(half / dxl), Math.ceil(wx(W + tg.ra * k) / dxl) + 1);
+      const rpx = tg.ra * k, cl = cloud(model === 'nuclear' ? C.blue : C.red, model !== 'nuclear');
+      c.save(); c.globalAlpha = aAtoms;
+      if ((ix1 - ix0) * (hv / a) < 5000) for (let i = ix0; i <= ix1; i++) {
+        const off = (i & 1) / 2, jy0 = Math.floor(wy(H) / a - off) - 1, jy1 = Math.ceil(wy(0) / a - off) + 1;
+        for (let j = jy0; j <= jy1; j++) {
+          const ax = X(i * dxl), ay = Y((j + off) * a);
+          if (rpx > 3 * W) { if (i === ix0 && j === jy0) { c.fillStyle = alpha(model === 'nuclear' ? C.blue : C.red, model === 'nuclear' ? .07 : .2); c.fillRect(0, 0, W, H); } }
+          else if (rpx > 1.2) c.drawImage(cl, ax - rpx * 1.15, ay - rpx * 1.15, rpx * 2.3, rpx * 2.3);
+          if (model === 'nuclear') {
+            const rN = Rn * k;
+            if (rN > 3.5) drawNucleus3D(c, ax, ay, k * 1e-15, packNucleus(tg.A, tg.Z), 0.6 + i * 0.7, 0.4 + j * 0.3, C);
+            else dot(c, ax, ay, Math.max(1.1, rN), C.red);
+          } else if (rpx > 6) {
+            // Thomson's "plums": electrons dotted through the positive sphere
+            for (let e = 0; e < Math.min(tg.Z, 24); e++) { const q = ((i * 131 + j * 71 + e * 37) % 997) / 997, r2 = Math.sqrt(((e * 53 + i * 7) % 89) / 89) * 0.85; dot(c, ax + Math.cos(q * TAU) * r2 * rpx, ay + Math.sin(q * TAU) * r2 * rpx, Math.max(1, rpx * 0.025), C.blue); }
+          }
+        }
+      }
+      c.restore();
+      // nucleus scale guides around the atom at the origin
+      if (model === 'nuclear' && Lg < -11.2) {
+        const ox = X(0), oy = Y(0);
+        c.save(); c.setLineDash([4, 5]); c.lineWidth = 1.2;
+        c.beginPath(); c.arc(ox, oy, d * k, 0, TAU); c.strokeStyle = alpha(C.violet, .8); c.stroke();
+        c.beginPath(); c.arc(ox, oy, (Rn + R_ALPHA) * k, 0, TAU); c.strokeStyle = alpha(C.red, .7); c.stroke(); c.restore();
+        rich(c, `head-on closest approach d = ${lenStr(d, 3)}`, ox, oy - d * k - 12, { align: 'center', size: 11.5, color: C.violet, w: 600, bg: alpha(C.paper2, .8) });
+        if ((Rn + R_ALPHA) * k > 18) rich(c, `strong force reaches α at R + R_α = ${lenStr(Rn + R_ALPHA, 2)}`, ox, oy + (Rn + R_ALPHA) * k + 14, { align: 'center', size: 11, color: C.red, bg: alpha(C.paper2, .8) });
+      }
+    }
+    // micro tracks (computed trajectories)
+    for (const a of micro) {
+      if (a.w > cam.w * 40 || a.w < cam.w / 40) continue;
+      const tt = a.tt || 0; let ip = a.ip; while (ip < a.pts.length - 1 && a.pts[ip + 1][2] <= tt) ip++; a.ip = ip;
+      const seg = a.pts.slice(0, ip + 1).map(p => [X(p[0]), Y(p[1])]);
+      const nxt = a.pts[Math.min(ip + 1, a.pts.length - 1)], cu = a.pts[ip], q = nxt[2] > cu[2] ? (tt - cu[2]) / (nxt[2] - cu[2]) : 0;
+      const hx = cu[0] + (nxt[0] - cu[0]) * q, hy = cu[1] + (nxt[1] - cu[1]) * q; seg.push([X(hx), Y(hy)]);
+      const big = a.th > 10 * DEG, fade = a.done ? clamp(1 - (a.age - a.doneAt) / (a.fan ? 9 : 3), 0, 1) : 1;
+      const col = a === sel ? C.green : a.contact ? C.red : a.th > Math.PI / 2 ? C.red : big ? C.orange : C.blue;
+      line(c, seg, { color: alpha(col, (a === sel ? 1 : big ? .95 : .6) * (a === sel ? 1 : fade)), width: a === sel ? 2.6 : big ? 2 : 1.4 });
+      if (!a.done) {
+        const rA = R_ALPHA * k;
+        if (rA > 3.5) { const pk = packNucleus(4, 2); drawNucleus3D(c, X(hx), Y(hy), k * 1e-15, pk, a.age * 3, a.age * 2, C, { pc: C.violet, nc: C.cyan }); }
+        else dot(c, X(hx), Y(hy), 3.2, C.violet);
+      } else if (a.contact) { const p = a.pts[a.pts.length - 1]; c.beginPath(); c.arc(X(p[0]), Y(p[1]), 7, 0, TAU); c.strokeStyle = C.red; c.lineWidth = 2; c.stroke(); rich(c, 'strong-force contact', X(p[0]) + 10, Y(p[1]) - 10, { size: 11, color: C.red, w: 600 }); }
+    }
+    // inspector for the selected track
+    if (sel && micro.includes(sel)) {
+      const a = sel, nx = X(a.nx), ny = Y(a.ny), y0 = a.pts[0][1];
+      line(c, [[X(a.pts[0][0]), Y(y0)], [X(a.nx + a.w), Y(y0)]], { color: alpha(C.green, .5), width: 1, dash: [3, 4] });
+      line(c, [[nx, ny], [nx, Y(y0)]], { color: C.green, width: 1.5 });
+      rich(c, `b = ${lenStr(a.b, 3)}`, nx + 6, (ny + Y(y0)) / 2, { size: 11.5, color: C.green, w: 700, bg: alpha(C.paper2, .85) });
+      if (a.done && !a.contact) {
+        const p = a.pts[a.pts.length - 1], q = a.pts[Math.max(0, a.pts.length - 6)], ang = Math.atan2(p[1] - q[1], p[0] - q[0]);
+        const r = Math.min(60, Math.hypot(X(p[0]) - nx, Y(p[1]) - ny) * 0.5);
+        c.beginPath(); c.arc(nx, ny, r, 0, -ang, ang > 0); c.strokeStyle = C.green; c.lineWidth = 1.5; c.stroke();
+      }
+    }
+    // HUD: what you're looking at, scale bar, powers-of-ten ladder
+    const [hd1, hd2] = describe(cam.w);
+    rich(c, hd1, 14, 18, { size: 14, color: C.ink, w: 700, bg: alpha(C.paper2, .75) });
+    rich(c, hd2, 14, 38, { size: 11.5, color: C.muted, bg: alpha(C.paper2, .75) });
+    rich(c, `view width ${lenStr(cam.w, 3)}  ·  ×${sci(W_MAX / cam.w, 2)} zoom`, 14, 56, { size: 11, color: C.muted, mono: true, bg: alpha(C.paper2, .75) });
+    scaleBar(c, 16, H - 16, k, Math.min(160, W * 0.3), C.ink2);
+    drawLadder(c, W, H, Lg, C);
+    if (model === 'nuclear' && Lg < -9 && Lg > -11.6 && Rn * k < 3.5) rich(c, 'red dots: nuclei, drawn bigger than life so you can see them', 14, 74, { size: 11, color: C.red, bg: alpha(C.paper2, .8) });
+    if (hintT > 0) { hintT -= dt; rich(c, 'scroll or pinch to zoom · drag to pan · double-click to zoom in', W / 2, H * 0.5 + 0.3 * H, { align: 'center', size: 12.5, color: C.ink, w: 600, bg: alpha(C.paper2, Math.min(1, hintT) * .9) }); }
+    updRO();
   }, [S]);
+  function updRO() {
+    if (!ro) return;
+    const tot = Math.max(1, N);
+    ro.set('n', N.toLocaleString()); ro.set('n1', `${fix(n1 / tot * 100, 2)}%`); ro.set('n10', `${fix(n10 / tot * 100, 3)}%`); ro.set('n90', `${fix(n90 / tot * 100, 4)}%`);
+    ro.set('nb', nBack ? `${nBack.toLocaleString()} (1 in ${Math.round(tot / nBack).toLocaleString()})` : '0');
+    const P90 = model === 'nuclear' ? Math.min(1, nDens * tFoil * Math.PI * bOfTheta(Math.PI / 2, d) ** 2) : 0;
+    ro.set('p90', P90 ? `1 in ${Math.round(1 / P90).toLocaleString()}` : 'essentially never');
+    const pw = model === 'nuclear' ? nDens * tFoil * Math.PI * (bOfTheta(Math.max(0.01, phi - DET_W) * DEG, d) ** 2 - bOfTheta(Math.min(179.9, phi + DET_W) * DEG, d) ** 2) : 0;
+    ro.set('det', `${nDet.toLocaleString()} · theory ${model === 'nuclear' ? num(pw * (N - detN0), 3) : '≈ 0'}`);
+    ro.set('d', lenStr(d, 3)); ro.set('R', `${lenStr(Rn, 2)} (d/R = ${fix(d / Rn, 1)})`);
+    ro.set('ct', bContact ? `${nContact.toLocaleString()} touched it` : 'none');
+  }
+  // the powers-of-ten ladder down the right-hand edge (click to jump)
+  const LAD = [[-1, 'chamber'], [-4, 'beam width'], [-7, 'foil'], [-10, 'atom'], [-13.6, 'nucleus']];
+  const ladGeom = () => { const W = S.w, H = S.h; const x = W - 18, y0 = 30, y1 = H - 66; return { x, y0, y1, Ly: Lg => y0 + (-0.6 - Lg) / (13.6 - 0.6) * (y1 - y0) }; };
+  function drawLadder(c, W, H, Lg, C) {
+    if (H < 300) return; const g = ladGeom();
+    c.strokeStyle = alpha(C.ink2, .5); c.lineWidth = 2; c.beginPath(); c.moveTo(g.x, g.y0); c.lineTo(g.x, g.y1); c.stroke();
+    c.font = FONT.mono(9.5); c.textAlign = 'right'; c.textBaseline = 'middle';
+    for (let e = -1; e >= -14; e--) { const y = g.Ly(e); c.fillStyle = alpha(C.ink2, .6); c.fillRect(g.x - 3, y, 6, 1); if (W > 520 && e % 3 === -1) { c.fillStyle = C.muted; c.fillText('10' + supx(e), g.x - 7, y); } }
+    if (W > 620) for (const [e, t] of LAD) rich(c, t, g.x - (e % 3 === -1 ? 44 : 9), g.Ly(e), { align: 'right', size: 10, color: C.muted, fit: false });
+    const y = clamp(g.Ly(Lg), g.y0, g.y1); c.beginPath(); c.moveTo(g.x + 2, y); c.lineTo(g.x + 11, y - 6); c.lineTo(g.x + 11, y + 6); c.closePath(); c.fillStyle = C.blue; c.fill();
+  }
+  // ---- input: wheel / pinch zoom, drag pan, drag the detector, click to inspect ----
+  const ptrs = new Map(); let mode = null, moved = 0, pinch = null, dragDet = false;
+  const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const detHit = (x, y) => { if (regimeOf(cam.w) !== 'app') return false; const ph = phi * DEG; return hyp(x - X(DET_R * Math.cos(ph)), y - Y(DET_R * Math.sin(ph))) < 16; };
+  cv.addEventListener('pointerdown', e => {
+    const p = pos(e); ptrs.set(e.pointerId, p); try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+    if (ptrs.size === 1) { mode = detHit(p[0], p[1]) ? 'det' : 'pan'; dragDet = mode === 'det'; moved = 0; }
+    else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: hyp(a[0] - b[0], a[1] - b[1]) || 1, w: cam.w, mx: wx((a[0] + b[0]) / 2), my: wy((a[1] + b[1]) / 2) }; mode = 'pinch'; }
+    cv.focus({ preventScroll: true });
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = pos(e), old = ptrs.get(e.pointerId);
+    if (!old) { if (e.pointerType === 'mouse') cv.style.cursor = detHit(p[0], p[1]) ? 'grab' : 'crosshair'; return; }
+    ptrs.set(e.pointerId, p);
+    if (mode === 'pan') { const dx = p[0] - old[0], dy = p[1] - old[1]; moved += Math.abs(dx) + Math.abs(dy); if (moved > 4) { cam.cx -= dx / kpx(); cam.cy += dy / kpx(); goal.on = false; tour = false; clampCam(); cv.style.cursor = 'grabbing'; } }
+    else if (mode === 'det') { const ang = Math.atan2(Math.abs(wy(p[1])), wx(p[0])) / DEG; phi = clamp(Math.round(ang), 3, 177); phiS.set(phi); nDet = 0; detN0 = N; }
+    else if (mode === 'pinch' && ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()], dd = hyp(a[0] - b[0], a[1] - b[1]) || 1, mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      cam.w = clamp(pinch.w * pinch.d / dd, W_MIN, W_MAX); cam.cx = pinch.mx - (mx - S.w / 2) / kpx(); cam.cy = pinch.my + (my - S.h / 2) / kpx(); goal.on = false; tour = false; clampCam(); syncZoom();
+    }
+  });
+  const up = e => {
+    const p = ptrs.get(e.pointerId); ptrs.delete(e.pointerId);
+    if (mode === 'pan' && moved <= 4 && p && e.type === 'pointerup') click(p[0], p[1]);
+    if (ptrs.size === 1) { mode = 'pan'; moved = 99; } else if (!ptrs.size) { mode = null; dragDet = false; cv.style.cursor = 'crosshair'; }
+  };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('wheel', e => { e.preventDefault(); const p = pos(e); const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; zoomAt(p[0], p[1], Math.exp(clamp(dy, -240, 240) * (e.ctrlKey ? 0.01 : 0.0022))); }, { passive: false });
+  cv.addEventListener('dblclick', e => { const p = pos(e); zoomAt(p[0], p[1], e.shiftKey ? 4 : 0.25); });
+  cv.addEventListener('keydown', e => {
+    const step = cam.w * 0.12; let used = true;
+    if (e.key === '+' || e.key === '=') zoomAt(S.w / 2, S.h / 2, 0.6); else if (e.key === '-' || e.key === '_') zoomAt(S.w / 2, S.h / 2, 1 / 0.6);
+    else if (e.key === 'ArrowLeft') cam.cx -= step; else if (e.key === 'ArrowRight') cam.cx += step; else if (e.key === 'ArrowUp') cam.cy += step; else if (e.key === 'ArrowDown') cam.cy -= step;
+    else if (e.key === '0') flyTo(HOME.cx, HOME.cy, HOME.w); else if (e.key === 'f' || e.key === 'F') toggleMax(); else if (e.key === ' ') { run = !run; syncRun(); } else used = false;
+    if (used) { e.preventDefault(); clampCam(); syncZoom(); }
+  });
+  function click(x, y) {
+    const g = ladGeom();
+    if (S.h >= 300 && Math.abs(x - g.x) < 16 && y > g.y0 - 8 && y < g.y1 + 8) { const Lg = clamp(-0.6 - (y - g.y0) / (g.y1 - g.y0) * 13, -13.6, -0.47); const w = Math.pow(10, Lg); flyTo(Lg < -2.6 ? 0 : HOME.cx, 0, w); return; }
+    // nearest computed track
+    let best = null, bd = 14;
+    for (const a of micro) for (let i = 0; i < a.pts.length; i += 1) { const dd = hyp(X(a.pts[i][0]) - x, Y(a.pts[i][1]) - y); if (dd < bd) { bd = dd; best = a; } }
+    sel = best; syncSel();
+  }
+  // ---- overlay buttons on the stage ----
+  const zb = el('div', { class: 'zoombar' });
+  const zbtn = (t, lab, f) => { const b = el('button', { type: 'button', title: lab, 'aria-label': lab, html: t, onclick: f }); zb.append(b); return b; };
+  zbtn('+', 'Zoom in', () => flyTo(cam.cx, cam.cy, cam.w / 4));
+  zbtn('−', 'Zoom out', () => flyTo(cam.cx, cam.cy, cam.w * 4));
+  zbtn('⌂', 'Back to the apparatus', () => { tour = false; flyTo(HOME.cx, HOME.cy, HOME.w); });
+  const maxB = zbtn('⛶', 'Full screen', () => toggleMax());
+  S.wrap.append(zb);
+  let maxed = false;
+  function toggleMax() {
+    const fs = document.fullscreenElement;
+    if (fs) { document.exitFullscreen(); return; }
+    if (maxed) { setMax(false); return; }
+    if (S.wrap.requestFullscreen && !/iPhone|iPad/.test(navigator.userAgent)) S.wrap.requestFullscreen().catch(() => setMax(true)); else setMax(true);
+  }
+  function setMax(on) {
+    maxed = on; S.wrap.classList.toggle('ps-max', on); document.documentElement.classList.toggle('ps-noscroll', on);
+    sizeMode(on);
+  }
+  function sizeMode(on) {
+    cv.style.touchAction = on ? 'none' : ''; maxB.innerHTML = on ? '✕' : '⛶'; maxB.title = on ? 'Exit full screen' : 'Full screen';
+    baseSize(); requestAnimationFrame(baseSize);
+  }
+  // desktop: the simulation is as tall as the window allows (so the nucleus is never off-screen), and the graph
+  // underneath grows to sit level with the controls. Full screen: the whole window.
+  const deskH = () => clamp(window.innerHeight - 150, 420, 780);
+  function baseSize() { const full = maxed || document.fullscreenElement === S.wrap; S.forceH = full ? () => window.innerHeight : window.innerWidth > 940 ? deskH : null; S.resize(); }
+  const fsChange = () => sizeMode(document.fullscreenElement === S.wrap || maxed);
+  L.on(document, 'fullscreenchange', fsChange);
+  L.on(window, 'keydown', e => { if (e.key === 'Escape' && maxed) setMax(false); });
+  L.cleanup(() => { document.documentElement.classList.remove('ps-noscroll'); });
+  // the stage observes its own width; a full-screen height also has to follow the window
+  L.on(window, 'resize', baseSize);
+  if (!window.PS_HARVEST) { baseSize(); requestAnimationFrame(() => { if (S2.wrap.isConnected) S2.setFill(); }); }
+  // phones: the controls sit under the canvas, so bring the canvas back into view when a control moves the camera
+  const show = () => { if (window.innerWidth <= 940) { const r = S.wrap.getBoundingClientRect(); if (r.top < 0 || r.bottom > window.innerHeight) S.wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } };
+
+  // ---- side panel ----
+  const gz = Group(P.side, 'Zoom: 13 powers of ten');
+  const lv = Seg(gz, { wrap: true, options: LEVELS.map(l => [l[0], l[1]]), value: 'app', onchange: v => { tour = false; const [x, y, w] = LEVELS.find(q => q[0] === v)[2](); flyTo(x, y, w); show(); } });
+  const zS = Slider(gz, { id: 'ru-zoom', label: 'View width', min: Math.log10(W_MIN), max: Math.log10(W_MAX), step: 0.01, value: Math.log10(cam.w), fmt: v => lenStr(Math.pow(10, v), 2), oninput: v => { goal.on = false; tour = false; const w = Math.pow(10, v); if (w < 2e-3 && Math.abs(cam.cx) > w) { cam.cx = 0; cam.cy = 0; } cam.w = w; clampCam(); } });
+  function syncZoom() { zS.set(Math.log10(cam.w)); const Lg = Math.log10(cam.w); const near = LEVELS.reduce((b, l) => Math.abs(Math.log10(lvW(l)) - Lg) < Math.abs(Math.log10(lvW(b)) - Lg) ? l : b); lv.set(Math.abs(Math.log10(lvW(near)) - Lg) < 0.35 ? near[0] : null); }
+  const tb = Btns(gz);
+  const tourB = Btn(tb, '▶ Fly in: bench → nucleus', () => {
+    if (tour) { tour = false; goal.on = false; tourB.innerHTML = '▶ Fly in: bench → nucleus'; return; }
+    tour = true; show(); tourB.innerHTML = '❚❚ Stop the flight'; Object.assign(cam, { cx: HOME.cx, cy: 0, w: HOME.w });
+    const legs = LEVELS.slice(1).map(l => l[2]()); tourK = 0;
+    const next = () => { if (!tour) return; if (tourK >= legs.length) { tour = false; tourB.innerHTML = '▶ Fly in: bench → nucleus'; fan(); return; } const [x, y, w] = legs[tourK++]; flyTo(x, y, w, () => setTimeout(next, 900)); };
+    next();
+  }, 'pri sm');
   const g = Group(P.side, 'Experiment');
-  Seg(g, { options: [['nuclear', 'Nuclear atom'], ['pudding', 'Plum pudding']], value: model, onchange: v => { model = v; counts = { fwd: 0, small: 0, big: 0, back: 0 }; tracks = []; } });
-  Slider(g, { id: 'ru-Z', label: 'Nucleus charge <i>Z</i>', min: 13, max: 92, step: 1, value: Z, fmt: v => `${v} (${v === 79 ? 'Au' : v === 13 ? 'Al' : v === 92 ? 'U' : 'Z'})`, oninput: v => Z = v });
-  Slider(g, { id: 'ru-E', label: 'α kinetic energy', min: 2, max: 12, step: 0.5, value: Ek, unit: 'MeV', fmt: v => fix(v, 1), oninput: v => Ek = v });
-  Slider(g, { id: 'ru-r', label: 'Beam rate', min: 0.2, max: 4, step: 0.2, value: rate, fmt: v => fix(v, 1) + '×', oninput: v => rate = v });
-  const b = Btns(g); const pb = Btn(b, '❚❚ Pause beam', () => { run = !run; pb.textContent = run ? '❚❚ Pause beam' : '▶ Fire'; }, 'pri'); Btn(b, 'Clear tracks', () => { tracks = []; counts = { fwd: 0, small: 0, big: 0, back: 0 }; });
-  Switch(g, { label: 'Keep old tracks', value: showAll, onchange: v => showAll = v });
-  const ro = Readout(Group(P.side, 'Detector counts'), [['n', 'α particles detected'], ['fwd', 'Straight through (&lt;10°)', 'hl'], ['sm', 'Deflected 10–45°'], ['bg', 'Deflected &gt; 45°'], ['bk', 'Backscattered (&gt;90°)'], ['d', 'Closest approach (head-on)']]);
-  Note(P.side, 'Turn the energy down or the charge up and the closest approach grows: that distance is an <b>upper estimate of the nuclear radius</b>, because the α never touches the nucleus.');
+  Seg(g, { options: [['nuclear', 'Nuclear atom'], ['pudding', 'Plum pudding']], value: model, onchange: v => { model = v; reset(); } });
+  const tSel = el('select', { class: 'sel', id: 'ru-t', 'aria-label': 'foil material' }, TARGETS.map((q, i) => el('option', { value: i }, `${q.n} foil (Z = ${q.Z})`)));
+  tSel.addEventListener('change', () => { tg = TARGETS[+tSel.value]; derive(); reset(); }); g.append(tSel);
+  const sSel = el('select', { class: 'sel', id: 'ru-src', 'aria-label': 'alpha source' }, [el('option', { value: '' }, 'α source: choose a real isotope…'), ...SOURCES.map(([n, e]) => el('option', { value: e }, `${n} (${e} MeV)`))]);
+  sSel.addEventListener('change', () => { if (sSel.value) { eS.set(+sSel.value, true); } }); g.append(sSel);
+  const eS = Slider(g, { id: 'ru-E', label: 'α kinetic energy', min: 1, max: 30, step: 0.01, value: Ek, unit: 'MeV', fmt: v => fix(v, 2), oninput: v => { Ek = v; derive(); reset(); } });
+  Slider(g, { id: 'ru-th', label: 'Foil thickness', min: -8, max: -5.3, step: 0.01, value: Math.log10(tFoil), fmt: v => `${lenStr(Math.pow(10, v), 2)} ≈ ${Math.round(Math.pow(10, v) / tg.a).toLocaleString()} atoms`, oninput: v => { tFoil = Math.pow(10, v); derive(); reset(); } });
+  Slider(g, { id: 'ru-r', label: 'Beam intensity', min: 0, max: 6, step: 0.1, value: lgRate, fmt: v => `${sci(Math.pow(10, v), 2)} α s⁻¹`, oninput: v => lgRate = v });
+  const phiS = Slider(g, { id: 'ru-phi', label: 'Detector angle φ', min: 3, max: 177, step: 1, value: phi, unit: '°', fmt: v => String(v), oninput: v => { phi = v; nDet = 0; detN0 = N; } });
+  const b = Btns(g); const pb = Btn(b, '❚❚ Pause beam', () => { run = !run; syncRun(); }, 'pri'); Btn(b, 'Reset counts', reset);
+  function syncRun() { pb.textContent = run ? '❚❚ Pause beam' : '▶ Fire beam'; }
+  Switch(g, { label: 'Show undeflected tracks', value: showFaint, onchange: v => showFaint = v });
+  Legend(g, [[Theme.c.blue || '#0a84ff', 'a sample of all α'], [Theme.c.orange || '#ff9f0a', 'deflected 8–90° (every one, up to 8 a second)'], [Theme.c.red || '#ff453a', 'backscattered &gt; 90° (every one)'], [Theme.c.green || '#30d158', 'your selected track']]);
+  const ga = Group(P.side, 'Aim one α at the nucleus');
+  Slider(ga, { id: 'ru-b', label: 'Impact parameter <i>b</i>', min: -16, max: -11.5, step: 0.01, value: Math.log10(aimB), fmt: v => `${lenStr(Math.pow(10, v), 3)} → θ = ${fix(thetaOfB(Math.pow(10, v), d) / DEG, 1)}°`, oninput: v => aimB = Math.pow(10, v) });
+  const ab = Btns(ga); Btn(ab, '◎ Fire at b', () => { aimOne(); show(); }, 'sm'); Btn(ab, '☰ Fan of 17', () => { fan(); show(); }, 'sm'); Btn(ab, 'Clear', () => { micro.length = 0; sel = null; syncSel(); }, 'sm');
+  const selBox = el('div', { class: 'ro-sel' }); ga.append(selBox);
+  function syncSel() {
+    if (!sel) { selBox.innerHTML = '<p class="muted small">Tap any computed track (zoomed in to atoms or closer) to measure it.</p>'; return; }
+    const a = sel, pred = thetaOfB(a.b, a.d);
+    selBox.innerHTML = `<dl class="ro"><dt>Impact parameter <i>b</i></dt><dd>${lenStr(a.b, 3)}</dd><dt>Scattering angle (computed)</dt><dd class="hl">${a.contact ? 'absorbed' : fix(a.th / DEG, 2) + '°'}</dd>
+      <dt>Rutherford 2 tan⁻¹(<i>d</i>/2<i>b</i>)</dt><dd>${a.model === 'nuclear' ? fix(pred / DEG, 2) + '°' : 'n/a'}</dd><dt>Closest approach <i>r</i><sub>min</sub></dt><dd>${lenStr(a.rmin, 3)}</dd></dl>
+      ${a.model === 'nuclear' && !a.contact && Math.abs(a.th - pred) > 0.3 * DEG ? '<p class="muted small">The computed angle is a little smaller than Rutherford’s: his formula assumes a bare nucleus, but far from it the electron cloud screens its charge.</p>' : ''}`;
+  }
+  syncSel();
+  ro = Readout(Group(P.side, 'Detector counts'), [['n', 'α fired'], ['n1', 'Deflected &lt; 1°', 'hl'], ['n10', 'Deflected 1–10°'], ['n90', 'Deflected 10–90°'], ['nb', 'Backscattered &gt; 90°', 'hl'], ['p90', 'Rutherford predicts &gt; 90°'], ['det', 'Counted at φ ± 2.5°'], ['d', 'Head-on closest approach <i>d</i>'], ['R', 'Nuclear radius <i>r</i>₀<i>A</i><sup>⅓</sup>'], ['ct', 'Strong-force contact']]);
+  ro.el.classList.add('ro-tight');
+  noteBox = el('div'); P.side.append(noteBox);
+  warnEl = el('div', { class: 'flag', html: '<b>Anomalous scattering!</b> The α now gets close enough to touch the nucleus, the strong force acts, and Rutherford’s formula fails. Rutherford used exactly this with light nuclei like aluminium (1919) to estimate the size of the nucleus.' });
+  Note(noteBox, 'Plum pudding gives deflections of a few hundredths of a degree at most; the nuclear atom sends about 1 in 10⁴–10⁵ straight back. Zoom in to see why: almost every α misses the tiny nucleus by a huge margin.');
+
+  // ---- analysis plot ----
+  const plot = new Plot(S2, { pad: { l: 64, r: 16, t: 26, b: 42 } });
+  const EDGES = [1, 2, 3, 4, 5, 7.5, 10, 12.5, 15, 20, 25, 30, 40, 50, 60, 75, 90, 105, 120, 135, 150, 165, 180];
+  const binCount = (a, b) => { let s = 0; for (let i = Math.floor(a); i < Math.ceil(b) && i < 180; i++) s += hist[i]; return s; };
+  const theoryPerSr = th => nDens * tFoil * (d / 4) ** 2 / Math.pow(Math.sin(th / 2), 4);
+  L.loop(() => {
+    const c = S2.begin(), C = Theme.c; if (!S2.w) return;
+    c.fillStyle = C.paper2; c.fillRect(0, 0, S2.w, S2.h);
+    plot.rect = { x: 0, y: 0, w: S2.w, h: S2.h };
+    const tot = Math.max(1, N);
+    if (plotMode === 'omega' || plotMode === 'sin4') {
+      const lo = Math.log10(theoryPerSr(Math.PI)), hi = Math.log10(theoryPerSr(1 * DEG));
+      if (plotMode === 'omega') Object.assign(plot, { xmin: 0, xmax: 180, ymin: Math.floor(lo - 2.5), ymax: Math.ceil(hi + 0.5), xlabel: 'scattering angle θ / °', ylabel: 'fraction per steradian (log)', yfmt: v => '10' + supx(Math.round(v)), xticks: [0, 30, 60, 90, 120, 150, 180], yticks: null, title: '' });
+      else Object.assign(plot, { xmin: 0, xmax: 180, ymin: 0, ymax: 2.5, xlabel: 'scattering angle θ / °', ylabel: 'N sin⁴(θ/2) ÷ theory', yfmt: null, xticks: [0, 30, 60, 90, 120, 150, 180], yticks: [0, 0.5, 1, 1.5, 2, 2.5], title: '' });
+      plot.axes({ zeroAxes: false });
+      if (model === 'nuclear') {
+        if (plotMode === 'omega') plot.curve(x => Math.log10(theoryPerSr(Math.max(0.5, x) * DEG)), { color: C.violet, width: 2, a: 1, b: 180, n: 300 });
+        else plot.hline(1, { color: C.violet, width: 2, dash: null });
+      } else if (plotMode === 'omega') rich(c, 'Thomson’s model: nothing beyond about 1°', plot.X(90), plot.Y((plot.ymin + plot.ymax) / 2), { align: 'center', size: 13, color: C.red, w: 600 });
+      for (let i = 0; i < EDGES.length - 1; i++) {
+        const a = EDGES[i], b = EDGES[i + 1], cnt = binCount(a, b); if (!cnt) continue;
+        const dO = TAU * (Math.cos(a * DEG) - Math.cos(b * DEG)), mid = (a + b) / 2, f = v => v / (tot * dO);
+        if (plotMode === 'omega') {
+          const yv = Math.log10(f(cnt)), ylo = cnt > 1 ? Math.log10(f(cnt - Math.sqrt(cnt))) : plot.ymin, yhi = Math.log10(f(cnt + Math.sqrt(cnt)));
+          plot.clip(cc => { line(cc, [[plot.X(mid), plot.Y(ylo)], [plot.X(mid), plot.Y(yhi)]], { color: C.blue, width: 1.2 }); });
+          plot.dots([[mid, yv]], { color: C.blue, r: 3.6 });
+        } else if (model === 'nuclear') {
+          const s4 = Math.pow(Math.sin(mid * DEG / 2), 4), th0 = nDens * tFoil * (d / 4) ** 2, yv = f(cnt) * s4 / th0, er = f(Math.sqrt(cnt)) * s4 / th0;
+          plot.clip(cc => line(cc, [[plot.X(mid), plot.Y(yv - er)], [plot.X(mid), plot.Y(yv + er)]], { color: C.blue, width: 1.2 }));
+          plot.dots([[mid, yv]], { color: C.blue, r: 3.6 });
+        }
+      }
+      rich(c, plotMode === 'omega' ? 'Points: simulated counts ± √N · Line: Rutherford, ∝ 1/sin⁴(θ/2)' : 'Rutherford’s test: N sin⁴(θ/2) is constant (= 1 here). Small angles miss: electron screening + multiple scattering.', plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    } else if (plotMode === 'energy') {
+      const rmax = Math.max(4 * d, 3 * (Rn + R_ALPHA));
+      Object.assign(plot, { xmin: 0, xmax: rmax * 1e15, ymin: 0, ymax: Ek * 1.6, xlabel: 'distance from the centre of the nucleus *r* / fm', ylabel: 'energy / MeV', yfmt: null, xticks: null, yticks: null, title: '' });
+      plot.axes();
+      plot.curve(x => Ek * d * 1e15 / x, { color: C.red, width: 2, a: d * 1e15 * 0.35, b: rmax * 1e15, n: 300 });
+      plot.curve(x => Math.max(0, Ek - Ek * d * 1e15 / x), { color: C.blue, width: 2, a: d * 1e15, b: rmax * 1e15, n: 200 });
+      plot.hline(Ek, { color: C.ink2, dash: [5, 4] });
+      plot.vline(d * 1e15, { color: C.violet, dash: [4, 4], width: 1.5 }); plot.label(d * 1e15, Ek * 1.45, `d = ${fix(d * 1e15, 1)} fm`, { dx: 6, color: C.violet, size: 12, w: 700 });
+      plot.area([[0, plot.ymax], [(Rn + R_ALPHA) * 1e15, plot.ymax]], alpha(C.red, .08), 0);
+      plot.label((Rn + R_ALPHA) * 1e15 / 2, Ek * 0.12, 'nucleus + α', { align: 'center', color: C.red, size: 11 });
+      rich(c, 'Head-on α: kinetic energy (blue) turns into electric potential energy (red). At r = d it stops: E_k = kQq/d.', plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    } else {
+      Object.assign(plot, { xmin: 0, xmax: 8, ymin: 0, ymax: 180, xlabel: 'impact parameter *b* / *d*', ylabel: 'θ / °', yfmt: null, xticks: null, yticks: [0, 30, 60, 90, 120, 150, 180], title: '' });
+      plot.axes(); plot.curve(x => thetaOfB(Math.max(1e-6, x), 1) / DEG, { color: C.violet, width: 2, a: 0.001, b: 8, n: 300 });
+      plot.hline(90); plot.label(0.5, 90, 'b = d/2 → 90°', { dy: -10, color: C.ink2, size: 11.5 });
+      const ab = aimB / d; if (ab < 8) plot.dots([[ab, thetaOfB(aimB, d) / DEG]], { color: C.green, r: 6, stroke: C.paper2 });
+      rich(c, 'tan(θ/2) = d/2b: only α aimed within about d of a nucleus are turned through large angles.', plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    }
+  }, [S2]);
+  const gp = Group(P.side, 'Graph under the simulation');
+  Seg(gp, { wrap: true, options: [['omega', 'N(θ) log'], ['sin4', 'N sin⁴(θ/2)'], ['energy', 'Energy, head-on'], ['theta', 'θ against b']], value: plotMode, onchange: v => plotMode = v });
+
+  // ---- teaching cards ----
   Card(P.below, 'What the results prove (4.5.1)', `<div class="tbl-wrap"><table class="tbl"><tr><th>Observation</th><th>Conclusion</th></tr>
     <tr><td style="white-space:normal">Most α particles pass straight through, undeflected</td><td style="white-space:normal">The atom is mostly <b>empty space</b></td></tr>
     <tr><td style="white-space:normal">A small number are deflected through large angles</td><td style="white-space:normal">There is a <b>concentrated positive charge</b> that repels them</td></tr>
-    <tr><td style="white-space:normal">About 1 in 8000 is deflected through more than 90°</td><td style="white-space:normal">That charge is in a <b>tiny, very dense nucleus</b> carrying nearly all the mass</td></tr></table></div>
-    <p style="margin-top:10px">Rutherford (with Geiger and Marsden, 1909): “as incredible as if you fired a 15-inch shell at a piece of tissue paper and it came back and hit you.” The plum-pudding model predicts only tiny deflections — switch models above and watch the difference.</p>`);
-  Card(P.below, 'Experimental details worth a mark', list(['A thin <b>gold</b> foil: gold is malleable enough to beat into a foil only a few atoms thick, so multiple scattering is unlikely.', 'The whole apparatus is <b>evacuated</b>, because α particles are absorbed by a few centimetres of air.', 'A movable detector (zinc sulfide screen + microscope) counts scintillations at each angle.', 'The source is collimated to give a narrow, mono-energetic beam.']));
+    <tr><td style="white-space:normal">A very few (about 1 in 10⁴) come back through more than 90°</td><td style="white-space:normal">That charge is in a <b>tiny nucleus</b> that holds nearly all the atom’s mass</td></tr></table></div>
+    <p style="margin-top:10px">Rutherford (from Geiger and Marsden’s results, 1909–1913): “as incredible as if you fired a 15-inch shell at a piece of tissue paper and it came back and hit you.” The plum-pudding model predicts only tiny deflections. Switch models above and watch the graph.</p>`);
+  Card(P.below, 'How to use this lab', list([
+    '<b>Zoom</b> with the mouse wheel, a trackpad pinch, two fingers on a phone, the + / − buttons or the level buttons. Double-click to zoom in on a spot. Press <b>F</b> or ⛶ for full screen.',
+    '<b>Fly in</b> takes you from the bench to one gold nucleus in about 15 seconds: 10 orders of magnitude.',
+    'At the <b>apparatus</b> scale, drag the green detector round the chamber; green flashes are scintillations on the ZnS screen.',
+    'From <b>atoms</b> down, every track is calculated step by step from Coulomb’s law (screened by the electron cloud), not drawn from a formula. Tap a track to measure its impact parameter, angle and closest approach.',
+    'At the <b>nucleus</b> scale, use <b>Fan of 17</b> to see the family of hyperbolic paths, or <b>Fire at b</b> to aim one α exactly.',
+    'Try <b>aluminium</b> with a <b>Po-214</b> source (7.69 MeV): the α can now touch the nucleus. That is anomalous scattering.']));
+  Card(P.below, 'Experimental details worth a mark', list(['A <b>thin</b> foil of <b>gold</b>: gold can be beaten very thin, so most α meet at most one nucleus closely (no multiple large deflections). Its large <i>Z</i> also gives strong repulsion.', 'The apparatus is <b>evacuated</b>: α particles are absorbed by a few centimetres of air and would also be scattered by the air molecules.', 'A movable detector (zinc sulfide screen and microscope) counts scintillations at each angle, in a darkened room.', 'The source is <b>collimated</b> to give a narrow, parallel beam of α particles with a single energy.']));
+  EqCard(P.below, 'Beyond the spec: Rutherford’s formula', [['E_k = \\frac{1}{4\\pi\\varepsilon_0}\\frac{(2e)(Ze)}{d}', 'head-on closest approach'], ['\\tan\\frac{\\theta}{2} = \\frac{d}{2b}', 'b = impact parameter'], ['N(\\theta) \\propto \\frac{1}{\\sin^4(\\theta/2)}', 'counts per unit solid angle'], ['N \\propto t Z^2 / E_k^2', 'thickness, charge, energy']]);
+  Drill(P.below, { title: 'Alpha scattering drill', cls: 'wide', gens: [
+    () => ({ q: 'In the α-scattering experiment, <b>most α particles passed straight through the foil</b>. What does this show?', options: ['The atom is mostly empty space', 'The nucleus is positively charged', 'The nucleus contains neutrons', 'Electrons orbit in shells'], correct: 0, why: 'Undeflected α met nothing massive or charged: most of the atom’s volume is empty.' }),
+    () => ({ q: 'A very small fraction of α particles were <b>scattered back through more than 90°</b>. What does this show?', options: ['Positive charge and most of the mass are concentrated in a tiny nucleus', 'The atom is mostly empty space', 'Gold atoms are tightly packed', 'α particles are helium nuclei'], correct: 0, why: 'Only a small, massive, concentrated positive charge can turn an α round. The fact that it is rare shows the nucleus is tiny.' }),
+    () => ({ q: 'Why was the α-scattering apparatus <b>evacuated</b>?', options: ['α particles are absorbed by a few cm of air', 'To stop the gold foil oxidising', 'To make the α travel faster than light', 'So the detector could see electrons'], correct: 0, why: 'α particles have a range of only a few cm in air; molecules of air would also scatter them.' }),
+    () => ({ q: 'Why must the foil be <b>very thin</b>?', options: ['So each α is scattered by at most one nucleus', 'So it is cheaper', 'So the foil becomes radioactive', 'So the α particles are slowed to rest'], correct: 0, why: 'A thin foil makes single scattering likely, so a large deflection can be blamed on one close encounter with one nucleus.' }),
+    () => { const f = pick([2, 3, 4]); return { q: `The α energy is multiplied by <b>${f}</b>. By what factor does the number scattered through more than a given angle change? (N ∝ 1/E<sub>k</sub>²)`, a: 1 / (f * f), unit: '', tol: 0.01, steps: ['N ∝ 1/E_k²', `factor = 1/${f}² = ${fix(1 / (f * f), 4)}`] }; },
+    () => { const t = pick(TARGETS.slice(0, 4)), E = pick([4.8, 5.3, 5.5, 7.7]); const dd = dHead(t.Z, E); return { q: `<i>Extension:</i> an α particle of <b>${E} MeV</b> heads straight for a ${t.n.toLowerCase()} nucleus (Z = ${t.Z}). Find the distance of closest approach. (1/4πε₀ = 8.99 × 10⁹, e = 1.60 × 10⁻¹⁹ C)`, a: dd, unit: 'm', tol: 0.02, steps: [`E_k = ${E} × 1.60×10⁻¹³ = ${sci(E * MEV, 3)} J`, `At closest approach E_k = kQq/d with Q = ${t.Z}e, q = 2e`, `d = 8.99×10⁹ × ${t.Z} × 2 × (1.60×10⁻¹⁹)² / ${sci(E * MEV, 3)} = ${sci(dd, 3)} m`] }; },
+  ] });
 }
 
 /* ---------- Lab B: nuclear radius & density ---------- */
+const SYM = ['n', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf'];
 const NUC = [['Hydrogen', 1, 1], ['Helium', 4, 2], ['Carbon', 12, 6], ['Oxygen', 16, 8], ['Aluminium', 27, 13], ['Iron', 56, 26], ['Copper', 64, 29], ['Silver', 108, 47], ['Gold', 197, 79], ['Uranium', 238, 92]];
+const zStable = A => { const k = NUC.find(n => n[1] === A); return k ? k[2] : Math.max(1, Math.round(A / (1.98 + 0.0155 * Math.pow(A, 2 / 3)))); };
+const nucName = A => { const k = NUC.find(n => n[1] === A); const Z = zStable(A); return k ? `${k[0]}-${A}` : `${SYM[Z] || 'Z' + Z}-${A}`; };
 function mountRadius(P, L) {
-  const S = L.stage(P.stageBox, { aspect: 1.9, minH: 320, maxH: 440, mobileAspect: 1.0 });
-  let sel = 8, mode = 'cube';
+  const S = L.stage(P.stageBox, { aspect: 1.9, minH: 340, maxH: 500, mobileAspect: 0.85 });
+  const fit = () => { S.forceH = window.innerWidth > 940 ? () => clamp(window.innerHeight - 160, 420, 680) : null; S.resize(); };
+  if (!window.PS_HARVEST) { fit(); L.on(window, 'resize', fit); }
+  let A = 197, A2 = 27, compare = true, mode = 'cube', yaw = 0.4, pitch = 0.35, spin = true, zoomV = 1, drag = null;
   const plot = new Plot(S, {});
-  L.loop(() => {
-    const c = S.begin(), C = Theme.c, W = S.w, H = S.h, wide = W > 620;
-    const lp = wide ? { x: 0, y: 0, w: W * 0.36, h: H } : { x: 0, y: 0, w: W, h: H * 0.42 };
-    const gp = wide ? { x: W * 0.36, y: 0, w: W * 0.64, h: H } : { x: 0, y: H * 0.42, w: W, h: H * 0.58 };
-    const [nm, A, Z] = NUC[sel];
-    // nucleon packing picture
+  const geo = () => { const W = S.w, H = S.h, wide = W > 620; return { wide, lp: wide ? { x: 0, y: 0, w: W * 0.42, h: H } : { x: 0, y: 0, w: W, h: H * 0.5 }, gp: wide ? { x: W * 0.42, y: 0, w: W * 0.58, h: H } : { x: 0, y: H * 0.5, w: W, h: H * 0.5 } }; };
+  const inL = (x, y) => { const { lp } = geo(); return x >= lp.x && x <= lp.x + lp.w && y >= lp.y && y <= lp.y + lp.h; };
+  S.cv.addEventListener('pointerdown', e => { const r = S.cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; if (!inL(x, y)) return; drag = [x, y]; spin = false; spinSw.set(false); try { S.cv.setPointerCapture(e.pointerId); } catch (_) {} });
+  S.cv.addEventListener('pointermove', e => { if (!drag) return; const r = S.cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; yaw += (x - drag[0]) * 0.01; pitch = clamp(pitch + (y - drag[1]) * 0.01, -1.4, 1.4); drag = [x, y]; });
+  const endD = () => drag = null; S.cv.addEventListener('pointerup', endD); S.cv.addEventListener('pointercancel', endD);
+  S.cv.addEventListener('wheel', e => { const r = S.cv.getBoundingClientRect(); if (!inL(e.clientX - r.left, e.clientY - r.top)) return; e.preventDefault(); zoomV = clamp(zoomV * Math.exp(-e.deltaY * 0.002), 0.4, 6); zS.set(zoomV); }, { passive: false });
+  L.loop(dt => {
+    const c = S.begin(), C = Theme.c, W = S.w, H = S.h; if (!W) return; const { wide, lp, gp } = geo();
+    if (spin) yaw += dt * 0.5;
     c.fillStyle = C.paper2; c.fillRect(lp.x, lp.y, lp.w, lp.h);
     line(c, wide ? [[lp.w, 0], [lp.w, H]] : [[0, lp.h], [W, lp.h]], { color: C.line2, width: 1 });
-    const R = R0 * Math.pow(A, 1 / 3);
-    const px = Math.min(lp.w, lp.h) * 0.38 * Math.pow(A / 238, 1 / 3) + 10;
-    const ccx = lp.x + lp.w / 2, ccy = lp.y + lp.h * 0.45;
-    c.beginPath(); c.arc(ccx, ccy, px, 0, TAU); c.fillStyle = alpha(C.violet, .1); c.fill(); c.strokeStyle = C.violet; c.lineWidth = 1.5; c.stroke();
-    const nr = Math.max(2.2, px / Math.pow(A, 1 / 3) * 0.55);
-    let placed = 0; const golden = Math.PI * (3 - Math.sqrt(5));
-    const shown = Math.min(A, 260); for (let i = 0; i < shown; i++) { const rr = px * 0.86 * Math.sqrt(i / shown); const th = i * golden; const x = ccx + rr * Math.cos(th), y = ccy + rr * Math.sin(th); const h = ((i * 2654435761) % 1000) / 1000; dot(c, x, y, nr, h < Z / A ? C.red : C.blue); placed++; }
-    rich(c, `${nm}: *A* = ${A}, *Z* = ${Z}`, ccx, ccy + px + 18, { align: 'center', size: 13, color: C.ink, w: 600 });
-    rich(c, `*R* = ${sci(R, 3)} m = ${fix(R * 1e15, 2)} fm`, ccx, ccy + px + 36, { align: 'center', size: 12, color: C.violet });
-    rich(c, 'red = protons · blue = neutrons', ccx, lp.y + 16, { align: 'center', size: 11, color: C.muted });
+    const Z = zStable(A), R = R0 * Math.cbrt(A), Rc = R0 * Math.cbrt(A2), Z2 = zStable(A2);
+    const both = compare && A2 !== A, Rmax = R0 * Math.cbrt(260);
+    const pxPerFm = Math.min(both ? lp.w * 0.24 : lp.w * 0.4, lp.h * 0.34) / (Rmax * 1e15) * zoomV;
+    const cx1 = lp.x + (both ? lp.w * 0.34 : lp.w / 2), cy1 = lp.y + lp.h * 0.48, cx2 = lp.x + lp.w * 0.78;
+    drawNucleus3D(c, cx1, cy1, pxPerFm, packNucleus(A, Z), yaw, pitch, C);
+    c.beginPath(); c.arc(cx1, cy1, R * 1e15 * pxPerFm, 0, TAU); c.strokeStyle = alpha(C.violet, .6); c.lineWidth = 1.2; c.setLineDash([4, 4]); c.stroke(); c.setLineDash([]);
+    rich(c, `${nucName(A)}  (*Z* = ${Z}, *N* = ${A - Z})`, cx1, cy1 + R * 1e15 * pxPerFm + 18, { align: 'center', size: 12.5, color: C.ink, w: 600 });
+    rich(c, `*R* = ${fix(R * 1e15, 2)} fm`, cx1, cy1 + R * 1e15 * pxPerFm + 35, { align: 'center', size: 12, color: C.violet });
+    if (both) {
+      drawNucleus3D(c, cx2, cy1, pxPerFm, packNucleus(A2, Z2), yaw, pitch, C);
+      rich(c, nucName(A2), cx2, cy1 + Rc * 1e15 * pxPerFm + 18, { align: 'center', size: 12.5, color: C.ink, w: 600 });
+      rich(c, `*R* = ${fix(Rc * 1e15, 2)} fm`, cx2, cy1 + Rc * 1e15 * pxPerFm + 35, { align: 'center', size: 12, color: C.violet });
+      rich(c, `${fix(A / A2, 2)}× the nucleons → ${fix(R / Rc, 2)}× the radius (cube root)`, lp.x + lp.w / 2, lp.y + lp.h - 14, { align: 'center', size: 11.5, color: C.ink2, w: 600 });
+    }
+    rich(c, 'red = protons · blue = neutrons · drag to spin · scroll to zoom', lp.x + lp.w / 2, lp.y + 16, { align: 'center', size: 11, color: C.muted });
+    scaleBar(c, lp.x + 14, lp.y + lp.h - (both ? 34 : 16), pxPerFm * 1e15, Math.min(120, lp.w * 0.35), C.ink2);
     // graph
-    plot.rect = { x: gp.x + 4, y: gp.y + 4, w: gp.w - 8, h: gp.h - 8 }; plot.pad = { l: 60, r: 14, t: 16, b: 42 };
-    if (mode === 'cube') Object.assign(plot, { xmin: 0, xmax: 6.5, ymin: 0, ymax: 8.5, xlabel: '*A*^(1/3)', ylabel: 'radius *R* / fm' });
-    else Object.assign(plot, { xmin: 0, xmax: 250, ymin: 0, ymax: 8.5, xlabel: 'nucleon number *A*', ylabel: 'radius *R* / fm' });
+    plot.rect = { x: gp.x + 4, y: gp.y + 4, w: gp.w - 8, h: gp.h - 8 }; plot.pad = { l: 62, r: 14, t: 18, b: 42 }; plot.yfmt = null; plot.xfmt = null; plot.xticks = null; plot.yticks = null;
+    const pts = NUC.map(([, a]) => a); const cur = A;
+    const fx = { cube: a => Math.cbrt(a), A: a => a, log: a => Math.log(a), rho: a => a, V: a => a }[mode];
+    const fy = { cube: a => 1.2 * Math.cbrt(a), A: a => 1.2 * Math.cbrt(a), log: a => Math.log(1.2 * Math.cbrt(a)), rho: () => 2.30, V: a => 4 / 3 * Math.PI * 1.728 * a }[mode];
+    const cfg = { cube: [0, 6.6, 0, 8.5, '*A*^(1/3)', 'radius *R* / fm'], A: [0, 260, 0, 8.5, 'nucleon number *A*', 'radius *R* / fm'], log: [0, 5.8, 0, 2.2, 'ln *A*', 'ln (*R* / fm)'], rho: [0, 260, 0, 3, 'nucleon number *A*', 'density / 10¹⁷ kg m⁻³'], V: [0, 260, 0, 2000, 'nucleon number *A*', 'volume *V* / fm³'] }[mode];
+    Object.assign(plot, { xmin: cfg[0], xmax: cfg[1], ymin: cfg[2], ymax: cfg[3], xlabel: cfg[4], ylabel: cfg[5] });
     plot.axes();
-    if (mode === 'cube') { plot.curve(x => 1.2 * x, { color: C.violet, width: 2 }); plot.label(5.2, 1.2 * 5.2, 'gradient = *r*₀ = 1.2 fm', { dx: -8, dy: -12, align: 'right', color: C.violet, size: 12.5, w: 600 }); }
-    else plot.curve(x => 1.2 * Math.pow(Math.max(x, 0), 1 / 3), { color: C.violet, width: 2, n: 300 });
-    plot.dots(NUC.map(([n, a]) => [mode === 'cube' ? Math.pow(a, 1 / 3) : a, 1.2 * Math.pow(a, 1 / 3)]), { color: C.blue, r: 4 });
-    const dx = mode === 'cube' ? Math.pow(A, 1 / 3) : A;
-    plot.dots([[dx, R * 1e15]], { color: C.red, r: 7, stroke: C.paper2 });
-    plot.label(dx, R * 1e15, nm, { dx: 10, dy: -10, color: C.red, size: 12, w: 700, bg: alpha(C.paper2, .85) });
-    const m = A * 1.66e-27, V = 4 / 3 * Math.PI * R ** 3;
-    ro.set('R', `${fix(R * 1e15, 2)} fm`); ro.set('V', `${sci(V, 3)} m³`); ro.set('m', `${sci(m, 3)} kg`); ro.set('rho', `${sci(m / V, 3)} kg m⁻³`);
-    ro.set('cmp', `${sci(m / V / 7850, 2)} × steel`);
+    plot.curve(x => mode === 'cube' ? 1.2 * x : mode === 'A' ? 1.2 * Math.cbrt(Math.max(0, x)) : mode === 'log' ? Math.log(1.2) + x / 3 : mode === 'rho' ? 2.30 : 4 / 3 * Math.PI * 1.728 * x, { color: C.violet, width: 2, n: 300 });
+    const lab = { cube: 'gradient = *r*₀ = 1.2 fm', A: '*R* ∝ *A*^(1/3): a curve', log: 'gradient = 1/3, intercept = ln *r*₀ = 0.18', rho: 'constant: ≈ 2.3 × 10¹⁷ kg m⁻³', V: 'gradient = 4π*r*₀³/3 = 7.24 fm³' }[mode];
+    rich(c, lab, plot.x0 + 10, plot.y0 + 12, { size: 12, color: C.violet, w: 600 });
+    plot.dots(pts.map(a => [fx(a), fy(a)]), { color: C.blue, r: 4 });
+    plot.dots([[fx(cur), fy(cur)]], { color: C.red, r: 7, stroke: C.paper2 });
+    plot.label(fx(cur), fy(cur), nucName(cur), { dx: 10, dy: -10, color: C.red, size: 12, w: 700, bg: alpha(C.paper2, .85) });
+    const m = A * U_KG, V = 4 / 3 * Math.PI * R ** 3, rho = m / V;
+    ro.set('AZ', `${A} · ${Z} · ${A - Z}`); ro.set('R', `${fix(R * 1e15, 2)} fm`); ro.set('V', `${sci(V, 3)} m³`); ro.set('Vn', `${fix(V / A * 1e45, 2)} fm³`);
+    ro.set('m', `${sci(m, 3)} kg`); ro.set('rho', `${sci(rho, 3)} kg m⁻³`); ro.set('cmp', `${sci(rho / 7850, 2)} × steel`); ro.set('tsp', `${sci(rho * 5e-6 / 1000, 2)} tonnes`);
+    ro.set('earth', `${fix(Math.cbrt(5.97e24 / rho * 3 / (4 * Math.PI)), 0)} m radius`);
   }, [S]);
   const g = Group(P.side, 'Nuclide');
-  const sel2 = el('select', { class: 'sel', id: 'nr-n', 'aria-label': 'nuclide' }, NUC.map(([n, A, Z], i) => el('option', { value: i }, `${n}-${A}`)));
-  sel2.value = sel; sel2.addEventListener('change', () => sel = +sel2.value); g.append(sel2);
-  Seg(g, { label: 'Graph', options: [['cube', '<i>R</i> vs <i>A</i><sup>1/3</sup>'], ['A', '<i>R</i> vs <i>A</i>']], value: mode, onchange: v => mode = v });
-  const ro = Readout(Group(P.side, 'This nucleus'), [['R', 'Radius <i>R</i> = <i>r</i>₀<i>A</i><sup>1/3</sup>', 'hl'], ['V', 'Volume 4π<i>R</i>³/3'], ['m', 'Mass ≈ <i>A</i> × 1.66×10⁻²⁷'], ['rho', 'Density', 'hl'], ['cmp', 'Compared with steel']]);
-  Note(P.side, 'Change nuclide and watch the density: it barely moves. Nuclear matter has an almost <b>constant density</b> of about 2.3 × 10¹⁷ kg m⁻³, because <i>R</i>³ ∝ <i>A</i>, so volume ∝ number of nucleons.');
-  EqCard(P.below, 'Nuclear radius (4.5.2–4.5.3)', [['R = r_0 A^{1/3}', 'r₀ ≈ 1.2 fm'], ['V = \\frac{4}{3}\\pi R^3 \\propto A', ''], ['\\rho = \\frac{m}{V} = \\frac{A u}{\\frac{4}{3}\\pi r_0^3 A}', 'A cancels'], ['\\rho \\approx 2.3\\times10^{17}\\,\\text{kg m}^{-3}', 'independent of A']]);
-  Card(P.below, 'Interpreting the graph (4.5.2)', list(['A graph of <b>R against A<sup>1/3</sup></b> is a straight line through the origin with gradient <i>r</i>₀ ≈ 1.2 × 10⁻¹⁵ m.', 'A graph of R against A is a curve, which is why you cube-root first.', 'Since volume ∝ A, each nucleon takes up the same volume: the nucleons are <b>packed together</b> and nuclear density is constant.', 'That density is around 10¹⁴ times the density of everyday solids: a teaspoon of it would have a mass of roughly a billion tonnes. Neutron stars are made of it.']));
+  const aS = Slider(g, { id: 'nr-A', label: 'Nucleon number <i>A</i>', min: 1, max: 260, step: 1, value: A, fmt: v => `${v} (${nucName(v)})`, oninput: v => { A = v; sel2.value = NUC.findIndex(n => n[1] === v); } });
+  const sel2 = el('select', { class: 'sel', id: 'nr-n', 'aria-label': 'nuclide' }, NUC.map(([n, a], i) => el('option', { value: i }, `${n}-${a}`)));
+  sel2.value = 8; sel2.addEventListener('change', () => { A = NUC[+sel2.value][1]; aS.set(A); }); g.append(sel2);
+  Switch(g, { label: 'Compare with a second nucleus', value: compare, onchange: v => compare = v });
+  Slider(g, { id: 'nr-A2', label: 'Second nucleus <i>A</i>', min: 1, max: 260, step: 1, value: A2, fmt: v => `${v} (${nucName(v)})`, oninput: v => A2 = v });
+  const zS = Slider(g, { id: 'nr-z', label: 'Zoom', min: 0.4, max: 6, step: 0.05, value: zoomV, fmt: v => fix(v, 2) + '×', oninput: v => zoomV = v });
+  const spinSw = Switch(g, { label: 'Spin', value: spin, onchange: v => spin = v });
+  Seg(g, { label: 'Graph', wrap: true, options: [['cube', '<i>R</i>–<i>A</i><sup>⅓</sup>'], ['A', '<i>R</i>–<i>A</i>'], ['log', 'ln <i>R</i>–ln <i>A</i>'], ['V', '<i>V</i>–<i>A</i>'], ['rho', 'ρ–<i>A</i>']], value: mode, onchange: v => mode = v });
+  const ro = Readout(Group(P.side, 'This nucleus'), [['AZ', '<i>A</i> · <i>Z</i> · <i>N</i>'], ['R', 'Radius <i>R</i> = <i>r</i>₀<i>A</i><sup>⅓</sup>', 'hl'], ['V', 'Volume 4π<i>R</i>³/3'], ['Vn', 'Volume per nucleon'], ['m', 'Mass ≈ <i>A</i> × 1.66×10⁻²⁷ kg'], ['rho', 'Density', 'hl'], ['cmp', 'Compared with steel'], ['tsp', 'A teaspoon (5 cm³) of it'], ['earth', 'Earth squashed to this density']]); ro.el.classList.add('ro-tight');
+  Note(P.side, 'Slide <i>A</i> from 1 to 260 and watch the density: it does not move. <i>R</i>³ ∝ <i>A</i>, so volume ∝ number of nucleons: every nucleon takes up the same space, and nuclear matter has a <b>constant density</b> of about 2.3 × 10¹⁷ kg m⁻³.');
+  EqCard(P.below, 'Nuclear radius (4.5.2–4.5.3)', [['R = r_0 A^{1/3}', 'r₀ ≈ 1.2 fm'], ['V = \\frac{4}{3}\\pi R^3 = \\frac{4}{3}\\pi r_0^3 A \\propto A', ''], ['\\rho = \\frac{m}{V} = \\frac{A u}{\\frac{4}{3}\\pi r_0^3 A} = \\frac{3u}{4\\pi r_0^3}', 'A cancels'], ['\\rho \\approx 2.3\\times10^{17}\\,\\text{kg m}^{-3}', 'independent of A'], ['\\ln R = \\frac{1}{3}\\ln A + \\ln r_0', 'straight line']]);
+  Card(P.below, 'Interpreting the graphs (4.5.2)', list(['A graph of <b>R against A<sup>1/3</sup></b> is a straight line through the origin with gradient <i>r</i>₀ ≈ 1.2 × 10⁻¹⁵ m.', 'A graph of R against A is a curve, which is why you cube-root first.', 'A graph of <b>ln R against ln A</b> is a straight line of gradient ⅓ and intercept ln <i>r</i>₀. Use it when you don’t know the power.', 'Since volume ∝ A, each nucleon takes up the same volume (about 7.2 fm³): nucleons are <b>packed together</b> like balls in a bag, and nuclear density is constant.', 'That density is about 10¹⁴ times that of everyday solids: a teaspoon would have a mass of roughly a billion tonnes. Neutron stars are made of it.']));
+  Card(P.below, 'Where the radii come from (extension)', '<p>Radii are measured by firing <b>high-energy electrons</b> (hundreds of MeV) at nuclei and looking at the diffraction pattern: the first minimum is at sin θ ≈ 0.61λ/R. Electrons feel only the electric force, so unlike α particles they can probe right inside the nucleus without the strong force getting in the way. Rutherford’s closest-approach distance only gives an <b>upper limit</b> on R.</p>');
   Drill(P.below, { title: 'Nuclear radius drill', cls: 'wide', gens: [
     () => { const [n, A] = pick(NUC); const R = R0 * Math.pow(A, 1 / 3); return { q: `Estimate the radius of a <b>${n}-${A}</b> nucleus (r₀ = 1.2 × 10⁻¹⁵ m).`, a: R, unit: 'm', tol: 0.02, steps: ['R = r₀A^(1/3)', `= 1.2×10⁻¹⁵ × ${A}^(1/3) = ${sci(R, 3)} m`] }; },
     () => { const [n, A] = pick(NUC); const R = R0 * Math.pow(A, 1 / 3), m = A * U_KG, V = 4 / 3 * Math.PI * R ** 3; return { q: `Estimate the density of nuclear matter using <b>${n}-${A}</b> (mass of a nucleon = 1.66 × 10⁻²⁷ kg).`, a: m / V, unit: 'kg m⁻³', tol: 0.05, steps: [`m = ${A} × 1.66×10⁻²⁷ = ${sci(m, 3)} kg`, `R = 1.2×10⁻¹⁵ × ${A}^(1/3) = ${sci(R, 3)} m, V = 4πR³/3 = ${sci(V, 3)} m³`, `ρ = m/V = ${sci(m / V, 3)} kg m⁻³`] }; },
-    () => { const f = pick([8, 27, 64]); return { q: `Nucleus X has <b>${f}×</b> the nucleon number of nucleus Y. How many times bigger is its radius?`, a: Math.cbrt(f), unit: '', tol: 0.01, steps: ['R ∝ A^(1/3)', `ratio = ${f}^(1/3) = ${fix(Math.cbrt(f), 2)}`] }; },
+    () => { const f = pick([8, 27, 64, 125]); return { q: `Nucleus X has <b>${f}×</b> the nucleon number of nucleus Y. How many times bigger is its radius?`, a: Math.cbrt(f), unit: '', tol: 0.01, steps: ['R ∝ A^(1/3)', `ratio = ${f}^(1/3) = ${fix(Math.cbrt(f), 2)}`] }; },
+    () => { const A = pick([27, 64, 125, 216]); const R = 1.2 * Math.cbrt(A) * (1 + (Math.random() - 0.5) * 0.06); return { q: `A nucleus with <b>A = ${A}</b> has a measured radius of <b>${fix(R, 2)} fm</b>. Find r₀.`, a: +fix(R, 2) / Math.cbrt(A), unit: 'fm', tol: 0.02, steps: ['r₀ = R / A^(1/3)', `= ${fix(R, 2)} / ${fix(Math.cbrt(A), 3)} = ${fix(+fix(R, 2) / Math.cbrt(A), 3)} fm`] }; },
+    () => { const [n, A] = pick(NUC.slice(2)); const R = R0 * Math.cbrt(A), V = 4 / 3 * Math.PI * R ** 3; return { q: `Find the volume of a <b>${n}-${A}</b> nucleus.`, a: V, unit: 'm³', tol: 0.03, steps: [`R = 1.2×10⁻¹⁵ × ${A}^(1/3) = ${sci(R, 3)} m`, `V = 4πR³/3 = ${sci(V, 3)} m³`] }; },
+    () => ({ q: 'Why is the density of nuclear matter the <b>same for all nuclei</b>?', options: ['Volume ∝ A and mass ∝ A, so A cancels in m/V', 'All nuclei have the same radius', 'The strong force is the same everywhere', 'Protons and neutrons have different masses'], correct: 0, why: 'R³ ∝ A gives V ∝ A, and m ∝ A, so ρ = m/V does not depend on A.' }),
   ] });
+}
+
+/* ---------- Lab C: find r₀ from data ---------- */
+const DATA_NUC = [['C', 12], ['O', 16], ['Al', 27], ['Ca', 40], ['Fe', 56], ['Sr', 88], ['Sn', 120], ['Ba', 138], ['Au', 197], ['Pb', 208]];
+function mountFit(P, L) {
+  const S = L.stage(P.stageBox, { aspect: 1.75, minH: 340, maxH: 500, mobileAspect: 1.0 });
+  let data = [], hA = [2.2, 1.0], hB = [5.5, 1.5], showFit = false, mode = 'log', act = null;
+  function newData() { const r0 = 1.15 + Math.random() * 0.12; data = DATA_NUC.map(([s, A]) => ({ s, A, R: r0 * Math.cbrt(A) * (1 + gauss() * 0.025), u: 0.03 })); showFit = false; fitB.textContent = 'Show best fit'; hA = mode === 'log' ? [2.2, 0.9 + Math.random() * 0.3] : [1, 1.6]; hB = mode === 'log' ? [5.5, 1.3 + Math.random() * 0.4] : [6, 6.4]; renderTable(); verdict.innerHTML = ''; }
+  const plot = new Plot(S, { pad: { l: 60, r: 18, t: 18, b: 44 } });
+  const tf = () => mode === 'log' ? { x: d => Math.log(d.A), y: d => Math.log(d.R), xr: [0, 6], yr: [0, 2.2], xl: 'ln *A*', yl: 'ln (*R* / fm)' } : { x: d => Math.cbrt(d.A), y: d => d.R, xr: [0, 6.5], yr: [0, 8.5], xl: '*A*^(1/3)', yl: '*R* / fm' };
+  function lsq() { const T = tf(), xs = data.map(T.x), ys = data.map(T.y), n = xs.length, mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n; let sxy = 0, sxx = 0; for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; } const m = sxy / sxx; return mode === 'log' ? { m, c: my - m * mx } : { m: data.reduce((a, d) => a + Math.cbrt(d.A) * d.R, 0) / data.reduce((a, d) => a + Math.cbrt(d.A) ** 2, 0), c: 0 }; }
+  Pointer(S, {
+    hit: (x, y) => { for (const [k, h] of [['a', hA], ['b', hB]]) if (hyp(plot.X(h[0]) - x, plot.Y(h[1]) - y) < 18) return k; return null; },
+    move: (k, x, y) => { const h = k === 'a' ? hA : hB; h[0] = clamp(plot.ix(x), plot.xmin, plot.xmax); h[1] = clamp(plot.iy(y), plot.ymin, plot.ymax); act = k; },
+    up: () => { act = null; }
+  });
+  L.loop(() => {
+    const c = S.begin(), C = Theme.c; if (!S.w) return; const T = tf();
+    Object.assign(plot, { xmin: T.xr[0], xmax: T.xr[1], ymin: T.yr[0], ymax: T.yr[1], xlabel: T.xl, ylabel: T.yl });
+    plot.axes();
+    for (const d of data) { const x = T.x(d), y = T.y(d), e = mode === 'log' ? d.u : d.R * d.u; plot.clip(cc => line(cc, [[plot.X(x), plot.Y(y - e)], [plot.X(x), plot.Y(y + e)]], { color: C.blue, width: 1.3 })); plot.label(x, y, d.s, { dx: 6, dy: -9, color: C.muted, size: 10.5 }); }
+    plot.cross(data.map(d => [T.x(d), T.y(d)]), { color: C.blue, s: 4.5 });
+    const m = (hB[1] - hA[1]) / (hB[0] - hA[0] || 1e-9), cc = hA[1] - m * hA[0];
+    plot.curve(x => m * x + cc, { color: C.orange, width: 2.2 });
+    handle(c, plot.X(hA[0]), plot.Y(hA[1]), C.orange, act === 'a'); handle(c, plot.X(hB[0]), plot.Y(hB[1]), C.orange, act === 'b');
+    if (showFit) { const f = lsq(); plot.curve(x => f.m * x + f.c, { color: C.green, width: 1.6, dash: [6, 4] }); }
+    rich(c, 'Drag the two orange handles to draw your best-fit line', plot.x0 + 8, plot.y0 + 12, { size: 11.5, color: C.muted });
+    if (mode === 'log') { ro.set('m', fix(m, 3)); ro.set('c', fix(cc, 3)); ro.set('n', `n = ${fix(m, 3)} (theory ⅓ = 0.333)`); ro.set('r0', `${fix(Math.exp(cc), 3)} fm`); }
+    else { ro.set('m', fix(m, 3) + ' fm'); ro.set('c', fix(cc, 3) + ' fm'); ro.set('n', 'line should pass through (0, 0)'); ro.set('r0', `${fix(m, 3)} fm (gradient)`); }
+  }, [S]);
+  const g = Group(P.side, 'Analysis');
+  Seg(g, { label: 'Plot', options: [['log', 'ln <i>R</i> against ln <i>A</i>'], ['cube', '<i>R</i> against <i>A</i><sup>⅓</sup>']], value: mode, onchange: v => { mode = v; if (v === 'log') { hA = [2.2, 1.0]; hB = [5.5, 1.5]; } else { hA = [1, 1.6]; hB = [6, 6.4]; } showFit = false; verdict.innerHTML = ''; } });
+  const ro = Readout(g, [['m', 'Gradient of your line', 'hl'], ['c', 'y-intercept'], ['n', 'Power of A'], ['r0', 'Your <i>r</i>₀', 'hl']]);
+  const verdict = el('div');
+  const b = Btns(g);
+  Btn(b, 'Check my line', () => {
+    const f = lsq(), m = (hB[1] - hA[1]) / (hB[0] - hA[0] || 1e-9), cc = hA[1] - m * hA[0];
+    const r0me = mode === 'log' ? Math.exp(cc) : m, r0f = mode === 'log' ? Math.exp(f.c) : f.m;
+    const ok = mode === 'log' ? Math.abs(m - f.m) < 0.03 && Math.abs(r0me - r0f) < 0.07 : Math.abs(m - f.m) < 0.04 && Math.abs(cc) < 0.35;
+    verdict.className = 'flag' + (ok ? ' ok' : ''); verdict.innerHTML = ok ? `✓ Good line. Least squares gives ${mode === 'log' ? `n = ${fix(f.m, 3)}, ` : ''}r₀ = ${fix(r0f, 3)} fm.` : `✗ Not yet: ${mode === 'log' ? 'aim for a gradient near ⅓ that runs through the middle of the points' : 'the line should run through the origin and the middle of the points'}.`;
+  }, 'pri');
+  const fitB = Btn(b, 'Show best fit', () => { showFit = !showFit; fitB.textContent = showFit ? 'Hide best fit' : 'Show best fit'; });
+  Btn(b, 'New data set', newData);
+  g.append(verdict);
+  Note(P.side, 'Taking logs of <i>R</i> = <i>r</i>₀<i>A</i><sup><i>n</i></sup> gives ln <i>R</i> = <i>n</i> ln <i>A</i> + ln <i>r</i>₀: a straight line. The <b>gradient</b> is the power <i>n</i> and the <b>intercept</b> is ln <i>r</i>₀, so <i>r</i>₀ = e<sup>intercept</sup>.');
+  const tcard = Card(P.below, 'Measured radii (simulated electron-scattering data, ±3%)', null, 'wide'); const tbox = el('div', { class: 'tbl-wrap' }); tcard.append(tbox);
+  function renderTable() { tbox.innerHTML = `<table class="tbl"><tr><th>Nuclide</th><th>A</th><th>R / fm</th><th>A<sup>⅓</sup></th><th>ln A</th><th>ln (R/fm)</th></tr>${data.map(d => `<tr><td>${d.s}-${d.A}</td><td>${d.A}</td><td>${fix(d.R, 2)}</td><td>${fix(Math.cbrt(d.A), 3)}</td><td>${fix(Math.log(d.A), 3)}</td><td>${fix(Math.log(d.R), 3)}</td></tr>`).join('')}</table>`; }
+  Card(P.below, 'Exam technique for log graphs', list(['Label the axes <b>ln (R / fm)</b> and <b>ln A</b>: you can only take the log of a pure number, so divide by the unit first.', 'Use a large gradient triangle, at least half the line, and quote the gradient to 2 or 3 s.f.', 'The intercept is where the line meets ln A = 0. If your axis does not start at 0, use <i>c</i> = <i>y</i> − <i>mx</i> with a point on the line, not a data point.', 'Error bars on ln R have the same length everywhere when the percentage uncertainty is the same: Δ(ln R) ≈ ΔR / R.']));
+  Drill(P.below, { title: 'Log-graph drill', cls: 'wide', gens: [
+    () => { const c = +(0.12 + Math.random() * 0.12).toFixed(3); return { q: `A graph of ln (R/fm) against ln A has intercept <b>${c}</b>. Find r₀.`, a: Math.exp(c), unit: 'fm', tol: 0.01, steps: ['ln R = n ln A + ln r₀, so the intercept = ln r₀', `r₀ = e^${c} = ${fix(Math.exp(c), 3)} fm`] }; },
+    () => { const [x1, y1, x2, y2] = [+(1 + Math.random()).toFixed(2), 0, +(4.5 + Math.random()).toFixed(2), 0]; const Y1 = +(0.18 + x1 / 3).toFixed(3), Y2 = +(0.18 + x2 / 3).toFixed(3); return { q: `Two points on a best-fit line of ln (R/fm) against ln A are (${x1}, ${Y1}) and (${x2}, ${Y2}). Find the gradient, which is the power of A.`, a: (Y2 - Y1) / (x2 - x1), unit: '', tol: 0.01, steps: [`gradient = (${Y2} − ${Y1}) / (${x2} − ${x1})`, `= ${fix((Y2 - Y1) / (x2 - x1), 3)} ≈ ⅓`] }; },
+  ] });
+  newData();
 }
 
 topic({
   id: 'nucleus', code: '4.5', unit: 'A2 1', title: 'The Nucleus', short: 'Nucleus',
-  blurb: 'Fire alpha particles at gold foil and watch the nuclear atom fall out of the results, then size the nucleus with R = r₀A^⅓ and find the density of nuclear matter.',
+  blurb: 'Zoom from the bench to a single gold nucleus, 13 powers of ten, and watch computed α tracks reveal the nuclear atom. Then size the nucleus with R = r₀A^⅓, spin a 3D nucleus, and find r₀ from a log graph.',
   outcomes: [
     ['4.5.1', 'describe alpha-particle scattering as evidence of the existence of atomic nuclei', 'rutherford'],
     ['4.5.2', 'interpret the variation of nuclear radius with nucleon number', 'radius'],
     ['4.5.3', 'use the equation r = r₀A^⅓ to estimate the density of nuclear matter', 'radius'],
   ],
   labs: [
-    { id: 'rutherford', title: 'Alpha scattering', hint: 'Geiger–Marsden', spec: ['4.5.1'], mount: mountRutherford },
-    { id: 'radius', title: 'Nuclear radius & density', hint: 'R = r₀A^⅓', spec: ['4.5.2', '4.5.3'], mount: mountRadius },
+    { id: 'rutherford', title: 'Alpha scattering', hint: 'bench → nucleus zoom', spec: ['4.5.1'], mount: mountRutherford, noFill: true },
+    { id: 'radius', title: 'Nuclear radius & density', hint: 'R = r₀A^⅓', spec: ['4.5.2', '4.5.3'], mount: mountRadius, noFill: true },
+    { id: 'fit', title: 'Find r₀ from data', hint: 'ln R against ln A', spec: ['4.5.2'], mount: mountFit },
   ],
-  equations: [['R = r_0 A^{1/3}', 'r₀ ≈ 1.2 fm'], ['\\rho = \\frac{m}{V}', ''], ['V = \\frac{4}{3}\\pi R^3', ''], ['E_k = \\frac{2Ze^2}{4\\pi\\varepsilon_0 d}', 'closest approach (extension)']],
-  traps: ['Alpha scattering shows the nucleus is small, dense and <b>positive</b> — quote the observation with the conclusion.', 'r₀ is 1.2 <b>femtometres</b> = 1.2 × 10⁻¹⁵ m.', 'A^(1/3) means the cube root of the nucleon number, not A ÷ 3.', 'Nuclear density comes out the same for every nuclide: say why (V ∝ A).', 'Use the nucleon mass 1.66 × 10⁻²⁷ kg × A for the nuclear mass in density questions.'],
+  equations: [['R = r_0 A^{1/3}', 'r₀ ≈ 1.2 fm'], ['\\rho = \\frac{m}{V}', ''], ['V = \\frac{4}{3}\\pi R^3', ''], ['\\ln R = \\frac{1}{3}\\ln A + \\ln r_0', 'log graph'], ['E_k = \\frac{2Ze^2}{4\\pi\\varepsilon_0 d}', 'closest approach (extension)']],
+  traps: ['Alpha scattering shows the nucleus is small, dense and <b>positive</b>: quote each observation with its conclusion.', '“Most went straight through” ⇒ empty space. “A few came back” ⇒ tiny, massive, positive nucleus. Don’t swap them.', 'r₀ is 1.2 <b>femtometres</b> = 1.2 × 10⁻¹⁵ m.', 'A^(1/3) means the cube root of the nucleon number, not A ÷ 3.', 'Nuclear density comes out the same for every nuclide: say why (V ∝ A and m ∝ A).', 'Use the nucleon mass 1.66 × 10⁻²⁷ kg × A for the nuclear mass in density questions.', 'Closest approach gives only an <b>upper limit</b> for the nuclear radius: the α never touches a gold nucleus.'],
+  notes: [
+    ['Alpha scattering: the experiment', 'Geiger and Marsden (directed by Rutherford) fired a narrow, collimated beam of α particles of one energy at a thin gold foil in an <b>evacuated</b> chamber. A zinc sulfide screen viewed through a microscope was moved round the foil and the scintillations at each angle were counted.'],
+    ['Alpha scattering: the results', '<table><tr><th>observation</th><th>conclusion</th></tr><tr><td>most α pass straight through</td><td>the atom is mostly empty space</td></tr><tr><td>some are deflected through large angles</td><td>concentrated positive charge repels them</td></tr><tr><td>about 1 in 10⁴ bounce back (&gt; 90°)</td><td>the charge and most of the mass are in a tiny, dense nucleus</td></tr></table>'],
+    ['Why the plum-pudding model failed', 'Thomson’s model spreads the positive charge through the whole atom (radius ~10⁻¹⁰ m). The field is then far too weak to deflect a fast, heavy α by more than a fraction of a degree, so it cannot explain backscattering.'],
+    ['Closest approach (extension)', 'A head-on α stops where all its kinetic energy has become electric potential energy: E_k = (1/4πε₀)(2e)(Ze)/d. For 5 MeV α on gold, d ≈ 45 fm: an upper limit on the radius of the gold nucleus (≈ 7 fm).'],
+    ['Nuclear radius', 'R = r₀A^⅓ with r₀ ≈ 1.2 × 10⁻¹⁵ m (1.2 fm). R against A^⅓ is a straight line through the origin with gradient r₀; ln R against ln A is a straight line of gradient ⅓ and intercept ln r₀.'],
+    ['Nuclear density', 'V = (4/3)πr₀³A ∝ A and m ≈ A × 1.66 × 10⁻²⁷ kg ∝ A, so ρ = 3u/(4πr₀³) ≈ 2.3 × 10¹⁷ kg m⁻³ for every nucleus: nucleons are closely packed. It is about 10¹⁴ times the density of ordinary matter.'],
+  ],
 });
 })();
 

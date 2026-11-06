@@ -1,2 +1,8 @@
+# Netlify: connect the repo and every push deploys. Build settings live here, so the Netlify UI needs none.
 [build]
   publish = "further-maths"
+  # Writes the crawlable /learn/ revision pages and sitemap.xml (Node 18+, no dependencies)
+  command = "node tools/build-seo.mjs"
+
+[build.environment]
+  NODE_VERSION = "20"
