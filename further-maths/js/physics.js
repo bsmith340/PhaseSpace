@@ -609,6 +609,142 @@ function Sorter(parent, o) {
   start(); return box;
 }
 
+/* ---------- multi-scale camera: pan, zoom, pinch, keyboard and full screen for the zoomable labs ---------- */
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+// lengths with an SI prefix: 2.5e-14 → "25.0 fm"
+function lenStr(m, sf = 3) {
+  const a = Math.abs(m);
+  const P = [[1, 'm'], [1e-2, 'cm'], [1e-3, 'mm'], [1e-6, 'µm'], [1e-9, 'nm'], [1e-12, 'pm'], [1e-15, 'fm']];
+  for (const [f, u] of P) if (a >= f * 0.9999) return `${num(m / f, sf)} ${u}`;
+  return `${num(m / 1e-15, sf)} fm`;
+}
+// the nicest 1/2/5 × 10ⁿ near x
+function niceLen(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; }
+function scaleBar(c, x, y, pxPerM, maxPx, color, fmt) {
+  const Lm = niceLen(maxPx / pxPerM), L = Lm * pxPerM;
+  c.save(); c.strokeStyle = color; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y - 5); c.lineTo(x, y); c.lineTo(x + L, y); c.lineTo(x + L, y - 5); c.stroke(); c.restore();
+  rich(c, fmt ? fmt(Lm) : lenStr(Lm, 2).replace('.0 ', ' '), x + L / 2, y - 12, { align: 'center', size: 11.5, color, w: 600, mono: true, fit: false });
+}
+// o: { home: {cx,cy,w} | () => {…}, wMin, wMax, bounds?: () => [x0,x1,y0,y1], hit?(x,y) → key, drag?(key,x,y,phase), click?(x,y),
+//      hover?(x,y), onzoom?(), deskH?: () => px (desktop canvas height) }
+// World y points up. Returns X/Y (world → px), wx/wy (px → world), k() (px per world unit), flyTo, step(dt) and more.
+function Cam(S, L, o) {
+  const cv = S.cv; cv.tabIndex = 0;
+  const home = () => typeof o.home === 'function' ? o.home() : o.home;
+  const h0 = home(), cam = { cx: h0.cx, cy: h0.cy, w: h0.w }, goal = { on: false, cx: 0, cy: 0, w: 1, then: null };
+  const A = { cam, maxed: false };
+  A.k = () => S.w / cam.w;
+  A.X = x => S.w / 2 + (x - cam.cx) * A.k(); A.Y = y => S.h / 2 - (y - cam.cy) * A.k();
+  A.wx = px => cam.cx + (px - S.w / 2) / A.k(); A.wy = py => cam.cy - (py - S.h / 2) / A.k();
+  A.hv = () => cam.w * S.h / Math.max(1, S.w);
+  A.clamp = () => { cam.w = clamp(cam.w, o.wMin, o.wMax); if (o.bounds) { const b = o.bounds(); cam.cx = clamp(cam.cx, b[0], b[1]); cam.cy = clamp(cam.cy, b[2], b[3]); } };
+  const changed = () => { if (o.onzoom) o.onzoom(cam); };
+  A.zoomAt = (px, py, f) => { const x = A.wx(px), y = A.wy(py); cam.w = clamp(cam.w * f, o.wMin, o.wMax); cam.cx = x - (px - S.w / 2) / A.k(); cam.cy = y + (py - S.h / 2) / A.k(); goal.on = false; A.clamp(); changed(); };
+  A.flyTo = (cx, cy, w, then) => Object.assign(goal, { on: true, cx, cy, w: clamp(w, o.wMin, o.wMax), then: then || null });
+  A.home = then => { const h = home(); A.flyTo(h.cx, h.cy, h.w, then); };
+  A.set = (cx, cy, w) => { Object.assign(cam, { cx, cy, w }); goal.on = false; A.clamp(); changed(); };
+  A.flying = () => goal.on;
+  // zoom exponentially in log space and shrink the pan offset in screen units, so the target stays framed at every scale
+  A.step = dt => {
+    if (!goal.on) return;
+    const f = 1 - Math.exp(-dt * (o.flySpeed || 4.2)), lw = Math.log(cam.w), lg = Math.log(goal.w), w0 = cam.w;
+    cam.w = Math.exp(lw + (lg - lw) * f); const shrink = (1 - Math.max(f, 0.08)) * Math.min(1, cam.w / w0);
+    cam.cx = goal.cx - (goal.cx - cam.cx) * shrink; cam.cy = goal.cy - (goal.cy - cam.cy) * shrink;
+    if (Math.abs(lw - lg) < 0.01 && Math.abs(goal.cx - cam.cx) < cam.w * 0.002 && Math.abs(goal.cy - cam.cy) < cam.w * 0.002) {
+      Object.assign(cam, { cx: goal.cx, cy: goal.cy, w: goal.w }); goal.on = false; const t = goal.then; goal.then = null; if (t) t();
+    }
+    changed();
+  };
+  // ---- input ----
+  const ptrs = new Map(); let mode = null, moved = 0, pinch = null, key = null;
+  const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const hitAt = (x, y) => o.hit ? o.hit(x, y) : null;
+  cv.addEventListener('pointerdown', e => {
+    const p = pos(e); ptrs.set(e.pointerId, p); try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+    if (ptrs.size === 1) { key = hitAt(p[0], p[1]); mode = key != null ? 'drag' : 'pan'; moved = 0; if (mode === 'drag' && o.drag) o.drag(key, p[0], p[1], 'start'); }
+    else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: hyp(a[0] - b[0], a[1] - b[1]) || 1, w: cam.w, mx: A.wx((a[0] + b[0]) / 2), my: A.wy((a[1] + b[1]) / 2) }; mode = 'pinch'; }
+    cv.focus({ preventScroll: true });
+  });
+  cv.addEventListener('pointermove', e => {
+    const p = pos(e), old = ptrs.get(e.pointerId);
+    if (!old) { if (e.pointerType === 'mouse') cv.style.cursor = hitAt(p[0], p[1]) != null ? 'grab' : (o.cursor || 'crosshair'); if (o.hover) o.hover(p[0], p[1]); return; }
+    ptrs.set(e.pointerId, p);
+    if (mode === 'pan') { const dx = p[0] - old[0], dy = p[1] - old[1]; moved += Math.abs(dx) + Math.abs(dy); if (moved > 4) { cam.cx -= dx / A.k(); cam.cy += dy / A.k(); goal.on = false; A.clamp(); changed(); cv.style.cursor = 'grabbing'; } }
+    else if (mode === 'drag') { if (o.drag) o.drag(key, p[0], p[1], 'move'); }
+    else if (mode === 'pinch' && ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()], dd = hyp(a[0] - b[0], a[1] - b[1]) || 1, mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      cam.w = clamp(pinch.w * pinch.d / dd, o.wMin, o.wMax); cam.cx = pinch.mx - (mx - S.w / 2) / A.k(); cam.cy = pinch.my + (my - S.h / 2) / A.k(); goal.on = false; A.clamp(); changed();
+    }
+  });
+  const up = e => {
+    const p = ptrs.get(e.pointerId); ptrs.delete(e.pointerId);
+    if (mode === 'pan' && moved <= 4 && p && e.type === 'pointerup' && o.click) o.click(p[0], p[1]);
+    if (mode === 'drag' && o.drag && p) o.drag(key, p[0], p[1], 'end');
+    if (ptrs.size === 1) { mode = 'pan'; moved = 99; } else if (!ptrs.size) { mode = null; key = null; cv.style.cursor = o.cursor || 'crosshair'; }
+  };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('pointerleave', () => { if (o.leave) o.leave(); });
+  cv.addEventListener('wheel', e => { e.preventDefault(); const p = pos(e); const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY; A.zoomAt(p[0], p[1], Math.exp(clamp(dy, -240, 240) * (e.ctrlKey ? 0.01 : 0.0022))); }, { passive: false });
+  cv.addEventListener('dblclick', e => { const p = pos(e); A.zoomAt(p[0], p[1], e.shiftKey ? 4 : 0.25); });
+  cv.addEventListener('keydown', e => {
+    const st = cam.w * 0.12; let used = true;
+    if (e.key === '+' || e.key === '=') A.zoomAt(S.w / 2, S.h / 2, 0.6); else if (e.key === '-' || e.key === '_') A.zoomAt(S.w / 2, S.h / 2, 1 / 0.6);
+    else if (e.key === 'ArrowLeft') cam.cx -= st; else if (e.key === 'ArrowRight') cam.cx += st; else if (e.key === 'ArrowUp') cam.cy += st; else if (e.key === 'ArrowDown') cam.cy -= st;
+    else if (e.key === '0') A.home(); else if (e.key === 'f' || e.key === 'F') toggleMax(); else if (o.key && o.key(e)) {} else used = false;
+    if (used) { e.preventDefault(); A.clamp(); changed(); }
+  });
+  // ---- on-canvas buttons and full screen ----
+  const zb = el('div', { class: 'zoombar' });
+  const zbtn = (t, lab, f) => { const b = el('button', { type: 'button', title: lab, 'aria-label': lab, html: t, onclick: f }); zb.append(b); return b; };
+  zbtn('+', 'Zoom in', () => A.flyTo(cam.cx, cam.cy, cam.w / 4));
+  zbtn('−', 'Zoom out', () => A.flyTo(cam.cx, cam.cy, cam.w * 4));
+  zbtn('⌂', 'Zoom right out', () => A.home());
+  const maxB = zbtn('⛶', 'Full screen', () => toggleMax());
+  S.wrap.append(zb);
+  function toggleMax() {
+    if (document.fullscreenElement) { document.exitFullscreen(); return; }
+    if (A.maxed) { setMax(false); return; }
+    if (S.wrap.requestFullscreen && !/iPhone|iPad/.test(navigator.userAgent)) S.wrap.requestFullscreen().catch(() => setMax(true)); else setMax(true);
+  }
+  function setMax(on) { A.maxed = on; S.wrap.classList.toggle('ps-max', on); document.documentElement.classList.toggle('ps-noscroll', on); sizeMode(on); }
+  function sizeMode(on) { cv.style.touchAction = on ? 'none' : ''; maxB.innerHTML = on ? '✕' : '⛶'; maxB.title = on ? 'Exit full screen' : 'Full screen'; baseSize(); requestAnimationFrame(baseSize); }
+  function baseSize() { const full = A.maxed || document.fullscreenElement === S.wrap; S.forceH = full ? () => window.innerHeight : (o.deskH && window.innerWidth > 940) ? o.deskH : null; S.resize(); }
+  A.toggleMax = toggleMax;
+  if (!window.PS_HARVEST) {
+    L.on(document, 'fullscreenchange', () => sizeMode(document.fullscreenElement === S.wrap || A.maxed));
+    L.on(window, 'keydown', e => { if (e.key === 'Escape' && A.maxed) setMax(false); });
+    L.on(window, 'resize', baseSize);
+    L.cleanup(() => document.documentElement.classList.remove('ps-noscroll'));
+    baseSize();
+  }
+  // phones: controls sit under the canvas, so bring it back into view when a control moves the camera
+  A.show = () => { if (window.innerWidth <= 940) { const r = S.wrap.getBoundingClientRect(); if (r.top < 0 || r.bottom > window.innerHeight) S.wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } };
+  return A;
+}
+// clip a pixel polyline to a rectangle (Liang–Barsky), returning the visible pieces: zoomed-in tracks can be millions of px long
+function clipPoly(pts, x0, y0, x1, y1) {
+  const out = []; let cur = null;
+  for (let i = 1; i < pts.length; i++) {
+    let [ax, ay] = pts[i - 1], [bx, by] = pts[i], t0 = 0, t1 = 1; const dx = bx - ax, dy = by - ay; let ok = true;
+    for (const [pp, q] of [[-dx, ax - x0], [dx, x1 - ax], [-dy, ay - y0], [dy, y1 - ay]]) { if (pp === 0) { if (q < 0) { ok = false; break; } } else { const r = q / pp; if (pp < 0) { if (r > t1) { ok = false; break; } if (r > t0) t0 = r; } else { if (r < t0) { ok = false; break; } if (r < t1) t1 = r; } } }
+    if (!ok) { cur = null; continue; }
+    const p0 = [ax + dx * t0, ay + dy * t0], p1 = [ax + dx * t1, ay + dy * t1];
+    if (!cur || t0 > 0) { cur = [p0]; out.push(cur); } cur.push(p1); if (t1 < 1) cur = null;
+  }
+  return out;
+}
+const poisson = m => { if (!(m > 0)) return 0; if (m < 30) { const Lm = Math.exp(-m); let k = 0, p = 1; do { k++; p *= Math.random(); } while (p > Lm); return k - 1; } return Math.max(0, Math.round(m + Math.sqrt(m) * gauss())); };
+// a small seeded generator for deterministic decoration (ion pairs, jitter) that must not flicker between frames
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// times with a sensible unit: 3.2e5 → "3.70 days"
+function timeStr(s, sf = 3) {
+  const a = Math.abs(s), Y = 3.156e7;
+  if (a >= Y * 1e3) return `${sci(s / Y, sf)} years`; if (a >= Y) return `${num(s / Y, sf)} years`; if (a >= 86400) return `${num(s / 86400, sf)} days`; if (a >= 3600) return `${num(s / 3600, sf)} h`;
+  if (a >= 60) return `${num(s / 60, sf)} min`; if (a >= 1) return `${num(s, sf)} s`; if (a >= 1e-3) return `${num(s * 1e3, sf)} ms`; return `${num(s * 1e6, sf)} µs`;
+}
+const erf = x => { const t = 1 / (1 + 0.3275911 * Math.abs(x)), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; };
+const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
+
 /* ---------- registry ---------- */
 const TOPICS = [];
 function topic(t) { t.labs.forEach((l, i) => l.letter = String.fromCharCode(65 + i)); TOPICS.push(t); return t; }
@@ -5331,21 +5467,6 @@ topic({
 (() => {
 const KE = 8.99e9, E_C = 1.60e-19, U_KG = 1.66e-27, R0 = 1.2e-15, NA = 6.02e23, A0 = 5.29e-11, MEV = 1.60e-13;
 const R_ALPHA = R0 * Math.cbrt(4);
-const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-// lengths with an SI prefix: 2.5e-14 → "25.0 fm"
-function lenStr(m, sf = 3) {
-  const a = Math.abs(m);
-  const P = [[1, 'm'], [1e-2, 'cm'], [1e-3, 'mm'], [1e-6, 'µm'], [1e-9, 'nm'], [1e-12, 'pm'], [1e-15, 'fm']];
-  for (const [f, u] of P) if (a >= f * 0.9999) return `${num(m / f, sf)} ${u}`;
-  return `${num(m / 1e-15, sf)} fm`;
-}
-// the nicest 1/2/5 × 10ⁿ length near x
-function niceLen(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; }
-function scaleBar(c, x, y, pxPerM, maxPx, color) {
-  const Lm = niceLen(maxPx / pxPerM), L = Lm * pxPerM;
-  c.save(); c.strokeStyle = color; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y - 5); c.lineTo(x, y); c.lineTo(x + L, y); c.lineTo(x + L, y - 5); c.stroke(); c.restore();
-  rich(c, lenStr(Lm, 2).replace('.0 ', ' '), x + L / 2, y - 12, { align: 'center', size: 11.5, color, w: 600, mono: true, fit: false });
-}
 const TARGETS = [
   { id: 'Au', n: 'Gold', Z: 79, A: 197, rho: 19300, M: 0.197, a: 2.88e-10, ra: 1.44e-10 },
   { id: 'Pt', n: 'Platinum', Z: 78, A: 195, rho: 21450, M: 0.195, a: 2.77e-10, ra: 1.39e-10 },
@@ -6136,303 +6257,789 @@ topic({
 })();
 
 /* ================= 4.6 Nuclear decay ================= */
+// Four labs, all built on measured data rather than made-up numbers:
+//  A  Penetration, range and ionisation: real sources and real ranges (Geiger's rule for α, Katz–Penfold for β, NIST
+//     attenuation coefficients for γ), a GM tube with solid angle and efficiency, absorption and inverse-square experiments,
+//     a magnetic field, and a zoom from the bench down to the individual ion pairs along a track.
+//  B  Decay equations on a zoomable N–Z chart, with the three natural decay series and their real half-lives.
+//  C  Random and exponential decay: up to 40 000 nuclei you can zoom into, real isotopes or dice.
+//  D  The half-life experiment: Poisson counting, background, error bars and a best-fit line with max/min gradients.
 (() => {
-const SYM = 'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U'.split(' ');
-const sym = Z => SYM[Z - 1] || '?';
+const SYM = 'H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf'.split(' ');
+const sym = Z => Z === 0 ? 'n' : SYM[Z - 1] || '?';
+const YR = 3.156e7, DAY = 86400, HR = 3600, MIN = 60;
+const MEV = 1.602e-13, CL = 2.998e8, E_C = 1.602e-19, M_A = 6.645e-27;
 
-/* ---------- Lab A: penetration and range ---------- */
+/* ---------- radiation physics ---------- */
+// mass attenuation coefficients μ/ρ (cm² g⁻¹), NIST XCOM totals
+const MU_E = [0.06, 0.1, 0.2, 0.3, 0.5, 0.662, 0.8, 1.0, 1.25, 1.5, 2.0, 3.0];
+const MU_PB = [5.02, 5.55, 0.999, 0.403, 0.161, 0.110, 0.0887, 0.0710, 0.0588, 0.0522, 0.0461, 0.0423];
+const MU_AL = [0.278, 0.170, 0.122, 0.104, 0.0844, 0.0747, 0.0681, 0.0615, 0.0550, 0.0500, 0.0432, 0.0354];
+function muRho(E, tab) {
+  if (E <= MU_E[0]) return tab[0]; if (E >= MU_E[MU_E.length - 1]) return tab[tab.length - 1];
+  let i = 0; while (MU_E[i + 1] < E) i++;
+  const f = Math.log(E / MU_E[i]) / Math.log(MU_E[i + 1] / MU_E[i]); return Math.exp(Math.log(tab[i]) + f * Math.log(tab[i + 1] / tab[i]));
+}
+// materials: density in g cm⁻³, effective mass number for Bragg–Kleeman alpha stopping
+const MAT = {
+  air: { n: 'air', rho: 1.205e-3, mu: MU_AL },
+  vac: { n: 'vacuum', rho: 0, mu: MU_AL },
+  paper: { n: 'paper', rho: 0.80, A: 9, mu: MU_AL },
+  al: { n: 'aluminium', rho: 2.70, A: 27, mu: MU_AL },
+  pb: { n: 'lead', rho: 11.35, A: 207, mu: MU_PB },
+};
+// α: Geiger's rule for the range in air, R(cm) = 0.318 E^1.5, and Bragg–Kleeman to convert other materials to "cm of air"
+const rAir = E => 0.318 * Math.pow(Math.max(E, 0), 1.5);
+const eAir = R => Math.pow(Math.max(R, 0) / 0.318, 2 / 3);
+const airEq = (m, cm) => m === MAT.air ? cm : m.rho ? cm * m.rho * 1000 / (0.56 * Math.cbrt(m.A)) : 0;
+// β: Katz–Penfold range (mg cm⁻²), its inverse by table, and the empirical absorption coefficient for a continuous spectrum
+const kp = E => E <= 2.5 ? 412 * Math.pow(E, 1.265 - 0.0954 * Math.log(E)) : 530 * E - 106;
+const KPT = []; for (let i = 0; i <= 240; i++) { const E = 0.002 * Math.pow(4000, i / 240); KPT.push([kp(E), E]); }
+function eOfR(R) { if (R <= KPT[0][0]) return KPT[0][1] * R / KPT[0][0]; let lo = 0, hi = KPT.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (KPT[m][0] < R) lo = m; else hi = m; } const [r0, e0] = KPT[lo], [r1, e1] = KPT[hi]; return e0 + (e1 - e0) * (R - r0) / (r1 - r0); }
+const muBeta = Emax => 17 * Math.pow(Emax, -1.14); // cm² g⁻¹
+function betaE(Q) { // allowed spectrum shape (no Fermi function) by rejection
+  const f = E => { const W = E + 0.511; return Math.sqrt(W * W - 0.261) * W * (Q - E) * (Q - E); };
+  let mx = 0; for (let i = 1; i < 40; i++) mx = Math.max(mx, f(Q * i / 40));
+  for (let k = 0; k < 200; k++) { const E = Math.random() * Q; if (Math.random() * mx * 1.05 < f(E)) return E; } return Q / 3;
+}
+const W_ION = 34e-6; // MeV per ion pair in air (≈ 34 eV)
+// the sources a school lab uses, with real energies (MeV) and yields per decay
+const SRC = [
+  { id: 'po210', n: 'Polonium-210', short: 'Po-210', A: 37e3, a: [[5.30, 1]], b: [], g: [], ans: 'a' },
+  { id: 'am241', n: 'Americium-241', short: 'Am-241', A: 37e3, a: [[5.49, 1]], b: [], g: [[0.0595, 0.36]], ans: 'ag' },
+  { id: 'sr90', n: 'Strontium-90 (with Y-90)', short: 'Sr-90', A: 37e3, a: [], b: [[0.546, 1], [2.28, 1]], g: [], ans: 'b' },
+  { id: 'cs137', n: 'Caesium-137', short: 'Cs-137', A: 37e3, a: [], b: [[0.512, 0.946], [1.174, 0.054]], g: [[0.662, 0.85]], ans: 'bg' },
+  { id: 'co60', n: 'Cobalt-60 (sealed)', short: 'Co-60', A: 37e3, a: [], b: [], g: [[1.173, 1], [1.333, 1]], ans: 'g' },
+  { id: 'ra226', n: 'Radium-226 (with daughters)', short: 'Ra-226', A: 37e3, a: [[4.78, 1], [5.49, 1], [6.00, 1], [7.69, 1]], b: [[1.02, 1], [3.27, 1]], g: [[0.352, 0.36], [0.609, 0.46], [1.764, 0.15]], ans: 'abg' },
+];
+const ANS = [['a', 'α only'], ['b', 'β only'], ['g', 'γ only'], ['ag', 'α + γ'], ['bg', 'β + γ'], ['abg', 'α + β + γ']];
+const BG = 0.42;              // background count rate, s⁻¹ (about 25 per minute)
+const RW = 0.007, RT = 0.011; // GM window and tube radius, m
+const EFF = { a: 0.98, b: 0.95, g: 0.01 };
+const KCOL = { a: 'red', b: 'blue', g: 'violet' };
+
+/* ---------- Lab A: penetration, range and ionisation ---------- */
 function mountPenetration(P, L) {
-  const S = L.stage(P.stageBox, { aspect: 1.8, minH: 330, maxH: 460, mobileAspect: 1.0 });
-  let kind = 'alpha', abs = 'none', run = true;
-  const parts = []; let counts = { emitted: 0, detected: 0 }, t = 0;
-  const MU = { none: 0, paper: 0.02, al: 0.25, lead: 8 }; // for gamma, per cm
-  L.loop(dt => {
-    t += dt;
-    const c = S.begin(), C = Theme.c, W = S.w, H = S.h;
-    const sx = 54, dxD = W - 60, mid = H * 0.44;
-    const absX = W * 0.46, absW = abs === 'none' ? 0 : abs === 'paper' ? 6 : abs === 'al' ? 16 : 34;
-    if (run && Math.random() < dt * 14) {
-      counts.emitted++;
-      const ang = (Math.random() - 0.5) * (kind === 'alpha' ? 0.25 : kind === 'beta' ? 0.7 : 0.5);
-      parts.push({ x: sx + 18, y: mid, vx: Math.cos(ang) * (kind === 'alpha' ? 150 : kind === 'beta' ? 240 : 420), vy: Math.sin(ang) * (kind === 'alpha' ? 150 : kind === 'beta' ? 240 : 420), alive: true, ion: [], scatter: kind === 'beta' });
-    }
-    // range in air (scaled): alpha 5 cm, beta 3 m, gamma unlimited
-    const rangePx = kind === 'alpha' ? (W - sx) * 0.42 : kind === 'beta' ? (W - sx) * 1.6 : 1e9;
-    for (const p of parts) {
-      if (!p.alive) continue;
-      p.x += p.vx * dt; p.y += p.vy * dt;
-      if (p.scatter && Math.random() < dt * 6) { const a = Math.atan2(p.vy, p.vx) + rand(-0.5, 0.5); const s = hyp(p.vx, p.vy); p.vx = Math.cos(a) * s; p.vy = Math.sin(a) * s; }
-      if (Math.random() < dt * (kind === 'alpha' ? 60 : kind === 'beta' ? 12 : 1.5)) p.ion.push([p.x, p.y]);
-      if (p.x - sx > rangePx) p.alive = false;
-      if (absW && p.x > absX && p.x < absX + absW) {
-        const stop = kind === 'alpha' ? 1 : kind === 'beta' ? (abs === 'paper' ? 0.05 : abs === 'al' ? 0.97 : 1) : 1 - Math.exp(-MU[abs] * (absW / 34) * 0.9);
-        if (Math.random() < stop * dt * 40) { p.alive = false; }
+  const S = L.stage(P.stageBox, { aspect: 1.6, minH: 380, maxH: 600, mobileAspect: 0.95 });
+  const S2 = L.stage(P.stageBox, { aspect: 2.6, minH: 230, maxH: 320, mobileAspect: 1.3, plain: true });
+  let src = SRC[1], mystery = false, absK = 'none', thick = { paper: 1e-4, al: 3e-3, pb: 0.02 }, dist = 0.02, medium = 'air', Bmt = 0, run = true, gmode = 'thick';
+  const absM = () => absK === 'none' ? null : MAT[absK];
+  const tAbs = () => absK === 'none' ? 0 : thick[absK];
+  const geom = () => { const t = tAbs(), x1 = dist - 0.003, x0 = x1 - t; return { x0, x1, h: 0.03 }; };
+  // expected count rates (s⁻¹) from each radiation, for any distance and absorber
+  function rates(o = {}) {
+    const d = o.d ?? dist, m = o.m === undefined ? absM() : o.m, t = o.t ?? tAbs(), vac = medium === 'vac';
+    const airCm = vac ? 0 : Math.max(0, d - t) * 100, G = 0.5 * (1 - d / Math.hypot(d, RW));
+    let a = 0, b = 0, g = 0;
+    for (const [E, y] of src.a) { const R = rAir(E), path = airCm + (m ? airEq(m, t * 100) : 0) + 1.3; a += y * Phi((R - path) / (0.015 * R)); }
+    const mass = airCm * 1.205 + (m ? m.rho * 1000 * t * 100 : 0) + 2; // mg cm⁻², including the 2 mg cm⁻² GM window
+    for (const [Q, y] of src.b) b += mass >= kp(Q) ? 0 : y * Math.exp(-muBeta(Q) * mass / 1000);
+    for (const [E, y] of src.g) g += y * Math.exp(-(m ? muRho(E, m.mu) * m.rho * t * 100 : 0) - muRho(E, MU_AL) * 1.205e-3 * airCm);
+    const k = src.A * G; return { a: k * a * EFF.a, b: k * b * EFF.b, g: k * g * EFF.g, bg: BG };
+  }
+  // ---- counting ----
+  let win = [], count = null, last60 = null, pts = { thick: [], dist: [] };
+  function tickCounts(dt) {
+    const r = rates(), tot = r.a + r.b + r.g + r.bg, n = poisson(tot * dt);
+    win.push([dt, n]); let T = 0; for (let i = win.length - 1; i >= 0; i--) { T += win[i][0]; if (T > 2) { win.splice(0, i); break; } }
+    if (count) { const speed = 20; const n2 = poisson(tot * dt * speed); count.n += n2; count.left -= dt * speed; if (count.left <= 0) { last60 = { n: count.n, x: count.x, xd: count.xd }; count = null; syncCount(); } }
+  }
+  // ---- camera ----
+  const home = () => { const w = Math.max(0.12, dist * 1.9 + 0.06); return { cx: dist / 2 + 0.01, cy: 0, w }; };
+  const C0 = Cam(S, L, { home, wMin: 4e-6, wMax: 0.9, bounds: () => [-0.2, 0.8, -0.3, 0.3], deskH: () => clamp(window.innerHeight - 150, 420, 760), click: (x, y) => {} });
+  const LV = [['bench', 'Bench', () => { const h = home(); return [h.cx, h.cy, h.w]; }], ['abs', 'Absorber', () => { const g = geom(); return [g.x0 - 0.002, 0, Math.max(6e-3, tAbs() * 5)]; }],
+    ['mm', 'Tracks: 1 mm', () => [0.01, 0, 1.2e-3]], ['ion', 'Ion pairs: 20 µm', () => [0.01, 0, 2e-5]]];
+  // ---- visual particles: computed tracks with their ion pairs ----
+  const parts = []; let idc = 1, spawnT = 0;
+  function matAt(x, y) { const g = geom(); if (absK !== 'none' && x >= g.x0 && x <= g.x1 && Math.abs(y) <= g.h) return absM(); return medium === 'vac' ? MAT.vac : MAT.air; }
+  function stepLen(x, y, ux, base) {
+    const g = geom(); if (absK === 'none') return base;
+    if (x >= g.x0 && x <= g.x1 && Math.abs(y) <= g.h) return Math.max(tAbs() / 10, 1e-6);
+    if (ux > 0 && x < g.x0) { const dd = (g.x0 - x) / ux; if (dd < base) return Math.max(dd + 1e-7, 1e-6); }
+    if (ux < 0 && x > g.x1) { const dd = (x - g.x1) / -ux; if (dd < base) return Math.max(dd + 1e-7, 1e-6); }
+    return base;
+  }
+  const B = () => Bmt / 1000;
+  // charged particles: steps along the path, losing energy, scattering (β) and curving in the field; returns a polyline
+  function transport(kind, E0, x, y, ang, depth = 0) {
+    const pts = [[x, y, 0, 0]], kids = []; let s = 0, ux = Math.cos(ang), uy = Math.sin(ang), E = E0, R = kind === 'a' ? rAir(E0) : kp(E0), R0 = R, fate = 'range';
+    for (let i = 0; i < 4000; i++) {
+      if (x >= dist && Math.abs(y) <= RT) { fate = Math.abs(y) <= RW ? 'gm' : 'wall'; break; }
+      if (Math.abs(x) > 0.85 || Math.abs(y) > 0.35 || x < -0.02) { fate = 'away'; break; }
+      const m = matAt(x, y); let h = stepLen(x, y, ux, medium === 'vac' && m === MAT.vac ? 0.004 : 0.0015);
+      if (x < dist && ux > 0) h = Math.min(h, Math.max((dist - x) / ux + 1e-7, 1e-6));
+      let dE = 0;
+      if (kind === 'a') {
+        const dR = airEq(m, h * 100); if (dR >= R && dR > 0) { h *= R / dR; dE = E; R = 0; } else { R -= dR; const e2 = eAir(R); dE = E - e2; }
+        E = eAir(R);
+        if (B()) { const p = Math.sqrt(2 * M_A * Math.max(E, 1e-3) * MEV); const th = 2 * E_C * B() / p * h; const c = Math.cos(th), sn = Math.sin(th); [ux, uy] = [ux * c - uy * sn, ux * sn + uy * c]; }
+      } else {
+        const dm = m.rho * 1000 * h * 100; if (dm >= R && dm > 0) { h *= R / dm; R = 0; } else R -= dm;
+        const e2 = R > 0 ? eOfR(R) : 0; dE = E - e2; E = e2;
+        if (m.rho) { const sg = 1.1 * Math.sqrt(Math.min(dm, R0) / R0) * (0.5 + 1.6 * (1 - R / R0)); const th = gauss() * sg; const c = Math.cos(th), sn = Math.sin(th); [ux, uy] = [ux * c - uy * sn, ux * sn + uy * c]; }
+        if (B()) { const pc = Math.sqrt(E * E + 2 * E * 0.511) || 0.01; const p = pc * MEV / CL; const th = -E_C * B() / p * h; const c = Math.cos(th), sn = Math.sin(th); [ux, uy] = [ux * c - uy * sn, ux * sn + uy * c]; }
       }
-      if (p.x > dxD) { p.alive = false; if (Math.abs(p.y - mid) < 60) counts.detected++; }
-      if (p.y < 4 || p.y > H - 40) p.alive = false;
+      x += ux * h; y += uy * h; s += h;
+      pts.push([x, y, s, Math.max(0, dE) / W_ION / Math.max(h, 1e-12)]);
+      if (R <= 0) { fate = 'stopped'; break; }
     }
-    while (parts.length > 260) parts.shift();
-    // air label
-    rich(c, 'air', W * 0.25, 18, { size: 11, color: C.muted });
-    // source
-    c.fillStyle = C.ink2; rrect(c, 20, mid - 26, 36, 52, 5); c.fill();
-    rich(c, kind === 'alpha' ? 'α' : kind === 'beta' ? 'β' : 'γ', 38, mid, { align: 'center', size: 20, color: C.paper2, w: 700 });
-    rich(c, 'source', 38, mid + 36, { align: 'center', size: 11, color: C.muted });
-    // absorber
-    if (absW) {
-      c.fillStyle = abs === 'paper' ? alpha(C.orange, .35) : abs === 'al' ? alpha(C.muted, .55) : alpha(C.ink, .65);
-      c.fillRect(absX, 10, absW, H - 46);
-      rich(c, abs === 'paper' ? 'paper' : abs === 'al' ? '3 mm aluminium' : '5 cm lead', absX + absW / 2, H - 28, { align: 'center', size: 11.5, color: C.ink2, w: 600 });
+    return { kind, pts, s, fate, E0, kids };
+  }
+  // γ: straight until it interacts (photoelectric in lead or at low energy, otherwise Compton); the electrons it frees ionise
+  function transportG(E, x, y, ang, depth = 0) {
+    const pts = [[x, y, 0, 0]], kids = []; let s = 0, ux = Math.cos(ang), uy = Math.sin(ang), fate = 'away', inTube = false;
+    for (let i = 0; i < 3000; i++) {
+      // a GM tube counts only about 1 γ in 100 that pass through it: test once, on entry
+      const nowIn = x >= dist && x < dist + 0.12 && Math.abs(y) <= RT;
+      if (nowIn && !inTube && Math.abs(y) <= RW && Math.random() < EFF.g) { fate = 'gm'; break; }
+      inTube = nowIn;
+      if (Math.abs(x) > 0.85 || Math.abs(y) > 0.35 || x < -0.02) break;
+      const m = matAt(x, y); const h = stepLen(x, y, ux, 0.003);
+      const mu = m.rho ? muRho(E, m.mu) * m.rho * 100 : 0;
+      if (mu && Math.random() < 1 - Math.exp(-mu * h)) {
+        const d0 = Math.random() * h; x += ux * d0; y += uy * d0; s += d0; pts.push([x, y, s, 0]);
+        if (m === MAT.pb && E < 0.5 || E < 0.12 || depth > 2) { kids.push({ at: s, p: transport('b', E, x, y, Math.atan2(uy, ux) + gauss() * 0.8) }); fate = 'absorbed'; break; }
+        // Compton: sample the angle from Klein–Nishina by rejection
+        let ct = 1; for (let k = 0; k < 60; k++) { const c = Math.random() * 2 - 1, r = 1 / (1 + E / 0.511 * (1 - c)); const kn = r * r * (r + 1 / r - (1 - c * c)) / 2; if (Math.random() < kn) { ct = c; break; } }
+        const E2 = E / (1 + E / 0.511 * (1 - ct)), th = Math.acos(ct) * (Math.random() < 0.5 ? 1 : -1);
+        kids.push({ at: s, p: transport('b', E - E2, x, y, Math.atan2(uy, ux) - th * 0.5) });
+        const c = Math.cos(th), sn = Math.sin(th); [ux, uy] = [ux * c - uy * sn, ux * sn + uy * c]; E = E2; depth++;
+        continue;
+      }
+      x += ux * h; y += uy * h; s += h; pts.push([x, y, s, 0]);
     }
-    // detector
-    c.fillStyle = C.paper3; c.strokeStyle = C.ink2; c.lineWidth = 1.5; rrect(c, dxD, mid - 60, 44, 120, 6); c.fill(); c.stroke();
-    rich(c, 'GM', dxD + 22, mid - 10, { align: 'center', size: 13, w: 700, color: C.ink });
-    rich(c, `${counts.detected}`, dxD + 22, mid + 14, { align: 'center', size: 15, mono: true, w: 700, color: C.green });
-    rich(c, 'counts', dxD + 22, mid + 34, { align: 'center', size: 10, color: C.muted });
-    // particles
-    const col = kind === 'alpha' ? C.red : kind === 'beta' ? C.blue : C.violet;
+    return { kind: 'g', pts, s, fate, E0: E, kids };
+  }
+  function spawn() {
+    const list = [...src.a.map(q => ['a', q]), ...src.b.map(q => ['b', q]), ...src.g.map(q => ['g', q])];
+    let tot = 0; for (const [, q] of list) tot += q[1]; let r = Math.random() * tot, pick_ = list[0];
+    for (const it of list) { r -= it[1][1]; if (r <= 0) { pick_ = it; break; } }
+    const [kind, [E]] = pick_;
+    // deep zoom: aim at the middle of the view so there is something to see; otherwise the holder's forward cone
+    const deep = C0.cam.w < 3e-3, aim = Math.atan2(C0.cam.cy, Math.max(1e-6, C0.cam.cx));
+    const ang = deep ? aim + (Math.random() - 0.5) * C0.hv() / Math.max(1e-6, Math.hypot(C0.cam.cx, C0.cam.cy)) : gauss() * 0.22;
+    const p = kind === 'g' ? transportG(E, 0, 0, ang) : transport(kind, kind === 'b' ? betaE(E) : E * (1 + gauss() * 0.004), 0, 0, ang);
+    add(p, 0);
+  }
+  function add(p, delay) {
+    const beta = p.kind === 'g' ? 1 : p.kind === 'a' ? Math.sqrt(2 * p.E0 / 3727) : Math.sqrt(1 - 1 / Math.pow(1 + p.E0 / 0.511, 2));
+    Object.assign(p, { id: idc++, head: 0, delay, age: 0, done: false, speed: Math.pow(beta, 0.35) });
+    // zoomed in, the view is far from the source: start each track just before it enters the view
+    if (delay === 0 && C0.cam.w < 0.02) {
+      const { cx, cy, w } = C0.cam; let best = Infinity, sB = 0;
+      for (let i = 1; i < p.pts.length; i++) { const [ax, ay, sa] = p.pts[i - 1], [bx, by, sb] = p.pts[i], dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy || 1e-30, t = clamp(((cx - ax) * dx + (cy - ay) * dy) / L2, 0, 1), dd = Math.hypot(ax + dx * t - cx, ay + dy * t - cy); if (dd < best) { best = dd; sB = sa + (sb - sa) * t; } }
+      if (best < 1.5 * w) { p.head = Math.max(0, sB - 0.8 * w); p.sOut = sB + 1.2 * w; p.wSpawn = w; }
+    }
+    parts.push(p); for (const k of p.kids) { k.p.parent = p; k.p.atS = k.at; add(k.p, -1); }
+    if (parts.length > 220) parts.splice(0, parts.length - 220);
+  }
+  // ---- main loop ----
+  const flashes = [];
+  L.loop(dt => { if (run) tickCounts(dt); updRO(); }, []);
+  L.loop(dt => {
+    const c = S.begin(), C = Theme.c, W = S.w, H = S.h; if (!W) return;
+    C0.step(dt);
+    const k = C0.k(), X = C0.X, Y = C0.Y, Lg = Math.log10(C0.cam.w), g = geom();
+    // shapes that are millimetres across become millions of pixels when zoomed in: clip them to the canvas first
+    const box = (x0, y0, x1, y1, fill, stroke) => { const a = clamp(Math.min(X(x0), X(x1)), -20, W + 20), b2 = clamp(Math.max(X(x0), X(x1)), -20, W + 20), t2 = clamp(Math.min(Y(y0), Y(y1)), -20, H + 20), u = clamp(Math.max(Y(y0), Y(y1)), -20, H + 20); if (b2 - a < 0.5 && b2 > -20 && a < W + 20) { c.fillStyle = fill; c.fillRect(a - 0.75, t2, 1.5, u - t2); return; } if (b2 <= a || u <= t2) return; if (fill) { c.fillStyle = fill; c.fillRect(a, t2, b2 - a, u - t2); } if (stroke) { c.strokeStyle = stroke; c.lineWidth = 1.5; c.strokeRect(a, t2, b2 - a, u - t2); } };
+    if (run) { spawnT -= dt; if (spawnT <= 0) { spawnT = C0.cam.w < 3e-3 ? 0.5 : 0.11; spawn(); } }
+    const vis = C0.cam.w / 1.1; // world units per second for a particle moving at c
     for (const p of parts) {
-      for (const [ix, iy] of p.ion) dot(c, ix, iy, 1.6, alpha(C.orange, .5));
-      if (!p.alive) continue;
-      if (kind === 'gamma') line(c, [[p.x - 14, p.y], [p.x, p.y]], { color: col, width: 2 });
-      else dot(c, p.x, p.y, kind === 'alpha' ? 4.5 : 3, col);
+      if (p.delay < 0) { if (p.parent && p.parent.head >= p.atS) p.delay = 0; else continue; }
+      p.age += dt; if (!p.done) { p.head += dt * vis * p.speed;
+        // once a track has crossed and left the zoomed-in view there is nothing more to watch: finish it
+        if (p.sOut && C0.cam.w < 0.02 && p.head > p.sOut) p.head = p.s;
+        else if (!p.sOut && C0.cam.w < 2e-3 && p.age > 3) p.head = p.s;
+        if (p.head >= p.s) { p.head = p.s; p.done = true; p.doneAt = p.age; if (p.fate === 'gm') flashes.push({ t: 0 }); } }
     }
-    rich(c, kind === 'alpha' ? 'α: helium nucleus, 2+ charge, heavily ionising, stopped by paper or ~5 cm of air' : kind === 'beta' ? 'β: fast electron, 1− charge, moderately ionising, stopped by ~3 mm aluminium' : 'γ: EM photon, no charge, weakly ionising, only reduced by thick lead', 16, H - 14, { size: 12, color: C.ink2 });
-    ro.set('em', String(counts.emitted)); ro.set('det', String(counts.detected)); ro.set('pct', counts.emitted ? `${fix(counts.detected / counts.emitted * 100, 1)}%` : '—');
+    for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; if (p.done && p.age - p.doneAt > 2.6 && !(p.kids.length && p.kids.some(k => !k.p.done))) parts.splice(i, 1); }
+    c.fillStyle = C.paper2; c.fillRect(0, 0, W, H);
+    // a grid that rescales with the zoom
+    { const gs = niceLen(C0.cam.w / 8), x0 = Math.floor(C0.wx(0) / gs) * gs; c.strokeStyle = alpha(C.muted, .08); c.lineWidth = 1; c.beginPath();
+      for (let x = x0; x <= C0.wx(W); x += gs) { const px = Math.round(X(x)) + .5; c.moveTo(px, 0); c.lineTo(px, H); }
+      for (let y = Math.floor(C0.wy(H) / gs) * gs; y <= C0.wy(0); y += gs) { const py = Math.round(Y(y)) + .5; c.moveTo(0, py); c.lineTo(W, py); } c.stroke(); }
+    if (medium === 'vac') rich(c, 'vacuum', W - 84, 76, { size: 11.5, color: C.muted });
+    if (Bmt) { const gs = Math.max(26, Math.min(70, W / 14)); c.fillStyle = alpha(C.ink2, .18); c.font = FONT.ui(12); c.textAlign = 'center'; c.textBaseline = 'middle'; for (let x = gs / 2; x < W; x += gs) for (let y = gs / 2; y < H; y += gs) c.fillText('⊗', x, y); }
+    // absorber
+    if (absK !== 'none') {
+      const m = absM(); box(g.x0, -g.h, g.x1, g.h, absK === 'paper' ? alpha(C.orange, .3) : absK === 'al' ? alpha(C.muted, .45) : alpha(C.ink, .55));
+      if (Lg > -2.6) rich(c, `${lenStr(tAbs(), 2)} ${m.n}`, X((g.x0 + g.x1) / 2), Y(g.h) - 12, { align: 'center', size: 11.5, color: C.ink2, w: 600 });
+    }
+    // source holder and GM tube
+    box(-0.012, -0.008, 0, 0.008, C.ink2); { const rs = 0.0015 * k; if (rs < 3000) dot(c, X(0), Y(0), Math.max(2.5, rs), C.violet); else box(-0.0015, -0.0015, 0.0015, 0.0015, C.violet); }
+    if (Lg > -2.4) rich(c, `${mystery ? 'mystery source' : src.short} in holder`, X(-0.006), Y(0.008) - 12, { align: 'center', size: 11.5, color: C.ink2, w: 600 });
+    box(dist, -RT, dist + 0.12, RT, C.paper3, C.ink2);
+    { const xw = X(dist); if (xw > -10 && xw < W + 10) { c.fillStyle = alpha(C.green, .7); c.fillRect(xw - 1.5, clamp(Y(RW), -10, H + 10), 3, clamp(Y(-RW), -10, H + 10) - clamp(Y(RW), -10, H + 10)); } }
+    if (Lg > -2.4) { rich(c, 'GM tube', Math.min(X(dist + 0.06), X(dist) + 60), Y(0), { align: 'center', size: 12.5, w: 700, color: C.ink }); rich(c, 'thin mica window', X(dist), Y(RT) - 12, { align: 'center', size: 11, color: C.green }); }
+    for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i]; f.t += dt; if (f.t > 0.5) { flashes.splice(i, 1); continue; } c.beginPath(); c.arc(X(dist + 0.01), Y(0), 6 + f.t * 30, 0, TAU); c.strokeStyle = alpha(C.green, 1 - f.t / 0.5); c.lineWidth = 2; c.stroke(); }
+    if (Lg > -2.6 && Lg < -0.2) { const yy = Y(-0.02); arrow(c, X(0), yy, X(dist), yy, { color: C.muted, width: 1.2, both: true, head: 7 }); rich(c, `d = ${lenStr(dist, 2)}`, X(dist / 2), yy + 12, { align: 'center', size: 11.5, color: C.muted, mono: true }); }
+    // tracks and ion pairs
+    let budget = 5000;
+    for (const p of parts) {
+      if (p.delay < 0) continue;
+      const col = C[KCOL[p.kind]], fade = p.done ? clamp(1 - (p.age - p.doneAt) / 2.6, 0, 1) : 1;
+      const path = []; let lastI = 0;
+      for (let i = 0; i < p.pts.length; i++) { if (p.pts[i][2] > p.head) break; path.push([X(p.pts[i][0]), Y(p.pts[i][1])]); lastI = i; }
+      let hx = p.pts[lastI][0], hy = p.pts[lastI][1];
+      if (lastI < p.pts.length - 1) { const a = p.pts[lastI], b = p.pts[lastI + 1], q = (p.head - a[2]) / Math.max(1e-15, b[2] - a[2]); hx = a[0] + (b[0] - a[0]) * q; hy = a[1] + (b[1] - a[1]) * q; path.push([X(hx), Y(hy)]); }
+      // ion pairs: drawn one by one when there are few enough on screen, otherwise as a dense band
+      const rng = mulberry(p.id * 7919);
+      for (let i = 1; i <= lastI + 1 && i < p.pts.length; i++) {
+        const a = p.pts[i - 1], b = p.pts[i], dens = b[3]; if (!dens) continue;
+        const segEnd = Math.min(b[2], p.head), len = segEnd - a[2]; if (len <= 0) continue;
+        const ax = X(a[0]), ay = Y(a[1]), bx = X(b[0]), by = Y(b[1]);
+        if (Math.max(ax, bx) < -20 || Math.min(ax, bx) > W + 20 || Math.max(ay, by) < -20 || Math.min(ay, by) > H + 20) continue;
+        const nI = dens * len, pxL = len * k, frac = len / Math.max(1e-15, b[2] - a[2]);
+        if (nI / Math.max(pxL, 1e-6) > 0.8 || budget <= 0) { for (const piece of clipPoly([[ax, ay], [ax + (bx - ax) * frac, ay + (by - ay) * frac]], -20, -20, W + 20, H + 20)) line(c, piece, { color: alpha(C.orange, .35 * fade), width: clamp(2 + Math.log10(Math.max(1, nI / Math.max(pxL, 1e-6))), 2, 7) }); continue; }
+        const segL = hyp(bx - ax, by - ay), ux = (bx - ax) / Math.max(1e-9, segL), uy = (by - ay) / Math.max(1e-9, segL);
+        // the part of this segment inside the canvas, as a fraction range [ta, tb]
+        let ta = 0, tb = frac; { const cl = (p0, d, lo, hi) => { if (Math.abs(d) < 1e-9) return p0 >= lo && p0 <= hi ? [-1e9, 1e9] : [1, 0]; const t1 = (lo - p0) / d, t2 = (hi - p0) / d; return [Math.min(t1, t2), Math.max(t1, t2)]; };
+          const [x1_, x2_] = cl(ax, bx - ax, -20, W + 20), [y1_, y2_] = cl(ay, by - ay, -20, H + 20); ta = Math.max(ta, x1_, y1_); tb = Math.min(tb, x2_, y2_); }
+        if (tb <= ta) continue;
+        const NB = Math.max(1, Math.ceil(nI / frac / 40)), per = nI / frac / NB;
+        for (let bk = Math.floor(ta * NB); bk < Math.min(NB, Math.ceil(tb * NB)); bk++) {
+          const r2 = mulberry(p.id * 131 + i * 977 + bk * 7); let n = Math.floor(per); if (r2() < per - n) n++; budget -= n; if (budget < 0) break;
+          for (let j = 0; j < n; j++) { const t = (bk + r2()) / NB; if (t > frac) continue; const off = (r2() - 0.5) * 3e-7 * k, px = ax + (bx - ax) * t - uy * off, py = ay + (by - ay) * t + ux * off;
+            if (k > 2e6) { dot(c, px, py, 2.6, alpha(C.orange, fade)); dot(c, px + 5 * (r2() - 0.5) * 2, py - 5, 1.6, alpha(C.blue, fade)); } else dot(c, px, py, 2, alpha(C.orange, .9 * fade)); }
+        }
+      }
+      for (const piece of clipPoly(path, -20, -20, W + 20, H + 20)) line(c, piece, { color: alpha(col, (p.kind === 'g' ? .55 : .85) * fade), width: p.kind === 'a' ? 1.8 : 1.3, dash: p.kind === 'g' ? [6, 4] : null });
+      if (!p.done) dot(c, X(hx), Y(hy), p.kind === 'a' ? 3.6 : 2.6, col);
+    }
+    // HUD
+    const desc = Lg > -1.7 ? ['The bench', 'source → absorber → GM tube'] : Lg > -2.7 ? ['Close up', 'tracks in the air and the absorber'] : Lg > -4 ? ['1 mm of air', 'orange: ion pairs knocked out along each track'] : ['Ion pairs', 'each orange + is a positive ion, each blue dot its freed electron (W ≈ 34 eV per pair)'];
+    rich(c, desc[0], 14, 18, { size: 14, color: C.ink, w: 700, bg: alpha(C.paper2, .75) });
+    rich(c, desc[1], 14, 38, { size: 11.5, color: C.muted, bg: alpha(C.paper2, .75) });
+    rich(c, `view width ${lenStr(C0.cam.w, 3)}`, 14, 56, { size: 11, color: C.muted, mono: true, bg: alpha(C.paper2, .75) });
+    scaleBar(c, 16, H - 16, k, Math.min(150, W * 0.3), C.ink2);
+    const r = rates(), tot = win.reduce((a, b) => a + b[1], 0), T = win.reduce((a, b) => a + b[0], 0) || 1;
+    const bx = W - 158, by = 10; c.fillStyle = C.ink; rrect(c, bx, by, 146, 52, 7); c.fill();
+    rich(c, count ? `counting… ${fix(Math.max(0, count.left), 0)} s` : 'GM counter', bx + 73, by + 13, { align: 'center', size: 10.5, color: alpha(C.paper2, .8), fit: false });
+    rich(c, count ? `${count.n}` : `${fix(tot / T, 1)} s⁻¹`, bx + 73, by + 35, { align: 'center', size: 19, color: C.green, w: 700, mono: true, fit: false });
   }, [S]);
-  const g = Group(P.side, 'Source');
-  Seg(g, { options: [['alpha', 'Alpha'], ['beta', 'Beta'], ['gamma', 'Gamma']], value: kind, onchange: v => { kind = v; parts.length = 0; counts = { emitted: 0, detected: 0 }; } });
-  Seg(g, { label: 'Absorber', wrap: true, options: [['none', 'None'], ['paper', 'Paper'], ['al', '3 mm Al'], ['lead', '5 cm Pb']], value: abs, onchange: v => { abs = v; counts = { emitted: 0, detected: 0 }; } });
-  const b = Btns(g); const pb = Btn(b, '❚❚ Pause', () => { run = !run; pb.textContent = run ? '❚❚ Pause' : '▶ Emit'; }, 'pri'); Btn(b, 'Reset counts', () => counts = { emitted: 0, detected: 0 });
-  const ro = Readout(Group(P.side, 'Detector'), [['em', 'Emitted'], ['det', 'Reaching the GM tube', 'hl'], ['pct', 'Fraction detected']]);
-  Note(P.side, 'The orange specks are <b>ion pairs</b>. Alpha makes thousands per millimetre, so it loses energy fast and has a short range. Gamma makes very few, so it travels a long way.');
+  // ---- analysis graph ----
+  const plot = new Plot(S2, { pad: { l: 62, r: 16, t: 26, b: 42 } });
+  L.loop(() => {
+    const c = S2.begin(), C = Theme.c; if (!S2.w) return;
+    c.fillStyle = C.paper2; c.fillRect(0, 0, S2.w, S2.h); plot.rect = { x: 0, y: 0, w: S2.w, h: S2.h };
+    const lg = v => Math.log10(Math.max(v, 1e-3));
+    if (gmode === 'thick') {
+      const m = absM() || MAT.al, key = absK === 'none' ? 'al' : absK, tmax = { paper: 2e-3, al: 1.2e-2, pb: 0.06 }[key], unit = key === 'pb' ? 'cm' : 'mm', f = key === 'pb' ? 100 : 1000;
+      const r0 = rates({ m, t: 0 });
+      Object.assign(plot, { xmin: 0, xmax: tmax * f, ymin: -1, ymax: Math.ceil(lg(r0.a + r0.b + r0.g) + 0.3), xlabel: `${m.n} thickness / ${unit}`, ylabel: 'corrected rate / s⁻¹ (log)', yfmt: v => '10' + supx(Math.round(v)), yticks: null, xticks: null });
+      plot.axes({ zeroAxes: false });
+      const comp = (sel, col) => plot.curve(x => lg(sel(rates({ m, t: x / f }))), { color: col, width: 1.6, n: 200, dash: [5, 4] });
+      if (!mystery) { if (src.a.length) comp(q => q.a, C.red); if (src.b.length) comp(q => q.b, C.blue); if (src.g.length) comp(q => q.g, C.violet);
+        plot.curve(x => lg((q => q.a + q.b + q.g)(rates({ m, t: x / f }))), { color: C.ink, width: 2, n: 200 }); }
+      for (const q of pts.thick.filter(q => q.mat === key)) { const yv = q.rate - BG, e = Math.sqrt(q.n) / 60; plot.clip(cc => line(cc, [[plot.X(q.x * f), plot.Y(lg(yv - e))], [plot.X(q.x * f), plot.Y(lg(yv + e))]], { color: C.green, width: 1.4 })); plot.dots([[q.x * f, lg(yv)]], { color: C.green, r: 4 }); }
+      rich(c, mystery ? 'Mystery source: theory hidden. Green: your 60 s counts, background subtracted.' : `Lines: theory (red α, blue β, violet γ, black total) · green: your 60 s counts, background subtracted`, plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    } else if (gmode === 'dist') {
+      const xs = [0.01, 0.4]; Object.assign(plot, { xmin: 0, xmax: 1 / (0.04 * 0.04) / 1e3, ymin: 0, ymax: Math.max(1, (q => q.a + q.b + q.g)(rates({ d: 0.04 }))) * 1.15, xlabel: '1 / *d*² / 10³ m⁻²', ylabel: 'corrected rate / s⁻¹', yfmt: null, yticks: null, xticks: null });
+      plot.axes();
+      if (!mystery) plot.curve(Array.from({ length: 120 }, (_, i) => { const d = 0.04 + i * 0.003; const q = rates({ d }); return [1 / (d * d) / 1e3, q.a + q.b + q.g]; }), { color: C.ink, width: 2 });
+      for (const q of pts.dist) { const yv = q.rate - BG, e = Math.sqrt(q.n) / 60; plot.clip(cc => line(cc, [[plot.X(1 / (q.x * q.x) / 1e3), plot.Y(yv - e)], [plot.X(1 / (q.x * q.x) / 1e3), plot.Y(yv + e)]], { color: C.green, width: 1.4 })); plot.dots([[1 / (q.x * q.x) / 1e3, yv]], { color: C.green, r: 4 }); }
+      rich(c, 'Inverse square: for γ the corrected rate is proportional to 1/d², a straight line through the origin (d ≥ 4 cm).', plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    } else {
+      const bars = [['α (5 MeV)', 0.896 / W_ION, C.red], ['β (1 MeV)', 2.4e-3 / W_ION, C.blue], ['γ (1 MeV)', 0.0279 * 1.205e-3 / W_ION, C.violet]];
+      Object.assign(plot, { xmin: 0, xmax: 3, ymin: -1, ymax: 5, xlabel: '', ylabel: 'ion pairs per cm of air (log)', yfmt: v => '10' + supx(Math.round(v)), xticks: [], yticks: [-1, 0, 1, 2, 3, 4, 5] });
+      plot.axes({ zeroAxes: false });
+      bars.forEach(([n, v, col], i) => { const x0 = plot.X(i + 0.2), x1 = plot.X(i + 0.8), y0 = plot.Y(-1), y1 = plot.Y(Math.log10(v)); c.fillStyle = alpha(col, .7); c.fillRect(x0, y1, x1 - x0, y0 - y1); rich(c, n, (x0 + x1) / 2, y0 + 14, { align: 'center', size: 12, color: C.ink2, w: 600 }); rich(c, num(v, 2), (x0 + x1) / 2, y1 - 10, { align: 'center', size: 12, color: col, w: 700, mono: true }); });
+      rich(c, 'Ionising power: α makes ~10⁴ times more ion pairs per cm than β, so it loses its energy in a few cm.', plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    }
+  }, [S2]);
+  // ---- controls ----
+  const gz = Group(P.side, 'Zoom: bench to ion pairs');
+  const lv = Seg(gz, { wrap: true, options: LV.map(l => [l[0], l[1]]), value: 'bench', onchange: v => { const [x, y, w] = LV.find(q => q[0] === v)[2](); C0.flyTo(x, y, w); C0.show(); } });
+  const g = Group(P.side, 'Source and absorber');
+  const sSel = el('select', { class: 'sel', id: 'pe-src', 'aria-label': 'source' }, SRC.map((q, i) => el('option', { value: i }, `${q.n}`)));
+  sSel.value = 1; sSel.addEventListener('change', () => { src = SRC[+sSel.value]; mystery = false; mysBox.innerHTML = ''; resetCounts(); }); g.append(sSel);
+  const aSeg = Seg(g, { label: 'Absorber', wrap: true, options: [['none', 'None'], ['paper', 'Paper'], ['al', 'Aluminium'], ['pb', 'Lead']], value: absK, onchange: v => { absK = v; syncThick(); resetCounts(); } });
+  const tS = Slider(g, { id: 'pe-t', label: 'Thickness', min: 0, max: 1, step: 0.005, value: 0.5, fmt: () => absK === 'none' ? '—' : lenStr(tAbs(), 2), oninput: v => { if (absK !== 'none') { const [a, b] = TR[absK]; thick[absK] = a * Math.pow(b / a, v); } resetCounts(); } });
+  const TR = { paper: [5e-5, 2e-3], al: [1e-4, 1.2e-2], pb: [1e-3, 0.06] };
+  function syncThick() { if (absK === 'none') { tS.refresh(); return; } const [a, b] = TR[absK]; tS.set(Math.log(thick[absK] / a) / Math.log(b / a)); }
+  Slider(g, { id: 'pe-d', label: 'Source to GM tube <i>d</i>', min: 0.01, max: 0.4, step: 0.005, value: dist, fmt: v => lenStr(v, 2), oninput: v => { dist = v; resetCounts(); } });
+  Seg(g, { label: 'Between them', options: [['air', 'Air'], ['vac', 'Vacuum']], value: medium, onchange: v => { medium = v; resetCounts(); } });
+  Slider(g, { id: 'pe-B', label: 'Magnetic field into the screen', min: 0, max: 1000, step: 10, value: 0, unit: 'mT', fmt: v => String(v), oninput: v => Bmt = v });
+  const gc = Group(P.side, 'Count');
+  const cb = Btns(gc);
+  const pb = Btn(cb, '❚❚ Pause', () => { run = !run; pb.textContent = run ? '❚❚ Pause' : '▶ Run'; }, 'sm');
+  Btn(cb, 'Count for 60 s', () => { if (!count) count = { n: 0, left: 60, x: tAbs(), xd: dist }; syncCount(); }, 'pri sm');
+  const recB = Btn(cb, '＋ Add to graph', () => { if (!last60) return; if (gmode === 'dist') pts.dist.push({ x: last60.xd, rate: last60.n / 60, n: last60.n }); else pts.thick.push({ x: last60.x, mat: absK === 'none' ? 'al' : absK, rate: last60.n / 60, n: last60.n }); last60 = null; syncCount(); }, 'sm');
+  Btn(cb, 'Clear graph', () => { pts = { thick: [], dist: [] }; }, 'sm');
+  const cBox = el('div', { class: 'key' }); gc.append(cBox);
+  function syncCount() { recB.disabled = !last60; cBox.innerHTML = count ? 'Counting for 60 s (fast-forwarded)…' : last60 ? `60 s count: <b class="mono">${last60.n} ± ${Math.round(Math.sqrt(last60.n))}</b> → rate ${fix(last60.n / 60, 2)} s⁻¹, corrected ${fix(last60.n / 60 - BG, 2)} s⁻¹. Add it to the graph.` : `Background is ${fix(BG * 60, 0)} counts per minute (${BG} s⁻¹): subtract it from every reading.`; }
+  function resetCounts() { win = []; count = null; syncCount(); }
+  const gp = Group(P.side, 'Graph under the simulation');
+  Seg(gp, { wrap: true, options: [['thick', 'Absorption'], ['dist', 'Inverse square'], ['ions', 'Ionising power']], value: gmode, onchange: v => gmode = v });
+  const ro = Readout(Group(P.side, 'What the GM tube sees'), [['rate', 'Count rate (last 2 s)', 'hl'], ['pa', 'Expected from α'], ['pb', 'Expected from β'], ['pg', 'Expected from γ'], ['range', 'α range in air'], ['brange', 'β max range in Al'], ['hvl', 'γ half-thickness in Pb']]); ro.el.classList.add('ro-tight');
+  function updRO() {
+    const r = rates(), tot = win.reduce((a, b) => a + b[1], 0), T = win.reduce((a, b) => a + b[0], 0) || 1, hide = mystery ? '?' : null;
+    ro.set('rate', `${fix(tot / T, 1)} s⁻¹`); ro.set('pa', hide || `${num(r.a, 3)} s⁻¹`); ro.set('pb', hide || `${num(r.b, 3)} s⁻¹`); ro.set('pg', hide || `${num(r.g, 3)} s⁻¹`);
+    ro.set('range', hide || (src.a.length ? `${fix(rAir(Math.max(...src.a.map(q => q[0]))), 1)} cm` : 'no α'));
+    ro.set('brange', hide || (src.b.length ? `${fix(kp(Math.max(...src.b.map(q => q[0]))) / 2700 * 10, 1)} mm` : 'no β'));
+    ro.set('hvl', hide || (src.g.length ? `${fix(Math.log(2) / (muRho(Math.max(...src.g.map(q => q[0])), MU_PB) * 11.35), 2)} cm` : 'no γ'));
+  }
+  // identify the mystery source
+  const gm = Group(P.side, 'Identify the mystery source');
+  const mysBox = el('div');
+  Btn(Btns(gm), '? New mystery source', () => { src = pick(SRC); mystery = true; resetCounts(); renderMys(); C0.show(); }, 'sm');
+  gm.append(mysBox);
+  function renderMys() {
+    mysBox.innerHTML = '';
+    if (!mystery) return;
+    const fb = el('div', { class: 'key' }, 'Use absorbers, distance and the field, then decide what it emits.');
+    const opts = el('div', { class: 'opts' }, ANS.map(([k, t]) => el('button', { type: 'button', onclick: e => { const ok = k === src.ans; e.currentTarget.classList.add(ok ? 'right' : 'wrong'); fb.innerHTML = ok ? `✓ Yes: it was <b>${src.n}</b>.` : '✗ Not quite. Paper stops α, a few mm of aluminium stops β, and only γ gets through lead (at a reduced rate).'; if (ok) { mystery = false; sSel.value = SRC.indexOf(src); } } }, t)));
+    mysBox.append(opts, fb);
+  }
+  syncCount();
+  Note(P.side, 'Zoom in to <b>Ion pairs</b>: in the same 20 µm an α knocks out dozens of ion pairs, a β usually none (about one every 140 µm) and γ almost never. That is why α has the shortest range and γ the longest.');
+  Legend(P.side, [[Theme.c.red || '#ff453a', 'α'], [Theme.c.blue || '#0a84ff', 'β⁻ (and electrons freed by γ)'], [Theme.c.violet || '#bf5af2', 'γ (dashed)'], [Theme.c.orange || '#ff9f0a', 'ion pairs']]);
+  // ---- teaching ----
   Card(P.below, 'Properties table (4.6.1)', `<div class="tbl-wrap"><table class="tbl">
     <tr><th>Property</th><th>Alpha (α)</th><th>Beta (β⁻)</th><th>Gamma (γ)</th></tr>
-    <tr><td>Nature</td><td>Helium nucleus (2p + 2n)</td><td>Fast electron</td><td>EM photon</td></tr>
+    <tr><td>Nature</td><td>Helium nucleus (2p + 2n)</td><td>Fast electron from the nucleus</td><td>High-energy EM photon</td></tr>
     <tr><td>Charge</td><td>+2e</td><td>−e</td><td>0</td></tr>
-    <tr><td>Relative mass</td><td>4</td><td>1/1836</td><td>0</td></tr>
-    <tr><td>Ionising power</td><td>Very high</td><td>Medium</td><td>Very low</td></tr>
-    <tr><td>Penetration</td><td>Paper / skin</td><td>~3 mm aluminium</td><td>Reduced by thick lead</td></tr>
-    <tr><td>Range in air</td><td>≈ 5 cm</td><td>≈ 1 m (up to a few m)</td><td>Follows inverse square</td></tr>
-    <tr><td>Deflection in a field</td><td>Slight, one way</td><td>Large, opposite way</td><td>None</td></tr></table></div>
-    <p style="margin-top:10px"><b>The link to learn:</b> heavily ionising ⇒ loses energy quickly ⇒ short range and easily absorbed. Alpha is the most ionising and the least penetrating; gamma is the opposite.</p>`);
-  Drill(P.below, { title: 'Radiation identification drill', gens: [
-    () => ({ q: 'A source’s count rate is unchanged by paper but falls almost to background behind 3 mm of aluminium. What is it emitting?', options: ['Beta only', 'Alpha only', 'Gamma only', 'Alpha and gamma'], correct: 0, why: 'Paper stops alpha; aluminium stops beta; gamma would still get through the aluminium.' }),
-    () => ({ q: 'Which radiation is the most dangerous <b>inside</b> the body?', options: ['Alpha', 'Beta', 'Gamma', 'All the same'], correct: 0, why: 'Inside the body there is nothing to absorb it first, and alpha is by far the most ionising, so it does the most damage to nearby cells.' }),
+    <tr><td>Mass</td><td>4 u</td><td>1/1840 u</td><td>0</td></tr>
+    <tr><td>Typical speed</td><td>≈ 0.05c</td><td>up to ≈ 0.99c</td><td>c</td></tr>
+    <tr><td>Ion pairs per cm of air</td><td>≈ 10⁴–10⁵</td><td>≈ 10²</td><td>≈ 1</td></tr>
+    <tr><td>Range in air</td><td>a few cm (definite)</td><td>up to a few m</td><td>no definite range; intensity follows the inverse square law</td></tr>
+    <tr><td>Stopped by</td><td>a sheet of paper</td><td>a few mm of aluminium</td><td>never fully: reduced by several cm of lead</td></tr>
+    <tr><td>In a magnetic field</td><td>small deflection</td><td>large deflection, opposite way</td><td>none</td></tr></table></div>
+    <p style="margin-top:10px"><b>The chain of reasoning examiners want:</b> large charge and mass ⇒ strong interactions ⇒ many ion pairs per cm ⇒ energy lost quickly ⇒ short range and low penetration. γ is uncharged, so it ionises only when it happens to interact, and it is absorbed exponentially rather than having a range.</p>`);
+  Card(P.below, 'How to use this lab', list([
+    '<b>Absorption experiment:</b> choose an absorber, take a 60 s count at several thicknesses, add each to the graph and compare with the theory lines. A log scale makes γ’s exponential absorption a straight line.',
+    '<b>Inverse square:</b> use Co-60 with no absorber, take 60 s counts at several distances (4 cm upwards) on the <i>Inverse square</i> graph.',
+    '<b>Zoom</b> with the wheel, a pinch or the buttons, from the bench down to the individual ion pairs along a track. Double-click to zoom in on a spot.',
+    '<b>Magnetic field:</b> switch to vacuum and turn up the field. β curves sharply one way; α curves the other way, but only slightly; γ goes straight.',
+    'Every count is Poisson-random, and the 25 counts a minute background is always there: subtract it.']));
+  EqCard(P.below, 'The physics behind the numbers (beyond the spec)', [['R_\\alpha \\approx 0.318\\,E^{1.5}\\ \\text{cm of air}', 'E in MeV (Geiger)'], ['I = I_0 e^{-\\mu x}', 'γ, μ from NIST data'], ['C \\propto \\frac{1}{d^2}', 'γ from a point source'], ['r = \\frac{p}{qB}', 'radius of curvature']]);
+  Drill(P.below, { title: 'Radiation identification drill', cls: 'wide', gens: [
+    () => ({ q: 'A source’s count rate is unchanged by paper but falls to background behind 5 mm of aluminium. What is it emitting?', options: ['Beta only', 'Alpha only', 'Gamma only', 'Alpha and gamma'], correct: 0, why: 'Paper would stop alpha (no change, so no alpha); aluminium stops beta; gamma would still get through the aluminium.' }),
+    () => ({ q: 'Paper reduces the count rate a lot. Behind 5 mm of aluminium it is still well above background, and only a thick block of lead brings it down. What does the source emit?', options: ['Alpha and gamma', 'Beta only', 'Alpha only', 'Beta and gamma'], correct: 0, why: 'The big drop at paper is alpha. What gets through aluminium and is reduced by lead is gamma.' }),
+    () => ({ q: 'Which radiation is the most dangerous <b>inside</b> the body?', options: ['Alpha', 'Beta', 'Gamma', 'All the same'], correct: 0, why: 'Inside the body nothing absorbs it first, and alpha is by far the most ionising, so it deposits all its energy in a tiny volume of tissue.' }),
+    () => ({ q: 'Why does an alpha particle have a much shorter range than a beta particle of the same energy?', options: ['It is more strongly ionising, so it loses energy faster', 'It travels faster', 'It has no charge', 'It is an electromagnetic wave'], correct: 0, why: 'Greater charge and mass mean far more ion pairs per cm, so it gives up its energy in a few cm of air.' }),
     () => ({ q: 'A beam passes through a magnetic field and is deflected sharply in the direction expected for negative charges. Which radiation is it?', options: ['Beta', 'Alpha', 'Gamma', 'Neutrons'], correct: 0, why: 'Beta particles are electrons: negative, and light enough for a large deflection.' }),
+    () => { const d1 = pick([4, 5, 6, 8]), f = pick([2, 3, 4]), C1 = randi(80, 400); return { q: `A gamma source gives a corrected count rate of <b>${C1} min⁻¹</b> at <b>${d1} cm</b>. Find the corrected count rate at <b>${d1 * f} cm</b>.`, a: C1 / (f * f), unit: 'min⁻¹', tol: 0.02, steps: ['Corrected rate ∝ 1/d²', `distance × ${f} ⇒ rate ÷ ${f * f}`, `${C1} / ${f * f} = ${fix(C1 / (f * f), 1)} min⁻¹`] }; },
+    () => { const x = pick([1, 1.5, 2, 3]), n = pick([2, 3, 4]); return { q: `${x} cm of lead halves the intensity of a gamma beam. What fraction gets through <b>${fix(x * n, 1)} cm</b>?`, a: 1 / Math.pow(2, n), unit: '', tol: 0.01, steps: [`${fix(x * n, 1)} cm is ${n} half-thicknesses`, `fraction = (½)^${n} = ${fix(1 / Math.pow(2, n), 4)}`] }; },
   ] });
 }
 
-/* ---------- Lab B: decay equations ---------- */
+/* ---------- Lab B: decay equations on the N–Z chart ---------- */
+// The three natural decay series (and some single steps), with real half-lives. [A, Z, mode, half-life in s]
+const CHAINS = {
+  u238: { n: 'Uranium-238 series', s: [[238, 92, 'α', 4.468e9 * YR], [234, 90, 'β', 24.10 * DAY], [234, 91, 'β', 1.17 * MIN], [234, 92, 'α', 2.455e5 * YR], [230, 90, 'α', 7.54e4 * YR], [226, 88, 'α', 1600 * YR], [222, 86, 'α', 3.8235 * DAY], [218, 84, 'α', 3.098 * MIN], [214, 82, 'β', 26.8 * MIN], [214, 83, 'β', 19.9 * MIN], [214, 84, 'α', 164.3e-6], [210, 82, 'β', 22.2 * YR], [210, 83, 'β', 5.012 * DAY], [210, 84, 'α', 138.4 * DAY], [206, 82, 'stable', Infinity]] },
+  u235: { n: 'Uranium-235 (actinium) series', s: [[235, 92, 'α', 7.04e8 * YR], [231, 90, 'β', 25.52 * HR], [231, 91, 'α', 3.276e4 * YR], [227, 89, 'β', 21.77 * YR], [227, 90, 'α', 18.68 * DAY], [223, 88, 'α', 11.43 * DAY], [219, 86, 'α', 3.96], [215, 84, 'α', 1.781e-3], [211, 82, 'β', 36.1 * MIN], [211, 83, 'α', 2.14 * MIN], [207, 81, 'β', 4.77 * MIN], [207, 82, 'stable', Infinity]] },
+  th232: { n: 'Thorium-232 series', s: [[232, 90, 'α', 1.405e10 * YR], [228, 88, 'β', 5.75 * YR], [228, 89, 'β', 6.15 * HR], [228, 90, 'α', 1.912 * YR], [224, 88, 'α', 3.66 * DAY], [220, 86, 'α', 55.6], [216, 84, 'α', 0.145], [212, 82, 'β', 10.64 * HR], [212, 83, 'β', 60.55 * MIN], [212, 84, 'α', 0.299e-6], [208, 82, 'stable', Infinity]] },
+  c14: { n: 'Carbon-14', s: [[14, 6, 'β', 5730 * YR], [14, 7, 'stable', Infinity]] },
+  sr90: { n: 'Strontium-90', s: [[90, 38, 'β', 28.8 * YR], [90, 39, 'β', 64.1 * HR], [90, 40, 'stable', Infinity]] },
+  co60: { n: 'Cobalt-60', s: [[60, 27, 'β', 5.27 * YR], [60, 28, 'stable', Infinity]] },
+  i131: { n: 'Iodine-131', s: [[131, 53, 'β', 8.02 * DAY], [131, 54, 'stable', Infinity]] },
+};
+const KNOWN = new Map(); for (const ch of Object.values(CHAINS)) for (const q of ch.s) KNOWN.set(q[0] + ':' + q[1], q);
+// a simplified chart of nuclides: the line of stability N ≈ Z + 0.0064 Z², a band either side, decay mode by position
+const Nst = Z => Z + 0.0064 * Z * Z;
+const bandW = Z => 2.5 + 0.16 * Z;
+function modeOf(N, Z) {
+  const k = KNOWN.get((N + Z) + ':' + Z); if (k) return k[2];
+  const dN = N - Nst(Z);
+  if (Z > 83) return dN > bandW(Z) * 0.55 ? 'β' : dN < -bandW(Z) * 0.55 ? 'β+' : 'α';
+  if (Math.abs(dN) <= 0.45 + Z * 0.018 && Z !== 43 && Z !== 61) return 'stable';
+  return dN > 0 ? 'β' : 'β+';
+}
 function mountEquations(P, L) {
-  const S = L.stage(P.stageBox, { aspect: 1.75, minH: 340, maxH: 480, mobileAspect: 1.0 });
-  const START = [['Uranium-238', 238, 92], ['Radium-226', 226, 88], ['Carbon-14', 14, 6], ['Strontium-90', 90, 38], ['Cobalt-60', 60, 27], ['Radon-222', 222, 86], ['Americium-241', 241, 95]];
-  let A = 238, Z = 92, path = [[238, 92]], last = null;
+  const S = L.stage(P.stageBox, { aspect: 1.45, minH: 400, maxH: 620, mobileAspect: 0.95 });
+  let chainK = 'u238', A = 238, Z = 92, path = [[238, 92]], last = null, playing = false, playT = 0, step = 0, hover = null, quiz = null;
+  const MCOL = () => ({ 'α': Theme.c.orange, 'β': Theme.c.blue, 'β+': Theme.c.red, 'stable': Theme.c.ink2 });
+  const home = () => { const asp = S.h / Math.max(1, S.w); return { cx: 80, cy: 52, w: Math.max(176, 118 / Math.max(asp, 0.3)) }; };
+  const C0 = Cam(S, L, { home, wMin: 6, wMax: 400, bounds: () => [-10, 170, -10, 110], cursor: 'pointer', deskH: () => clamp(window.innerHeight - 160, 420, 720),
+    click: (x, y) => { const N = Math.round(C0.wx(x)), Zc = Math.round(C0.wy(y)); if (Zc < 1 || Zc > 98 || N < 0 || Math.abs(N - Nst(Zc)) > bandW(Zc)) return; setNuc(N + Zc, Zc); playing = false; syncPlay(); },
+    hover: (x, y) => { hover = [Math.round(C0.wx(x)), Math.round(C0.wy(y))]; }, leave: () => hover = null });
+  function setNuc(a, z, keepPath) { A = a; Z = z; if (!keepPath) path = [[A, Z]]; last = null; render(); }
   function emit(kind) {
     last = { kind, from: [A, Z] };
     if (kind === 'a') { A -= 4; Z -= 2; } else if (kind === 'b') { Z += 1; } else if (kind === 'bp') { Z -= 1; }
-    path.push([A, Z]); if (path.length > 30) path.shift();
-    render();
+    path.push([A, Z]); if (path.length > 40) path.shift();
+    render(); follow();
   }
-  L.loop(() => {
-    const c = S.begin(), C = Theme.c, W = S.w, H = S.h, wide = W > 620;
-    const N = A - Z;
-    // N–Z chart
-    const gx = wide ? W * 0.44 : 8, gy = wide ? 20 : H * 0.42, gw = (wide ? W * 0.54 : W - 16), gh = (wide ? H - 44 : H * 0.55);
-    const zs = path.map(p => p[1]), ns = path.map(p => p[0] - p[1]);
-    const z0 = Math.min(...zs) - 3, z1 = Math.max(...zs) + 3, n0 = Math.min(...ns) - 3, n1 = Math.max(...ns) + 3;
-    const X = n => gx + (n - n0) / (n1 - n0) * gw, Y = z => gy + gh - (z - z0) / (z1 - z0) * gh;
-    c.strokeStyle = C.grid2; c.lineWidth = 1;
-    c.beginPath(); for (let n = Math.ceil(n0); n <= n1; n++) { c.moveTo(X(n), gy); c.lineTo(X(n), gy + gh); } for (let z = Math.ceil(z0); z <= z1; z++) { c.moveTo(gx, Y(z)); c.lineTo(gx + gw, Y(z)); } c.stroke();
-    rich(c, 'neutron number *N* →', gx + gw, gy + gh + 16, { align: 'right', size: 11.5, color: C.muted });
-    rich(c, 'proton number *Z* ↑', gx + 2, gy - 6, { size: 11.5, color: C.muted });
-    for (let i = 1; i < path.length; i++) { const p0 = path[i - 1], p1 = path[i]; arrow(c, X(p0[0] - p0[1]), Y(p0[1]), X(p1[0] - p1[1]), Y(p1[1]), { color: p1[1] > p0[1] ? C.blue : C.red, width: 2, head: 9 }); }
-    for (const p of path) dot(c, X(p[0] - p[1]), Y(p[1]), 4, alpha(C.ink2, .5));
-    dot(c, X(N), Y(Z), 7, C.violet, C.paper2);
-    rich(c, `${sym(Z)}-${A}`, X(N) + 10, Y(Z) - 10, { size: 12.5, color: C.violet, w: 700, bg: alpha(C.paper2, .85) });
-    // nuclide box
-    const bx = wide ? W * 0.05 : 12, by = wide ? H * 0.22 : 14, bw = wide ? W * 0.3 : W * 0.4, bh = wide ? H * 0.42 : H * 0.3;
-    c.fillStyle = C.paper2; c.strokeStyle = C.ink2; c.lineWidth = 2; rrect(c, bx, by, bw, bh, 8); c.fill(); c.stroke();
-    c.fillStyle = C.ink; c.font = FONT.disp(Math.min(46, bw * 0.3)); c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText(sym(Z), bx + bw * 0.58, by + bh * 0.5);
-    c.font = FONT.mono(Math.min(20, bw * 0.13), 600); c.textAlign = 'right';
-    c.fillText(String(A), bx + bw * 0.34, by + bh * 0.36);
-    c.fillStyle = C.blue; c.fillText(String(Z), bx + bw * 0.34, by + bh * 0.66);
-    c.fillStyle = C.muted; c.font = FONT.ui(11); c.textAlign = 'center'; c.textBaseline = 'top';
-    c.fillText('nucleon number A', bx + bw / 2, by + bh + 6);
-    c.fillStyle = C.blue; c.fillText('proton number Z', bx + bw / 2, by + bh + 22);
-    ro.set('A', String(A)); ro.set('Z', String(Z)); ro.set('N', String(N)); ro.set('el', sym(Z));
-  }, [S]);
-  const g = Group(P.side, 'Start from');
-  const ss = el('select', { class: 'sel', id: 'de-s', 'aria-label': 'starting nuclide' }, START.map(([n], i) => el('option', { value: i }, n)));
-  ss.addEventListener('change', () => { const [, a, z] = START[+ss.value]; A = a; Z = z; path = [[A, Z]]; last = null; render(); }); g.append(ss);
-  const g2 = Group(P.side, 'Emit');
-  const b = Btns(g2);
-  Btn(b, 'α decay', () => emit('a'), 'pri'); Btn(b, 'β⁻ decay', () => emit('b'), 'pri'); Btn(b, 'γ emission', () => emit('g')); Btn(b, 'β⁺ decay', () => emit('bp'));
-  Btn(Btns(g2), 'Reset', () => { const [, a, z] = START[+ss.value]; A = a; Z = z; path = [[A, Z]]; last = null; render(); });
-  const eqBox = el('div', { class: 'eqbox', style: { textAlign: 'left', fontSize: '22px', minHeight: '40px' } }); g2.append(eqBox);
-  const expl = el('div', { class: 'key' }); g2.append(expl);
-  const ro = Readout(Group(P.side, 'Current nuclide'), [['el', 'Element', 'hl'], ['A', 'Nucleon number <i>A</i>'], ['Z', 'Proton number <i>Z</i>'], ['N', 'Neutrons <i>N</i> = <i>A</i> − <i>Z</i>']]);
-  function nuc(a, z, s) { return `<span style="display:inline-flex;flex-direction:column;font-size:.52em;line-height:1.05;vertical-align:.1em;text-align:right;margin-right:.12em"><span>${a}</span><span style="color:var(--ps-blue)">${z}</span></span>${s}`; }
-  function render() {
-    if (!last) { eqBox.innerHTML = '<span class="muted" style="font-size:15px">Press a decay button to build the equation.</span>'; expl.innerHTML = ''; return; }
-    const [a0, z0] = last.from;
-    const parts = { a: [nuc(a0 - 4, z0 - 2, sym(z0 - 2)), nuc(4, 2, 'He')], b: [nuc(a0, z0 + 1, sym(z0 + 1)), nuc(0, -1, 'e')], bp: [nuc(a0, z0 - 1, sym(z0 - 1)), nuc(0, 1, 'e')], g: [nuc(a0, z0, sym(z0)), 'γ'] }[last.kind];
-    eqBox.innerHTML = `${nuc(a0, z0, sym(z0))} → ${parts[0]} + ${parts[1]}`;
-    expl.innerHTML = { a: '<b>Alpha:</b> A decreases by 4, Z decreases by 2. The nuclide moves two places down and two left on the chart.', b: '<b>Beta-minus:</b> a neutron turns into a proton, so Z increases by 1 and A is unchanged (plus an antineutrino).', bp: '<b>Beta-plus:</b> a proton turns into a neutron, so Z decreases by 1 and A is unchanged (plus a neutrino). <i>Extension beyond the CCEA list.</i>', g: '<b>Gamma:</b> the nucleus loses energy only. A and Z are unchanged — it usually follows an α or β decay that leaves the nucleus excited.' }[last.kind];
-  }
-  render();
-  Card(P.below, 'The rules (4.6.2)', `<div class="tbl-wrap"><table class="tbl"><tr><th>Emission</th><th>Change in A</th><th>Change in Z</th><th>What happens</th></tr>
-  <tr><td>Alpha</td><td>−4</td><td>−2</td><td style="white-space:normal">Two protons and two neutrons leave as a helium nucleus</td></tr>
-  <tr><td>Beta-minus</td><td>0</td><td>+1</td><td style="white-space:normal">A neutron becomes a proton and an electron is emitted</td></tr>
-  <tr><td>Gamma</td><td>0</td><td>0</td><td style="white-space:normal">An excited nucleus loses energy as a photon</td></tr></table></div>
-  <p style="margin-top:10px">Both nucleon number and proton number are <b>conserved</b>: the top numbers balance, and so do the bottom ones. That is how you find an unknown particle in an equation.</p>`);
-  Drill(P.below, { title: 'Decay equation drill', cls: 'wide', gens: [
-    () => { const [n, a, z] = pick(START.slice(0, 6)); const which = Math.random() < 0.5; return { q: `${n} (A = ${a}, Z = ${z}) emits an <b>alpha</b> particle. What is the <b>${which ? 'nucleon number A' : 'proton number Z'}</b> of the daughter nucleus?`, a: which ? a - 4 : z - 2, unit: '', tol: 0.001, steps: ['Alpha = ⁴₂He, so A drops by 4 and Z drops by 2', `${which ? `A: ${a} − 4 = ${a - 4}` : `Z: ${z} − 2 = ${z - 2}`}`] }; },
-    () => { const [n, a, z] = pick(START); const which = Math.random() < 0.5; return { q: `${n} (A = ${a}, Z = ${z}) emits a <b>beta-minus</b> particle. Give the <b>${which ? 'nucleon number A' : 'proton number Z'}</b> of the daughter.`, a: which ? a : z + 1, unit: '', tol: 0.001, steps: ['β⁻ is ⁰₋₁e: A unchanged, Z increases by 1 (a neutron becomes a proton)', `${which ? `A stays ${a}` : `Z: ${z} + 1 = ${z + 1}`}`] }; },
-    () => { const a = randi(200, 240), z = randi(80, 94), na = randi(1, 4); return { q: `A nucleus (A = ${a}, Z = ${z}) emits <b>${na} alpha</b> particles and <b>2 beta-minus</b> particles. Find the final proton number.`, a: z - 2 * na + 2, unit: '', tol: 0.001, steps: [`Each α: Z − 2 ⇒ −${2 * na}`, 'Each β⁻: Z + 1 ⇒ +2', `Z = ${z} − ${2 * na} + 2 = ${z - 2 * na + 2}`] }; },
-  ] });
-}
-
-/* ---------- Lab C: random & exponential decay ---------- */
-function mountDecay(P, L) {
-  const S1 = L.stage(P.stageBox, { aspect: 2.5, minH: 200, maxH: 280, tag: 'each square is a nucleus' });
-  const S2 = L.stage(P.stageBox, { aspect: 2.2, minH: 260, maxH: 360, plain: true });
-  let N0 = 400, half = 8, speed = 1, t = 0, run = true, logMode = false, nuclei = [], hist = [], decayedRecent = 0, rateWin = [];
-  function reset() { nuclei = Array.from({ length: N0 }, () => ({ alive: true, at: 0 })); t = 0; hist = [[0, N0]]; rateWin = []; }
-  reset();
-  const plot = new Plot(S2, {});
+  const follow = () => { if (C0.cam.w < 60) C0.flyTo(A - Z, Z, C0.cam.w); };
+  function loadChain(k) { chainK = k; const s0 = CHAINS[k].s[0]; setNuc(s0[0], s0[1]); step = 0; C0.flyTo(s0[0] - s0[1] - 4, s0[1] - 4, Math.max(24, 30)); }
   L.loop(dt => {
-    const lam = Math.log(2) / half;
-    if (run) {
-      const step = dt * speed; let dec = 0;
-      for (const n of nuclei) if (n.alive && Math.random() < 1 - Math.exp(-lam * step)) { n.alive = false; n.at = t; dec++; }
-      t += step; decayedRecent = dec;
-      rateWin.push([t, dec / step]); if (rateWin.length > 40) rateWin.shift();
-      const alive = nuclei.filter(n => n.alive).length;
-      if (!hist.length || t - hist[hist.length - 1][0] > 0.05) hist.push([t, alive]);
-      if (t > half * 6) run = false;
-    }
-    const alive = nuclei.filter(n => n.alive).length;
-    // grid
-    const c = S1.begin(), C = Theme.c, W = S1.w, H = S1.h;
-    const cols = Math.ceil(Math.sqrt(N0 * W / H)), rows = Math.ceil(N0 / cols);
-    const cw = (W - 20) / cols, ch = (H - 20) / rows, s = Math.min(cw, ch) * 0.82;
-    nuclei.forEach((n, i) => { const x = 10 + (i % cols) * cw, y = 10 + Math.floor(i / cols) * ch; c.fillStyle = n.alive ? C.violet : alpha(C.muted, .22); c.fillRect(x, y, s, s); });
-    // graph
-    S2.begin();
-    const A0 = lam * N0;
-    if (!logMode) Object.assign(plot, { xmin: 0, xmax: half * 6, ymin: 0, ymax: N0 * 1.08, xlabel: 'time *t* / s', ylabel: 'number of undecayed nuclei *N*' });
-    else Object.assign(plot, { xmin: 0, xmax: half * 6, ymin: Math.log(Math.max(1, N0)) - 5, ymax: Math.log(N0) + 0.4, xlabel: 'time *t* / s', ylabel: 'ln *N*' });
-    plot.axes();
-    plot.curve(x => logMode ? Math.log(N0) - lam * x : N0 * Math.exp(-lam * x), { color: alpha(C.muted, .8), width: 1.6, dash: [5, 4], n: 300 });
-    plot.curve(hist.map(([x, y]) => [x, logMode ? Math.log(Math.max(y, 0.5)) : y]), { color: C.violet, width: 2.2 });
-    if (!logMode) for (let k = 1; k <= 4; k++) { const th = half * k; if (th <= plot.xmax) { plot.vline(th, { color: alpha(C.blue, .5) }); plot.hline(N0 / Math.pow(2, k), { color: alpha(C.blue, .35) }); plot.label(th, N0 / Math.pow(2, k), `*t*½ ×${k}`, { dx: 5, dy: -8, size: 11, color: C.blue }); } }
-    else plot.label(plot.xmax * 0.55, Math.log(N0) - lam * plot.xmax * 0.55, `gradient = −*λ* = ${fix(-lam, 3)} s⁻¹`, { dx: 0, dy: -14, align: 'center', size: 12, color: C.violet, w: 600, bg: alpha(C.paper2, .85) });
-    ro.set('N', `${alive} / ${N0}`); ro.set('t', `${fix(t, 1)} s`); ro.set('lam', `${fix(lam, 4)} s⁻¹`);
-    ro.set('A', `${fix(lam * alive, 1)} s⁻¹`); ro.set('meas', rateWin.length ? `${fix(rateWin.slice(-8).reduce((a, b) => a + b[1], 0) / Math.min(8, rateWin.length), 1)} s⁻¹` : '—');
-    ro.set('frac', `${fix(alive / N0 * 100, 1)}%`);
-  }, [S1, S2]);
-  const g = Group(P.side, 'Sample');
-  Slider(g, { id: 'dc-N', label: 'Number of nuclei <i>N</i>₀', min: 50, max: 1200, step: 50, value: N0, fmt: v => fix(v, 0), oninput: v => { N0 = v; reset(); } });
-  Slider(g, { id: 'dc-h', label: 'Half-life <i>t</i>½', min: 2, max: 20, step: 1, value: half, unit: 's', fmt: v => fix(v, 0), oninput: v => { half = v; reset(); } });
-  Slider(g, { id: 'dc-s', label: 'Speed', min: 0.25, max: 4, step: 0.25, value: speed, fmt: v => fix(v, 2) + '×', oninput: v => speed = v });
-  const b = Btns(g); const pb = Btn(b, '❚❚ Pause', () => { run = !run; pb.textContent = run ? '❚❚ Pause' : '▶ Run'; }, 'pri'); Btn(b, 'New sample', () => { reset(); run = true; pb.textContent = '❚❚ Pause'; });
-  Switch(g, { label: 'Plot ln <i>N</i> against <i>t</i>', value: logMode, onchange: v => logMode = v });
-  const ro = Readout(Group(P.side, 'Live'), [['N', 'Undecayed <i>N</i>', 'hl'], ['frac', 'Fraction left'], ['t', 'Time'], ['lam', 'Decay constant <i>λ</i> = 0.693/<i>t</i>½'], ['A', 'Activity <i>λN</i>'], ['meas', 'Measured decay rate']]);
-  Note(P.side, 'Each nucleus decays at random: you cannot say <b>which</b> one is next, only the <b>probability</b>. With thousands of nuclei those random events average out into a smooth exponential — compare the jagged line with the dashed theory.');
-  EqCard(P.below, 'Decay equations (4.6.3–4.6.7)', [['\\frac{\\Delta N}{\\Delta t} = -\\lambda N', 'activity A = λN'], ['A = A_0 e^{-\\lambda t}', 'also N = N₀e^{−λt}'], ['t_{1/2} = \\frac{0.693}{\\lambda}', '0.693 = ln 2'], ['\\ln N = \\ln N_0 - \\lambda t', 'straight line, gradient −λ']]);
-  Card(P.below, 'Definitions to learn', list(['<b>Random:</b> every undecayed nucleus has the same probability of decaying in the next second, and you cannot predict which will go or when.', '<b>Exponential:</b> the activity is proportional to the number of undecayed nuclei, so equal time intervals give equal <b>fractional</b> decreases.', '<b>Decay constant λ:</b> the fraction of the undecayed nuclei that decay per second (unit s⁻¹).', '<b>Activity A:</b> the number of decays per second, measured in becquerel (Bq). A = λN.', '<b>Half-life:</b> the average time taken for the number of undecayed nuclei (or the activity) to fall to half its initial value.', 'Decay is unaffected by temperature, pressure or chemical state.']));
-  Drill(P.below, { title: 'Decay drill', cls: 'wide', gens: [
-    () => { const th = pick([5.3, 8.1, 28, 1600, 5730]); const lam = Math.log(2) / th; return { q: `A source has a half-life of <b>${th} years</b>. Find its decay constant in year⁻¹.`, a: lam, unit: 'year⁻¹', tol: 0.01, steps: ['λ = 0.693 / t½', `= 0.693 / ${th} = ${sci(lam, 3)} year⁻¹`] }; },
-    () => { const A0 = randi(200, 9000), th = randi(2, 30), n = randi(1, 5); return { q: `A source of activity <b>${A0} Bq</b> has a half-life of <b>${th} hours</b>. Find its activity after <b>${n * th} hours</b>.`, a: A0 / Math.pow(2, n), unit: 'Bq', tol: 0.01, steps: [`${n * th} h is ${n} half-lives`, `A = ${A0} / 2^${n} = ${fix(A0 / Math.pow(2, n), 1)} Bq`] }; },
-    () => { const A0 = randi(500, 5000), th = randi(4, 40), t = randi(5, 60); const lam = Math.log(2) / th; const A = A0 * Math.exp(-lam * t); return { q: `A source of initial activity <b>${A0} Bq</b> has half-life <b>${th} s</b>. Find its activity after <b>${t} s</b>.`, a: A, unit: 'Bq', tol: 0.02, steps: [`λ = 0.693/${th} = ${fix(lam, 4)} s⁻¹`, `A = A₀e^(−λt) = ${A0}e^(−${fix(lam, 4)}×${t})`, `A = ${fix(A, 1)} Bq`] }; },
-    () => { const N = +rand(1, 9).toFixed(1), e = randi(18, 22), th = randi(2, 30); const lam = Math.log(2) / (th * 3600); const A = lam * N * Math.pow(10, e); return { q: `A sample contains <b>${N} × 10^${e}</b> undecayed nuclei with half-life <b>${th} hours</b>. Find its activity.`, a: A, unit: 'Bq', tol: 0.02, steps: [`λ = 0.693 / (${th} × 3600) = ${sci(lam, 3)} s⁻¹`, `A = λN = ${sci(lam, 3)} × ${N}×10^${e} = ${sci(A, 3)} Bq`] }; },
-  ] });
-}
-
-/* ---------- Lab D: half-life experiment ---------- */
-function mountHalfLife(P, L) {
-  const S1 = L.stage(P.stageBox, { aspect: 2.4, minH: 220, maxH: 300, tag: 'protactinium generator + GM tube' });
-  const S2 = L.stage(P.stageBox, { aspect: 2.3, minH: 260, maxH: 360, plain: true });
-  const TRUE_HL = 71, BG = 0.55, A0 = 28;
-  let t = 0, rows = [], counting = null, bgRows = [], logMode = false, started = false;
-  const plot = new Plot(S2, {});
-  const rateAt = tt => A0 * Math.exp(-Math.log(2) / TRUE_HL * tt) + BG;
-  L.loop(dt => {
-    if (started) t += dt * 4;
-    if (counting) {
-      counting.left -= dt * 4;
-      counting.counts += (counting.bg ? BG : rateAt(counting.t0)) * dt * 4 + gauss() * Math.sqrt(Math.max(0.2, (counting.bg ? BG : rateAt(counting.t0)) * dt * 4));
-      if (counting.left <= 0) {
-        const n = Math.max(0, Math.round(counting.counts));
-        if (counting.bg) bgRows.push(n / (counting.dur || 10)); else rows.push({ t: Math.round(counting.t0), n, rate: n / 10 });
-        counting = null; render();
+    const c = S.begin(), C = Theme.c, W = S.w, H = S.h; if (!W) return;
+    C0.step(dt);
+    if (playing) { playT -= dt; if (playT <= 0) { const ch = CHAINS[chainK].s; const cur = ch.findIndex(q => q[0] === A && q[1] === Z); if (cur < 0 || ch[cur][2] === 'stable') { playing = false; syncPlay(); } else { const md = ch[cur][2]; emit(md === 'α' ? 'a' : 'b'); playT = 1.5; } } }
+    const k = C0.k(), X = C0.X, Y = C0.Y, col = MCOL();
+    c.fillStyle = C.paper2; c.fillRect(0, 0, W, H);
+    const n0 = Math.max(0, Math.floor(C0.wx(0)) - 1), n1 = Math.min(160, Math.ceil(C0.wx(W)) + 1), z0 = Math.max(1, Math.floor(C0.wy(H)) - 1), z1 = Math.min(98, Math.ceil(C0.wy(0)) + 1);
+    // cells of the simplified chart
+    const cs = k * 0.92;
+    for (let z = z0; z <= z1; z++) {
+      const ns = Nst(z), bw = bandW(z);
+      for (let n = Math.max(n0, Math.ceil(ns - bw)); n <= Math.min(n1, Math.floor(ns + bw)); n++) {
+        const m = modeOf(n, z), isK = KNOWN.has((n + z) + ':' + z);
+        c.fillStyle = m === 'stable' ? alpha(C.ink, .8) : alpha(col[m], isK ? .85 : .32);
+        c.fillRect(X(n) - cs / 2, Y(z) - cs / 2, cs, cs);
+        if (k > 30) { c.fillStyle = m === 'stable' ? C.paper2 : C.ink; c.textAlign = 'center'; c.textBaseline = 'middle';
+          if (k > 64) { c.font = FONT.ui(Math.min(14, k * 0.2), 700); c.fillText(`${sym(z)}-${n + z}`, X(n), Y(z) - k * 0.12); }
+          else { c.font = FONT.ui(Math.min(13, k * 0.3), 700); c.fillText(sym(z), X(n), Y(z) - k * 0.15); c.font = FONT.mono(Math.min(11, k * 0.24)); c.fillText(String(n + z), X(n), Y(z) + k * 0.18); } }
+        if (k > 64) { const q = KNOWN.get((n + z) + ':' + z); c.font = FONT.mono(Math.min(11, k * 0.15)); c.fillStyle = m === 'stable' ? alpha(C.paper2, .8) : C.ink2; c.fillText(q ? (q[2] === 'stable' ? 'stable' : `${q[2]} · ${timeStr(q[3], 3)}`) : (m === 'stable' ? 'stable' : m), X(n), Y(z) + k * 0.16); }
       }
     }
-    const c = S1.begin(), C = Theme.c, W = S1.w, H = S1.h;
-    // apparatus
-    const bx = W * 0.14, by = H * 0.3, bw = 58, bh = H * 0.5;
-    c.fillStyle = alpha(C.orange, .25); c.strokeStyle = C.ink2; c.lineWidth = 1.5; rrect(c, bx, by, bw, bh, 6); c.fill(); c.stroke();
-    c.fillStyle = alpha(C.orange, .5); c.fillRect(bx + 2, by + bh * 0.45, bw - 4, bh * 0.5);
-    rich(c, 'organic layer', bx + bw + 8, by + bh * 0.3, { size: 11, color: C.muted });
-    rich(c, 'aqueous layer', bx + bw + 8, by + bh * 0.72, { size: 11, color: C.muted });
-    rich(c, 'protactinium generator', bx + bw / 2, by + bh + 18, { align: 'center', size: 11.5, color: C.ink2, w: 600 });
-    const gx = W * 0.55, gy = H * 0.34;
-    c.fillStyle = C.paper3; c.strokeStyle = C.ink2; rrect(c, gx, gy, 90, 40, 8); c.fill(); c.stroke();
-    rich(c, 'GM tube', gx + 45, gy + 20, { align: 'center', size: 12.5, w: 600, color: C.ink });
-    line(c, [[gx + 90, gy + 20], [gx + 130, gy + 20]], { color: C.ink2, width: 2 });
-    c.fillStyle = C.ink; rrect(c, gx + 130, gy - 4, 110, 48, 6); c.fill();
-    const disp = counting ? `${Math.max(0, Math.round(counting.counts))}` : (rows.length ? `${rows[rows.length - 1].n}` : '0');
-    rich(c, disp, gx + 185, gy + 12, { align: 'center', size: 20, mono: true, w: 700, color: C.green });
-    rich(c, counting ? `counting… ${fix(Math.max(0, counting.left), 1)} s left` : 'counts in 10 s', gx + 185, gy + 34, { align: 'center', size: 10.5, color: alpha(C.paper2, .8) });
-    rich(c, `clock: ${fix(t, 0)} s`, W - 14, 20, { align: 'right', size: 12.5, mono: true, color: C.ink2 });
-    // graph
-    S2.begin();
-    const bgMean = bgRows.length ? bgRows.reduce((a, b) => a + b, 0) / bgRows.length : 0;
-    const data = rows.map(r => ({ x: r.t, y: Math.max(0.01, r.rate - bgMean) }));
-    if (!logMode) Object.assign(plot, { xmin: 0, xmax: Math.max(240, ...rows.map(r => r.t)) * 1.1, ymin: 0, ymax: Math.max(10, ...data.map(d => d.y)) * 1.2, xlabel: 'time *t* / s', ylabel: 'corrected count rate / s⁻¹' });
-    else Object.assign(plot, { xmin: 0, xmax: Math.max(240, ...rows.map(r => r.t)) * 1.1, ymin: -1.5, ymax: Math.log(Math.max(10, ...data.map(d => d.y))) + 0.6, xlabel: 'time *t* / s', ylabel: 'ln(corrected rate)' });
-    plot.axes();
-    let lam = NaN;
-    if (data.length >= 2) {
-      const pts = data.map(d => [d.x, Math.log(d.y)]);
-      const n = pts.length, mx = pts.reduce((a, b) => a + b[0], 0) / n, my = pts.reduce((a, b) => a + b[1], 0) / n;
-      let sxy = 0, sxx = 0; for (const [x, y] of pts) { sxy += (x - mx) * (y - my); sxx += (x - mx) ** 2; }
-      lam = -sxy / sxx; const b0 = my + lam * mx;
-      if (logMode) plot.curve(x => b0 - lam * x, { color: C.green, width: 1.6 });
-      else plot.curve(x => Math.exp(b0 - lam * x), { color: C.green, width: 1.6, n: 200 });
-    }
-    plot.cross(data.map(d => [d.x, logMode ? Math.log(d.y) : d.y]), { color: C.red, s: 5, width: 2 });
-    if (!rows.length) rich(S2.ctx, 'Measure the background first, then take counts every 20–30 s', plot.x0 + plot.pw / 2, plot.y0 + plot.ph / 2, { align: 'center', size: 13, color: C.muted });
-    if (!logMode && data.length >= 2) { const half = Math.log(2) / lam; plot.hline(data[0].y / 2, { color: alpha(C.blue, .4) }); }
-    ro.set('bg', bgRows.length ? `${fix(bgMean, 2)} s⁻¹ (n=${bgRows.length})` : 'not measured'); ro.set('n', String(rows.length));
-    ro.set('lam', isFinite(lam) ? `${fix(lam, 4)} s⁻¹` : '—'); ro.set('hl', isFinite(lam) ? `${fix(Math.log(2) / lam, 1)} s` : '—');
-    ro.set('err', isFinite(lam) ? `${fix((Math.log(2) / lam - TRUE_HL) / TRUE_HL * 100, 1)}%` : '—');
-  }, [S1, S2]);
-  const g = Group(P.side, 'Procedure');
-  const b1 = Btns(g);
-  Btn(b1, 'Measure background (30 s)', () => { if (!counting) counting = { left: 30, counts: 0, t0: t, bg: true, dur: 30 }; });
-  Btn(b1, 'Count for 10 s', () => { if (!counting) { started = true; counting = { left: 10, counts: 0, t0: t, bg: false, dur: 10 }; } }, 'pri');
-  Btn(b1, 'Wait 20 s', () => { t += 20; });
-  Btn(b1, 'Fresh sample', () => { t = 0; rows = []; counting = null; started = false; render(); });
-  Switch(g, { label: 'Plot ln(rate) against <i>t</i>', value: logMode, onchange: v => logMode = v });
-  const ro = Readout(Group(P.side, 'Analysis'), [['bg', 'Background rate'], ['n', 'Readings'], ['lam', 'λ from gradient'], ['hl', 'Half-life <i>t</i>½ = 0.693/λ', 'hl'], ['err', 'vs accepted 71 s']]);
-  Note(P.side, 'Take a reading, press <b>Wait 20 s</b>, take another. Six or seven readings over about 4 minutes is plenty. Always subtract the background before plotting.');
-  const tcard = Card(P.below, 'Results', null);
-  const tbox = el('div', { class: 'tbl-wrap', style: { maxHeight: '260px', overflowY: 'auto' } }); tcard.append(tbox);
+    // axes
+    c.strokeStyle = alpha(C.ink2, .6); c.lineWidth = 1; c.beginPath(); c.moveTo(X(0) - k, Y(0.5)); c.lineTo(X(160), Y(0.5)); c.moveTo(X(-0.5), Y(0) + k); c.lineTo(X(-0.5), Y(100)); c.stroke();
+    const tick = niceLen(C0.cam.w / 8); c.fillStyle = C.muted; c.font = FONT.mono(10.5);
+    for (let n = Math.ceil(n0 / tick) * tick; n <= n1; n += tick) { c.textAlign = 'center'; c.textBaseline = 'top'; c.fillText(String(n), X(n), clamp(Y(0.5) + 4, 4, H - 30)); }
+    for (let z = Math.ceil(z0 / tick) * tick; z <= z1; z += tick) { c.textAlign = 'right'; c.textBaseline = 'middle'; c.fillText(String(z), clamp(X(-0.5) - 4, 40, W), Y(z)); }
+    rich(c, 'neutron number *N* →', W - 14, H - 58, { align: 'right', size: 12, color: C.ink2, w: 600 });
+    rich(c, 'proton number *Z* ↑', 14, 74, { size: 12, color: C.ink2, w: 600 });
+    if (C0.cam.w > 60) { line(c, [[X(0), Y(0)], [X(100), Y(100)]], { color: alpha(C.muted, .7), width: 1, dash: [4, 4] }); rich(c, '*N* = *Z*', X(62), Y(66), { size: 11.5, color: C.muted }); }
+    // the decay path
+    for (let i = 1; i < path.length; i++) { const p0 = path[i - 1], p1 = path[i]; const a = p1[0] < p0[0]; arrow(c, X(p0[0] - p0[1]), Y(p0[1]), X(p1[0] - p1[1]), Y(p1[1]), { color: a ? C.orange : p1[1] > p0[1] ? C.blue : C.red, width: clamp(k * 0.12, 1.6, 4), head: clamp(k * 0.45, 7, 16) }); }
+    const N = A - Z; c.beginPath(); c.arc(X(N), Y(Z), Math.max(6, k * 0.62), 0, TAU); c.strokeStyle = C.violet; c.lineWidth = 3; c.stroke();
+    rich(c, `${sym(Z)}-${A}`, X(N) + Math.max(9, k * 0.7), Y(Z) - Math.max(9, k * 0.7), { size: 13, color: C.violet, w: 700, bg: alpha(C.paper2, .85) });
+    if (hover && hover[1] >= 1 && hover[1] <= 98 && Math.abs(hover[0] - Nst(hover[1])) <= bandW(hover[1]) && k < 27) { const [hn, hz] = hover; rich(c, `${sym(hz)}-${hn + hz} · ${modeOf(hn, hz)}`, X(hn) + 10, Y(hz) + 14, { size: 11.5, color: C.ink, bg: alpha(C.paper2, .9) }); }
+    // HUD + legend
+    rich(c, CHAINS[chainK].n, 14, 18, { size: 14, color: C.ink, w: 700, bg: alpha(C.paper2, .8) });
+    rich(c, 'click any nucleus to start from it · scroll or pinch to zoom', 14, 38, { size: 11.5, color: C.muted, bg: alpha(C.paper2, .8) });
+    c.fillStyle = alpha(C.paper2, .88); c.fillRect(0, H - 32, W, 32);
+    let lx = 14; for (const [m, t] of [['stable', 'stable'], ['α', 'α emitter'], ['β', 'β⁻ emitter'], ['β+', 'β⁺/EC (extension)']]) { c.fillStyle = m === 'stable' ? C.ink : alpha(col[m], .8); c.fillRect(lx, H - 22, 12, 12); lx += 16 + rich(c, t, lx + 16, H - 16, { size: 11, color: C.ink2, fit: false }) + 12; }
+    const q = KNOWN.get(A + ':' + Z);
+    ro.set('el', `${sym(Z)}-${A}`); ro.set('AZN', `${A} · ${Z} · ${N}`); ro.set('nz', fix(N / Z, 3)); ro.set('mode', modeOf(N, Z) === 'stable' ? 'stable' : modeOf(N, Z)); ro.set('t', q ? (q[3] === Infinity ? 'stable' : timeStr(q[3])) : 'not in the data set');
+  }, [S]);
+  // ---- controls ----
+  const g = Group(P.side, 'Decay series');
+  const cSel = el('select', { class: 'sel', id: 'de-c', 'aria-label': 'decay series' }, Object.entries(CHAINS).map(([k2, v]) => el('option', { value: k2 }, v.n)));
+  cSel.addEventListener('change', () => { loadChain(cSel.value); playing = false; syncPlay(); }); g.append(cSel);
+  const gb = Btns(g);
+  const playB = Btn(gb, '▶ Play the series', () => { if (!playing) { const s0 = CHAINS[chainK].s[0]; if (!CHAINS[chainK].s.some(q => q[0] === A && q[1] === Z) || modeOf(A - Z, Z) === 'stable') setNuc(s0[0], s0[1]); C0.flyTo(A - Z, Z, 18); playT = 0.8; } playing = !playing; syncPlay(); C0.show(); }, 'pri sm');
+  function syncPlay() { playB.innerHTML = playing ? '❚❚ Pause' : '▶ Play the series'; }
+  Btn(gb, 'Step', () => { const ch = CHAINS[chainK].s, cur = ch.find(q => q[0] === A && q[1] === Z); if (cur && cur[2] !== 'stable') { emit(cur[2] === 'α' ? 'a' : 'b'); } }, 'sm');
+  Btn(gb, 'Whole chart', () => C0.home(), 'sm');
+  const g2 = Group(P.side, 'Or emit by hand');
+  const b = Btns(g2);
+  Btn(b, 'α decay', () => emit('a'), 'pri sm'); Btn(b, 'β⁻ decay', () => emit('b'), 'pri sm'); Btn(b, 'γ emission', () => emit('g'), 'sm'); Btn(b, 'β⁺ (ext.)', () => emit('bp'), 'sm');
+  const eqBox = el('div', { class: 'eqbox', style: { textAlign: 'left', fontSize: '22px', minHeight: '44px', overflowX: 'auto' } }); g2.append(eqBox);
+  const cons = el('div', { class: 'mono small', style: { fontSize: '.8rem' } }); g2.append(cons);
+  const expl = el('div', { class: 'key' }); g2.append(expl);
+  const ro = Readout(Group(P.side, 'Current nuclide'), [['el', 'Nuclide', 'hl'], ['AZN', '<i>A</i> · <i>Z</i> · <i>N</i>'], ['nz', '<i>N</i>/<i>Z</i>'], ['mode', 'Decays by'], ['t', 'Half-life']]); ro.el.classList.add('ro-tight');
+  function nuc(a, z, s) { return `<span style="display:inline-flex;flex-direction:column;font-size:.52em;line-height:1.05;vertical-align:.1em;text-align:right;margin-right:.12em"><span>${a}</span><span style="color:var(--ps-blue)">${z}</span></span>${s}`; }
   function render() {
-    const bgMean = bgRows.length ? bgRows.reduce((a, b) => a + b, 0) / bgRows.length : 0;
-    tbox.innerHTML = `<table class="tbl"><tr><th>t / s</th><th>counts in 10 s</th><th>rate / s⁻¹</th><th>corrected / s⁻¹</th><th>ln(corrected)</th></tr>${rows.map(r => `<tr><td>${r.t}</td><td>${r.n}</td><td>${fix(r.rate, 2)}</td><td>${fix(Math.max(0.01, r.rate - bgMean), 2)}</td><td>${fix(Math.log(Math.max(0.01, r.rate - bgMean)), 2)}</td></tr>`).join('') || '<tr><td colspan="5" style="text-align:left;color:var(--ps-muted)">No readings yet.</td></tr>'}</table>`;
+    if (!last) { eqBox.innerHTML = '<span class="muted" style="font-size:15px">Play the series or press a decay button to build the equation.</span>'; expl.innerHTML = ''; cons.innerHTML = ''; return; }
+    const [a0, z0] = last.from;
+    const prod = { a: [[a0 - 4, z0 - 2, sym(z0 - 2)], [4, 2, 'He']], b: [[a0, z0 + 1, sym(z0 + 1)], [0, -1, 'e']], bp: [[a0, z0 - 1, sym(z0 - 1)], [0, 1, 'e']], g: [[a0, z0, sym(z0)], [0, 0, 'γ']] }[last.kind];
+    eqBox.innerHTML = `${nuc(a0, z0, sym(z0))} → ${nuc(...prod[0])} + ${last.kind === 'g' ? 'γ' : nuc(...prod[1])}${last.kind === 'b' ? ' + ν̄' : last.kind === 'bp' ? ' + ν' : ''}`;
+    cons.innerHTML = `top: ${a0} = ${prod[0][0]} + ${prod[1][0]} ✓ &nbsp; bottom: ${z0} = ${prod[0][1]} ${prod[1][1] < 0 ? '− ' + (-prod[1][1]) : '+ ' + prod[1][1]} ✓`;
+    const q = KNOWN.get(a0 + ':' + z0);
+    expl.innerHTML = { a: '<b>Alpha:</b> two protons and two neutrons leave together. A falls by 4 and Z by 2: two squares down and two to the left on the chart.', b: '<b>Beta-minus:</b> a neutron changes into a proton and an electron (and an antineutrino). Z rises by 1, A is unchanged: one square up and one to the left.', bp: '<b>Beta-plus</b> (not on the CCEA spec): a proton changes into a neutron and a positron. Z falls by 1, A is unchanged.', g: '<b>Gamma:</b> the nucleus only loses energy, so A and Z do not change. It usually follows an α or β decay that leaves the nucleus excited.' }[last.kind] + (q && q[3] !== Infinity ? ` <span class="muted">Real half-life of ${sym(z0)}-${a0}: ${timeStr(q[3])}.</span>` : '');
+  }
+  // predict the decay
+  const gq = Group(P.side, 'Predict the decay');
+  const qBox = el('div'); gq.append(qBox);
+  Btn(Btns(gq), '? New nuclide', () => {
+    const chs = [...KNOWN.values()].filter(q => q[2] !== 'stable'); const q = pick(chs); quiz = q; setNuc(q[0], q[1]); C0.flyTo(q[0] - q[1], q[1], 30); C0.show();
+    const fb = el('div', { class: 'key' }, `${sym(q[1])}-${q[0]} has ${q[0] - q[1]} neutrons and ${q[1]} protons. How will it decay?`);
+    qBox.innerHTML = ''; qBox.append(el('div', { class: 'opts' }, [['α', 'α'], ['β', 'β⁻']].map(([m, t]) => el('button', { type: 'button', onclick: e => { const ok = m === q[2]; e.currentTarget.classList.add(ok ? 'right' : 'wrong'); fb.innerHTML = (ok ? '✓ ' : '✗ ') + (q[2] === 'α' ? 'Heavy nuclei (Z > 83) shed mass and charge by alpha emission.' : 'It has too many neutrons for its protons (it sits below-right of the stable line), so a neutron becomes a proton: β⁻.'); } }, t))), fb);
+  }, 'sm');
+  render();
+  Card(P.below, 'The rules (4.6.2)', `<div class="tbl-wrap"><table class="tbl"><tr><th>Emission</th><th>Change in A</th><th>Change in Z</th><th>What happens</th><th>On the chart</th></tr>
+  <tr><td>Alpha ⁴₂He</td><td>−4</td><td>−2</td><td style="white-space:normal">Two protons and two neutrons leave as a helium nucleus</td><td>2 down, 2 left</td></tr>
+  <tr><td>Beta-minus ⁰₋₁e</td><td>0</td><td>+1</td><td style="white-space:normal">A neutron becomes a proton; an electron and an antineutrino are emitted</td><td>1 up, 1 left</td></tr>
+  <tr><td>Gamma γ</td><td>0</td><td>0</td><td style="white-space:normal">An excited nucleus loses energy as a photon</td><td>no move</td></tr></table></div>
+  <p style="margin-top:10px">Both nucleon number and proton number are <b>conserved</b>: the top numbers balance, and so do the bottom ones. That is how you find an unknown particle. To count the decays in a series, use A first: the number of α = ΔA ÷ 4. Then use Z: each α lowers Z by 2 and each β⁻ raises it by 1.</p>`);
+  Card(P.below, 'Reading the chart', list(['Light stable nuclei have N ≈ Z. Heavier ones need extra neutrons, so the stable line bends away from N = Z.', 'Nuclei <b>below and right</b> of the stable line (too many neutrons) decay by β⁻; above and left (too few) by β⁺ or electron capture (beyond the spec).', 'Beyond lead and bismuth (Z > 83) nothing is stable: those nuclei mostly emit α and work their way down to lead.', 'Colours here come from a simplified model of the chart; the three decay series and the labelled half-lives are real data.']));
+  Drill(P.below, { title: 'Decay equation drill', cls: 'wide', gens: [
+    () => { const q = pick([...KNOWN.values()].filter(q => q[2] === 'α')); const which = Math.random() < 0.5; return { q: `${sym(q[1])}-${q[0]} (Z = ${q[1]}) emits an <b>alpha</b> particle. What is the <b>${which ? 'nucleon number A' : 'proton number Z'}</b> of the daughter nucleus?`, a: which ? q[0] - 4 : q[1] - 2, unit: '', tol: 0.001, steps: ['Alpha = ⁴₂He, so A drops by 4 and Z drops by 2', `${which ? `A: ${q[0]} − 4 = ${q[0] - 4}` : `Z: ${q[1]} − 2 = ${q[1] - 2}`}`] }; },
+    () => { const q = pick([...KNOWN.values()].filter(q => q[2] === 'β')); const which = Math.random() < 0.5; return { q: `${sym(q[1])}-${q[0]} (Z = ${q[1]}) emits a <b>beta-minus</b> particle. Give the <b>${which ? 'nucleon number A' : 'proton number Z'}</b> of the daughter.`, a: which ? q[0] : q[1] + 1, unit: '', tol: 0.001, steps: ['β⁻ is ⁰₋₁e: A unchanged, Z increases by 1', which ? `A = ${q[0]}` : `Z = ${q[1]} + 1 = ${q[1] + 1}`] }; },
+    () => { const ch = pick([CHAINS.u238, CHAINS.u235, CHAINS.th232]); const s = ch.s, i = randi(0, s.length - 5), j = s.length - 1, [a1, z1] = s[i], [a2, z2] = s[j], na = (a1 - a2) / 4, nb = 2 * na - (z1 - z2); const askA = Math.random() < 0.5; return { q: `${sym(z1)}-${a1} (Z = ${z1}) decays through a series to stable ${sym(z2)}-${a2} (Z = ${z2}). How many <b>${askA ? 'alpha' : 'beta-minus'}</b> decays happen?`, a: askA ? na : nb, unit: '', tol: 0.001, steps: [`Only α changes A: number of α = (${a1} − ${a2}) / 4 = ${na}`, `${na} α lower Z by ${2 * na}; Z actually falls by ${z1 - z2}`, `number of β⁻ = ${2 * na} − ${z1 - z2} = ${nb}`] }; },
+    () => { const q = pick([...KNOWN.values()].filter(q => q[2] !== 'stable')); const isA = q[2] === 'α'; const a2 = isA ? q[0] - 4 : q[0], z2 = isA ? q[1] - 2 : q[1] + 1; return { q: `Complete the equation: ${sym(q[1])}-${q[0]} (Z = ${q[1]}) → ${sym(z2)}-${a2} (Z = ${z2}) + <b>X</b>. What is X?`, options: ['an alpha particle ⁴₂He', 'a beta-minus particle ⁰₋₁e', 'a gamma ray', 'a neutron'], correct: isA ? 0 : 1, why: `Top: ${q[0]} − ${a2} = ${q[0] - a2}; bottom: ${q[1]} − ${z2} = ${q[1] - z2}. ${isA ? 'A = 4, Z = 2 is a helium nucleus.' : 'A = 0, Z = −1 is an electron.'}` }; },
+  ] });
+}
+
+/* ---------- Lab C: random and exponential decay ---------- */
+const ISO = [['dice', 'Dice (1 in 6 per throw)', 0], ['rn220', 'Radon-220', 55.6], ['pa234', 'Protactinium-234m', 69.5], ['tc99m', 'Technetium-99m', 6.01 * HR], ['i131', 'Iodine-131', 8.02 * DAY], ['co60', 'Cobalt-60', 5.27 * YR], ['c14', 'Carbon-14', 5730 * YR], ['u238', 'Uranium-238', 4.468e9 * YR]];
+function mountDecay(P, L) {
+  const S1 = L.stage(P.stageBox, { aspect: 1.9, minH: 300, maxH: 520, mobileAspect: 1.1 });
+  const S2 = L.stage(P.stageBox, { aspect: 2.5, minH: 240, maxH: 340, mobileAspect: 1.3, plain: true });
+  let iso = ISO[1], N0 = 2500, speed = 0.5, run = true, gmode = 'N';
+  let cols = 50, rows = 50, alive, when, aliveN, t, hist, bins, throwT, halves, recent;
+  const thalf = () => iso[0] === 'dice' ? Math.log(2) / -Math.log(5 / 6) : iso[2];  // in throws for dice
+  const lam = () => Math.log(2) / thalf();
+  const tu = s => iso[0] === 'dice' ? `${num(s, 3)} throws` : timeStr(s);
+  function reset() {
+    cols = Math.ceil(Math.sqrt(N0 * 1.6)); rows = Math.ceil(N0 / cols);
+    alive = new Uint8Array(N0).fill(1); when = new Float64Array(N0).fill(-1); aliveN = N0; t = 0; hist = [[0, N0]]; throwT = 0; halves = []; recent = [];
+    bins = []; img = null;
+  }
+  let img = null, imgCv = null;
+  reset();
+  const home = () => { const asp = S1.h / Math.max(1, S1.w), w = Math.max(cols, rows / Math.max(asp, 0.2)) * 1.06; return { cx: cols / 2, cy: -rows / 2, w }; };
+  const C0 = Cam(S1, L, { home, wMin: 3, wMax: 400, bounds: () => [0, cols, -rows, 0], cursor: 'zoom-in', deskH: () => clamp(window.innerHeight - 380, 300, 520) });
+  // one time step: every undecayed nucleus decays with probability 1 − e^(−λΔt), independently
+  function advance(dts) {
+    let p, dice = iso[0] === 'dice';
+    if (dice) { throwT += dts; if (throwT < 1) return; throwT -= 1; dts = 1; p = 1 / 6; } else p = 1 - Math.exp(-lam() * dts);
+    const startN = aliveN; let dec = 0;
+    for (let i = 0; i < N0; i++) if (alive[i] && Math.random() < p) { alive[i] = 0; when[i] = t + Math.random() * dts; dec++; recent.push([i, performance.now()]); }
+    t += dts; aliveN -= dec; hist.push([t, aliveN]);
+    // decays per bin (bin width = t½/8) for the activity graphs
+    const bw = iso[0] === 'dice' ? 1 : thalf() / 8, bi = Math.floor((t - dts / 2) / bw); while (bins.length <= bi) bins.push({ n: 0, start: null, t0: bins.length * bw, bw }); const b = bins[bi]; if (b.start == null) b.start = startN; b.n += dec;
+    for (let k = halves.length + 1; k <= 6; k++) if (aliveN <= N0 / Math.pow(2, k)) halves.push(t); else break;
+    if (recent.length > 400) recent.splice(0, recent.length - 400);
+    img = null;
+  }
+  L.loop(dt => {
+    if (run && aliveN > 0 && t < thalf() * 8) {
+      const dts = dt * speed * (iso[0] === 'dice' ? 2.5 : thalf());
+      const sub = iso[0] === 'dice' ? 1 : Math.max(1, Math.ceil(dts / (thalf() / 40))); for (let i = 0; i < sub; i++) advance(dts / sub);
+    }
+    const c = S1.begin(), C = Theme.c, W = S1.w, H = S1.h; if (!W) return;
+    C0.step(dt);
+    const k = C0.k(), X = C0.X, Y = C0.Y;
+    c.fillStyle = C.paper2; c.fillRect(0, 0, W, H);
+    if (k < 7) {
+      // zoomed out: one pixel per nucleus, scaled up
+      if (!img) { if (!imgCv) imgCv = document.createElement('canvas'); imgCv.width = cols; imgCv.height = rows; const ic = imgCv.getContext('2d'); const id = ic.createImageData(cols, rows);
+        const hexRGB = h => { const s = h.replace('#', ''); const n = parseInt(s.length === 3 ? s.split('').map(q => q + q).join('') : s, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+        const va = hexRGB(C.violet.startsWith('#') ? C.violet : '#8e5cf7'), vd = hexRGB(C.muted.startsWith('#') ? C.muted : '#8e8e93');
+        for (let i = 0; i < N0; i++) { const o4 = i * 4, cc = alive[i] ? va : vd; id.data[o4] = cc[0]; id.data[o4 + 1] = cc[1]; id.data[o4 + 2] = cc[2]; id.data[o4 + 3] = alive[i] ? 255 : 60; }
+        ic.putImageData(id, 0, 0); img = imgCv; }
+      c.imageSmoothingEnabled = false; c.drawImage(img, X(0), Y(0), cols * k, rows * k); c.imageSmoothingEnabled = true;
+    } else {
+      // zoomed in: every nucleus drawn, and the ones that have just decayed flash and fire off a particle
+      const i0 = Math.max(0, Math.floor(C0.wx(0)) - 1), i1 = Math.min(cols - 1, Math.ceil(C0.wx(W))), j0 = Math.max(0, Math.floor(-C0.wy(0)) - 1), j1 = Math.min(rows - 1, Math.ceil(-C0.wy(H)));
+      const now = performance.now(), fl = new Map(); for (const [i, tm] of recent) if (now - tm < 900) fl.set(i, (now - tm) / 900);
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+        const id = j * cols + i; if (id >= N0) continue; const x = X(i + 0.5), y = Y(-j - 0.5), r = k * 0.38;
+        if (alive[id]) { dot(c, x, y, r, alpha(C.violet, .9)); if (k > 40) { dot(c, x - r * 0.3, y - r * 0.3, r * 0.25, alpha('#ffffff', .35)); } }
+        else { dot(c, x, y, r * 0.8, alpha(C.muted, .22)); }
+        const f = fl.get(id); if (f != null) { c.beginPath(); c.arc(x, y, r * (1 + f * 2), 0, TAU); c.strokeStyle = alpha(C.orange, 1 - f); c.lineWidth = 2; c.stroke(); const a = (id * 2.399) % TAU; arrow(c, x, y, x + Math.cos(a) * r * (1 + f * 4), y + Math.sin(a) * r * (1 + f * 4), { color: alpha(C.red, 1 - f), width: 2, head: 7 }); }
+        if (k > 70) rich(c, alive[id] ? 'undecayed' : `decayed at ${tu(when[id])}`, x, y + r + 12, { align: 'center', size: 10.5, color: C.muted, fit: false });
+      }
+    }
+    rich(c, `${aliveN.toLocaleString()} of ${N0.toLocaleString()} undecayed`, 14, 18, { size: 14, color: C.ink, w: 700, bg: alpha(C.paper2, .8) });
+    rich(c, `t = ${tu(t)}  ·  ${iso[1]}${iso[0] === 'dice' ? '' : `, t½ = ${timeStr(thalf())}`}`, 14, 38, { size: 11.5, color: C.muted, bg: alpha(C.paper2, .8) });
+    if (k < 7) rich(c, 'zoom in to watch individual nuclei: nothing tells you which will go next', 14, 56, { size: 11, color: C.muted, bg: alpha(C.paper2, .8) });
+    // readouts
+    const L_ = lam(), mA = bins.length > 1 ? bins[bins.length - 2] : null;
+    ro.set('N', `${aliveN.toLocaleString()} (${fix(aliveN / N0 * 100, 1)}%)`); ro.set('t', tu(t));
+    ro.set('lam', iso[0] === 'dice' ? `p = 1/6 per throw` : `${sci(L_, 3)} s⁻¹`);
+    ro.set('A', iso[0] === 'dice' ? `${fix(aliveN / 6, 1)} per throw` : `${num(L_ * aliveN, 3)} Bq`);
+    ro.set('mA', mA ? (iso[0] === 'dice' ? `${fix(mA.n / mA.bw, 1)} per throw` : `${num(mA.n / mA.bw, 3)} Bq`) : '—');
+    ro.set('f', mA && mA.start ? `${num(mA.n / mA.start / mA.bw, 3)} ${iso[0] === 'dice' ? 'per throw' : 's⁻¹'}` : '—');
+    ro.set('h', halves.length ? halves.map((h, i) => tu(h - (i ? halves[i - 1] : 0)).replace(' throws', '')).slice(0, 4).join(', ') : '—');
+  }, [S1]);
+  // ---- graphs ----
+  const plot = new Plot(S2, { pad: { l: 62, r: 16, t: 26, b: 42 } });
+  L.loop(() => {
+    const c = S2.begin(), C = Theme.c; if (!S2.w) return;
+    c.fillStyle = C.paper2; c.fillRect(0, 0, S2.w, S2.h); plot.rect = { x: 0, y: 0, w: S2.w, h: S2.h };
+    const th = thalf(), L_ = lam(), dice = iso[0] === 'dice', xs = dice ? 1 : th, xu = dice ? 'throws' : 'half-lives', T = th * 6;
+    const tx = v => v / xs;
+    const theoryN = x => dice ? N0 * Math.pow(5 / 6, x) : N0 * Math.exp(-L_ * x);
+    const xl = dice ? 'number of throws' : 'time *t* / half-lives';
+    if (gmode === 'N') {
+      Object.assign(plot, { xmin: 0, xmax: T / xs, ymin: 0, ymax: N0 * 1.08, xlabel: xl, ylabel: 'undecayed nuclei *N*', yfmt: null, xticks: null, yticks: null }); plot.axes();
+      plot.clip(cc => { const up = [], dn = []; for (let i = 0; i <= 100; i++) { const x = T * i / 100, n = theoryN(x), sd = 2 * Math.sqrt(n * (1 - n / N0) + 1e-9); up.push([plot.X(tx(x)), plot.Y(n + sd)]); dn.push([plot.X(tx(x)), plot.Y(Math.max(0, n - sd))]); }
+        cc.beginPath(); up.forEach((q, i) => i ? cc.lineTo(q[0], q[1]) : cc.moveTo(q[0], q[1])); for (let i = dn.length - 1; i >= 0; i--) cc.lineTo(dn[i][0], dn[i][1]); cc.closePath(); cc.fillStyle = alpha(C.violet, .1); cc.fill(); });
+      plot.curve(x => theoryN(x * xs), { color: alpha(C.ink2, .8), width: 1.6, dash: [5, 4], n: 200 });
+      plot.curve(hist.map(([x, n]) => [tx(x), n]), { color: C.violet, width: 2.2 });
+      if (!dice) for (let k2 = 1; k2 <= 4; k2++) { plot.vline(k2, { color: alpha(C.blue, .45) }); plot.hline(N0 / Math.pow(2, k2), { color: alpha(C.blue, .3) }); plot.label(k2, N0 / Math.pow(2, k2), `N₀/${Math.pow(2, k2)}`, { dx: 5, dy: -8, size: 11, color: C.blue }); }
+      rich(c, 'Purple: this sample · dashed: N = N₀e^(−λt) · shaded: the ±2√N spread you expect from randomness', plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    } else if (gmode === 'ln') {
+      Object.assign(plot, { xmin: 0, xmax: T / xs, ymin: Math.max(0, Math.log(N0) - 5), ymax: Math.log(N0) + 0.3, xlabel: xl, ylabel: 'ln *N*', yfmt: null, xticks: null, yticks: null }); plot.axes();
+      plot.curve(x => Math.log(theoryN(x * xs)), { color: alpha(C.ink2, .8), width: 1.6, dash: [5, 4], n: 200 });
+      plot.curve(hist.filter(h => h[1] > 0).map(([x, n]) => [tx(x), Math.log(n)]), { color: C.violet, width: 2.2 });
+      rich(c, `ln N = ln N₀ − λt: a straight line of gradient −λ = ${dice ? fix(Math.log(5 / 6), 3) + ' per throw' : sci(-L_, 3) + ' s⁻¹'}. The scatter grows as N gets small.`, plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    } else {
+      const done = bins.slice(0, -1);
+      const ys = gmode === 'A' ? done.map(b => b.n / b.bw) : done.filter(b => b.start).map(b => b.n / b.start / b.bw);
+      const ymax = gmode === 'A' ? Math.max(1, (dice ? N0 / 6 : L_ * N0) * 1.25, ...ys) : Math.max(...(dice ? [1 / 6] : [L_]).map(v => v * 2.2), ...ys.slice(0, 20));
+      Object.assign(plot, { xmin: 0, xmax: T / xs, ymin: 0, ymax, xlabel: xl, ylabel: gmode === 'A' ? `activity / ${dice ? 'decays per throw' : 'Bq'}` : `fraction decaying per ${dice ? 'throw' : 'second'}`, yfmt: null, xticks: null, yticks: null }); plot.axes();
+      if (gmode === 'A') plot.curve(x => dice ? theoryN(x) / 6 : L_ * theoryN(x * xs), { color: alpha(C.ink2, .8), width: 1.6, dash: [5, 4], n: 200 });
+      else plot.hline(dice ? 1 / 6 : L_, { color: C.ink2, dash: [5, 4], width: 1.6 });
+      for (const b of done) {
+        if (gmode === 'f' && !b.start) continue;
+        const v = gmode === 'A' ? b.n / b.bw : b.n / b.start / b.bw, e = gmode === 'A' ? Math.sqrt(b.n) / b.bw : Math.sqrt(b.n) / b.start / b.bw, xm = tx(b.t0 + b.bw / 2);
+        plot.clip(cc => line(cc, [[plot.X(xm), plot.Y(v - e)], [plot.X(xm), plot.Y(v + e)]], { color: C.violet, width: 1.2 }));
+        plot.dots([[xm, v]], { color: C.violet, r: 3.4 });
+      }
+      rich(c, gmode === 'A' ? 'Activity A = λN falls exponentially too. Error bars: ±√(counts).' : `λ is the fraction of the remaining nuclei that decay per ${dice ? 'throw' : 'second'}: the same at every stage (dashed), however few are left.`, plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+    }
+  }, [S2]);
+  // ---- controls ----
+  const g = Group(P.side, 'Sample');
+  const iSel = el('select', { class: 'sel', id: 'dc-iso', 'aria-label': 'isotope' }, ISO.map((q, i) => el('option', { value: i }, q[2] ? `${q[1]} (t½ = ${timeStr(q[2])})` : q[1])));
+  iSel.value = 1; iSel.addEventListener('change', () => { iso = ISO[+iSel.value]; reset(); C0.home(); }); g.append(iSel);
+  Slider(g, { id: 'dc-N', label: 'Number of nuclei <i>N</i>₀', min: 2, max: 4.6, step: 0.01, value: Math.log10(N0), fmt: v => { const n = Math.pow(10, v); return (n > 1000 ? Math.round(n / 100) * 100 : Math.round(n)).toLocaleString(); }, oninput: v => { const n = Math.pow(10, v); N0 = n > 1000 ? Math.round(n / 100) * 100 : Math.round(n); reset(); C0.home(); } });
+  Slider(g, { id: 'dc-s', label: 'Speed', min: 0.05, max: 2, step: 0.05, value: speed, fmt: v => iso[0] === 'dice' ? `${fix(v * 2.5, 2)} throws per s` : `${fix(v, 2)} half-lives per s`, oninput: v => speed = v });
+  const b = Btns(g); const pb = Btn(b, '❚❚ Pause', () => { run = !run; pb.textContent = run ? '❚❚ Pause' : '▶ Run'; }, 'pri'); Btn(b, 'New sample', () => { reset(); run = true; pb.textContent = '❚❚ Pause'; });
+  Btn(b, 'Zoom to one nucleus', () => { const i = Math.floor(Math.random() * N0); C0.flyTo((i % cols) + 0.5, -Math.floor(i / cols) - 0.5, 6); C0.show(); }, 'sm');
+  const gp = Group(P.side, 'Graph');
+  Seg(gp, { wrap: true, options: [['N', '<i>N</i> against <i>t</i>'], ['ln', 'ln <i>N</i> against <i>t</i>'], ['A', 'Activity'], ['f', 'Fraction per second']], value: gmode, onchange: v => gmode = v });
+  const ro = Readout(Group(P.side, 'Live'), [['N', 'Undecayed <i>N</i>', 'hl'], ['t', 'Time'], ['lam', 'Decay constant λ = 0.693/<i>t</i>½'], ['A', 'Activity λ<i>N</i> (theory)'], ['mA', 'Activity in the last interval'], ['f', 'Fraction decaying per second'], ['h', 'Successive half-lives seen']]); ro.el.classList.add('ro-tight');
+  Note(P.side, 'Every undecayed nucleus has the same chance of decaying in the next second, whatever its age. Nothing about a nucleus tells you when it will go, yet a large sample halves in the same time, again and again. Watch the successive half-lives: they come out (nearly) equal.');
+  EqCard(P.below, 'Decay equations (4.6.4–4.6.7)', [['A = -\\frac{\\Delta N}{\\Delta t} = \\lambda N', 'activity, Bq'], ['\\lambda = \\frac{A}{N}', 'fraction decaying per second'], ['A = A_0 e^{-\\lambda t}', 'and N = N₀e^{−λt}'], ['t_{1/2} = \\frac{\\ln 2}{\\lambda} = \\frac{0.693}{\\lambda}', ''], ['\\ln N = \\ln N_0 - \\lambda t', 'straight line, gradient −λ']]);
+  Card(P.below, 'Definitions to learn', list(['<b>Random:</b> you cannot predict which nucleus will decay next or when; each has a fixed probability of decaying per second (λ), independent of its age and of what happens to the others.', '<b>Spontaneous:</b> decay is not affected by temperature, pressure or chemical state.', '<b>Exponential:</b> the activity is proportional to the number of undecayed nuclei, so equal time intervals give equal <b>fractional</b> decreases.', '<b>Decay constant λ:</b> the fraction of the undecayed nuclei that decay per second (unit s⁻¹), or the probability per second that one nucleus decays.', '<b>Activity A:</b> the number of nuclei decaying per second, in becquerel (1 Bq = 1 decay per second).', '<b>Half-life t½:</b> the average time for the number of undecayed nuclei (or the activity) to fall to half its initial value.']));
+  Drill(P.below, { title: 'Decay drill', cls: 'wide', gens: [
+    () => { const q = pick(ISO.slice(1)); const lam_ = Math.log(2) / q[2]; return { q: `${q[1]} has a half-life of <b>${timeStr(q[2])}</b>. Find its decay constant in s⁻¹.`, a: lam_, unit: 's⁻¹', tol: 0.02, steps: [`t½ = ${sci(q[2], 3)} s`, 'λ = 0.693 / t½', `= ${sci(lam_, 3)} s⁻¹`] }; },
+    () => { const A0 = randi(200, 9000), th = randi(2, 30), n = randi(1, 5); return { q: `A source of activity <b>${A0} Bq</b> has a half-life of <b>${th} hours</b>. Find its activity after <b>${n * th} hours</b>.`, a: A0 / Math.pow(2, n), unit: 'Bq', tol: 0.01, steps: [`${n * th} h is ${n} half-lives`, `A = ${A0} / 2^${n} = ${fix(A0 / Math.pow(2, n), 1)} Bq`] }; },
+    () => { const A0 = randi(500, 5000), th = randi(4, 40), tt = randi(5, 60); const l = Math.log(2) / th; const A = A0 * Math.exp(-l * tt); return { q: `A source of initial activity <b>${A0} Bq</b> has half-life <b>${th} s</b>. Find its activity after <b>${tt} s</b>.`, a: A, unit: 'Bq', tol: 0.02, steps: [`λ = 0.693/${th} = ${fix(l, 4)} s⁻¹`, `A = A₀e^(−λt) = ${A0} × e^(−${fix(l, 4)} × ${tt})`, `= ${fix(A, 1)} Bq`] }; },
+    () => { const Nn = +rand(1, 9).toFixed(1), e = randi(18, 22), th = randi(2, 30); const l = Math.log(2) / (th * 3600); const A = l * Nn * Math.pow(10, e); return { q: `A sample contains <b>${Nn} × 10^${e}</b> undecayed nuclei with half-life <b>${th} hours</b>. Find its activity.`, a: A, unit: 'Bq', tol: 0.02, steps: [`λ = 0.693 / (${th} × 3600) = ${sci(l, 3)} s⁻¹`, `A = λN = ${sci(l, 3)} × ${Nn}×10^${e} = ${sci(A, 3)} Bq`] }; },
+    () => { const A0 = randi(800, 6000), f = pick([0.1, 0.2, 0.3, 0.6]), th = randi(3, 20); const tt = th * Math.log(1 / f) / Math.log(2); return { q: `How long does it take the activity of a source with half-life <b>${th} days</b> to fall to <b>${f * 100}%</b> of its initial value?`, a: tt, unit: 'days', tol: 0.02, steps: [`A/A₀ = e^(−λt) ⇒ t = ln(A₀/A)/λ`, `λ = 0.693/${th} = ${fix(Math.log(2) / th, 4)} day⁻¹`, `t = ln(${fix(1 / f, 3)}) / ${fix(Math.log(2) / th, 4)} = ${fix(tt, 2)} days`] }; },
+    () => ({ q: 'A sample of a radioactive isotope is heated from 20 °C to 400 °C. What happens to its half-life?', options: ['It stays the same', 'It halves', 'It doubles', 'It falls slightly'], correct: 0, why: 'Decay is spontaneous: it depends only on the nucleus, not on temperature, pressure or chemical state.' }),
+    () => ({ q: 'Which statement best describes the <b>random</b> nature of radioactive decay?', options: ['You cannot predict which nucleus will decay next, or when', 'The activity is always the same', 'Older nuclei are more likely to decay', 'Half the nuclei decay in each second'], correct: 0, why: 'Each nucleus has the same fixed probability per second of decaying; its age makes no difference.' }),
+  ] });
+}
+
+/* ---------- Lab D: the half-life experiment ---------- */
+const GEN = [['pa', 'Protactinium-234m generator', 69.5, 30], ['rn', 'Radon-220 (thoron) generator', 55.6, 40], ['x', 'Unknown source', 0, 30]];
+function mountHalfLife(P, L) {
+  const S1 = L.stage(P.stageBox, { aspect: 2.6, minH: 210, maxH: 280, tag: 'generator + GM tube + scaler' });
+  const S2 = L.stage(P.stageBox, { aspect: 1.9, minH: 300, maxH: 440, plain: true });
+  let gen = GEN[0], TH = gen[2], A0 = gen[3], BGR = 0.45, clock = 0, started = false, speed = 5, intv = 10, auto = false, logMode = true;
+  let rows = [], bgN = null, bgT = 0, counting = null, shake = 0, hA = null, hB = null, act = null, showFit = false;
+  const lamT = () => Math.log(2) / TH;
+  // the expected counts between t1 and t2 integrate the decaying rate exactly, then a Poisson sample gives the reading
+  const meanCounts = (t1, t2) => A0 / lamT() * (Math.exp(-lamT() * t1) - Math.exp(-lamT() * t2)) + BGR * (t2 - t1);
+  function fresh() { if (gen[0] === 'x') TH = 30 + Math.random() * 120; else TH = gen[2]; rows = []; clock = 0; started = false; counting = null; shake = 1; hA = null; hB = null; touched = false; showFit = false; fitB.textContent = 'Show best fit'; render(); }
+  function startCount(bg) { if (counting) return; if (!bg) started = true; counting = { bg, t0: clock, dur: bg ? 100 : intv, left: bg ? 100 : intv, n: 0 }; }
+  function finishCount() {
+    const q = counting; counting = null;
+    const n = q.bg ? poisson(BGR * q.dur) : poisson(meanCounts(q.t0, q.t0 + q.dur));
+    if (q.bg) { bgN = n; bgT = q.dur; } else rows.push({ t: q.t0 + q.dur / 2, n, dur: q.dur });
+    render(); if (auto && !q.bg && clock < 8 * TH) startCount(false);
+  }
+  const bgRate = () => bgN == null ? 0 : bgN / bgT;
+  const pts = () => rows.map(r => { const corr = r.n / r.dur - bgRate(); return { x: r.t, n: r.n, dur: r.dur, y: corr, e: Math.sqrt(r.n) / r.dur, ly: corr > 0 ? Math.log(corr) : NaN, le: corr > 0 ? Math.sqrt(r.n) / r.dur / corr : NaN }; }).filter(p => p.y > 0);
+  // weighted least squares on ln(rate), with weights taken from the fitted line rather than each noisy count (weighting by
+  // the observed count biases t½ upwards by a few per cent), leaving out readings under 10 counts, whose logs are biased.
+  // Checked against 2000 simulated runs: no measurable bias, and the quoted ± covers the true value about 2 times in 3.
+  // Also the steepest and shallowest lines through the error bars of the first and last points.
+  function fits() {
+    const p = pts().filter(q => isFinite(q.ly) && q.n >= 10); if (p.length < 3) return null;
+    const bgr = bgRate();
+    const fit = wf => { let sw = 0, sx = 0, sy = 0, sxx = 0, sxy = 0; for (const q of p) { const w = wf(q); sw += w; sx += w * q.x; sy += w * q.ly; sxx += w * q.x * q.x; sxy += w * q.x * q.ly; } const m = (sw * sxy - sx * sy) / (sw * sxx - sx * sx); return { m, c: (sy - m * sx) / sw, sm: Math.sqrt(sw / (sw * sxx - sx * sx)) }; };
+    let F = fit(() => 1); for (let it = 0; it < 4; it++) { const G = F; F = fit(q => { const r = Math.exp(G.c + G.m * q.x), nh = (r + bgr) * q.dur; return r * r * q.dur * q.dur / Math.max(nh, 1e-9); }); }
+    const { m, c: c0, sm } = F;
+    const a = p[0], b = p[p.length - 1];
+    const mMax = ((b.ly - b.le) - (a.ly + a.le)) / (b.x - a.x), mMin = ((b.ly + b.le) - (a.ly - a.le)) / (b.x - a.x);
+    return { m, c: c0, sm, a, b, mMax, mMin };
+  }
+  const plot = new Plot(S2, { pad: { l: 62, r: 16, t: 26, b: 42 } });
+  Pointer(S2, {
+    scroll: true,
+    hit: (x, y) => { if (!logMode || !hA) return null; for (const [k, h] of [['a', hA], ['b', hB]]) if (hyp(plot.X(h[0]) - x, plot.Y(h[1]) - y) < 18) return k; return null; },
+    move: (k, x, y) => { const h = k === 'a' ? hA : hB; h[0] = clamp(plot.ix(x), plot.xmin, plot.xmax); h[1] = clamp(plot.iy(y), plot.ymin, plot.ymax); act = k; touched = true; },
+    up: () => act = null
+  });
+  let touched = false;
+  L.loop(dt => {
+    const sp = dt * speed;
+    if (started) clock += sp;
+    if (counting) { counting.left -= sp; const el_ = counting.dur - Math.max(0, counting.left); counting.live = Math.round(counting.bg ? BGR * el_ : meanCounts(counting.t0, counting.t0 + el_)); if (counting.left <= 0) finishCount(); }
+    shake = Math.max(0, shake - dt * 1.5);
+    // apparatus
+    const c = S1.begin(), C = Theme.c, W = S1.w, H = S1.h; if (!W) return;
+    const bx = W * 0.1 + Math.sin(performance.now() / 40) * shake * 6, by = H * 0.22, bw = Math.min(70, W * 0.12), bh = H * 0.6;
+    c.fillStyle = alpha(C.ink2, .08); c.strokeStyle = C.ink2; c.lineWidth = 1.5; rrect(c, bx, by, bw, bh, 8); c.fill(); c.stroke();
+    const split = shake > 0.05 ? 0 : 1;
+    c.fillStyle = alpha(C.orange, .45); c.fillRect(bx + 2, by + bh * 0.5, bw - 4, bh * 0.5 - 2);
+    c.fillStyle = alpha(C.cyan, split ? .35 : .15); c.fillRect(bx + 2, by + bh * 0.12, bw - 4, bh * 0.38);
+    if (W > 520) { rich(c, gen[0] === 'pa' ? 'organic layer: ²³⁴ᵐPa' : gen[0] === 'rn' ? 'radon-220 gas' : 'sample', bx + bw + 8, by + bh * 0.3, { size: 11, color: C.muted }); rich(c, gen[0] === 'pa' ? 'aqueous layer' : 'parent source', bx + bw + 8, by + bh * 0.75, { size: 11, color: C.muted }); }
+    // live decays near the top layer
+    const rate = started ? A0 * Math.exp(-lamT() * clock) : A0;
+    for (let i = 0; i < Math.min(30, rate / 3); i++) { const r1 = mulberry(Math.floor(performance.now() / 120) * 97 + i)(); if (r1 < 0.5) dot(c, bx + 6 + r1 * 2 * (bw - 12), by + bh * 0.14 + mulberry(i * 13 + Math.floor(performance.now() / 120))() * bh * 0.32, 2.2, alpha(C.red, .8)); }
+    const gx = W * 0.42, gy = H * 0.3;
+    c.fillStyle = C.paper3; c.strokeStyle = C.ink2; rrect(c, gx, gy, Math.min(110, W * 0.18), 34, 8); c.fill(); c.stroke();
+    line(c, [[gx, gy + 17], [bx + bw, by + bh * 0.3]], { color: alpha(C.muted, .5), dash: [3, 4], width: 1 });
+    rich(c, 'GM tube', gx + Math.min(55, W * 0.09), gy + 17, { align: 'center', size: 12, w: 600, color: C.ink });
+    const sx = W * 0.66, sw = Math.min(170, W * 0.3);
+    line(c, [[gx + Math.min(110, W * 0.18), gy + 17], [sx, gy + 17]], { color: C.ink2, width: 2 });
+    c.fillStyle = C.ink; rrect(c, sx, gy - 10, sw, 62, 7); c.fill();
+    const disp = counting ? `${counting.live || 0}` : rows.length ? `${rows[rows.length - 1].n}` : bgN != null ? `${bgN}` : '0';
+    rich(c, disp, sx + sw / 2, gy + 14, { align: 'center', size: 22, mono: true, w: 700, color: C.green, fit: false });
+    rich(c, counting ? `${counting.bg ? 'background' : 'counting'} · ${fix(Math.max(0, counting.left), 0)} s left` : `counts in ${intv} s`, sx + sw / 2, gy + 40, { align: 'center', size: 10.5, color: alpha(C.paper2, .8), fit: false });
+    rich(c, `stopclock ${fix(clock, 0)} s${speed > 1 ? `  (×${speed})` : ''}`, W - 14, 16, { align: 'right', size: 12, mono: true, color: C.ink2, fit: false });
+    // graph
+    const c2 = S2.begin(); c2.fillStyle = C.paper2; c2.fillRect(0, 0, S2.w, S2.h); plot.rect = { x: 0, y: 0, w: S2.w, h: S2.h };
+    const p = pts(), tmax = Math.max(6 * Math.max(TH, 40), ...p.map(q => q.x)) * 1.05;
+    if (logMode) {
+      const ymx = Math.log(Math.max(5, A0)) + 0.6;
+      Object.assign(plot, { xmin: 0, xmax: tmax, ymin: Math.min(-1, ...p.map(q => q.ly - q.le).filter(isFinite)) - 0.2, ymax: ymx, xlabel: 'time *t* / s', ylabel: 'ln (corrected rate / s⁻¹)', yfmt: null });
+      plot.axes({ zeroAxes: false });
+      const F = fits();
+      if (F && showFit) {
+        plot.curve(x => F.c + F.m * x, { color: C.green, width: 1.8 });
+        plot.curve(x => F.a.ly + F.a.le + F.mMax * (x - F.a.x), { color: alpha(C.red, .7), width: 1.2, dash: [5, 4] });
+        plot.curve(x => F.a.ly - F.a.le + F.mMin * (x - F.a.x), { color: alpha(C.blue, .7), width: 1.2, dash: [5, 4] });
+      }
+      for (const q of p) { if (!isFinite(q.ly)) continue; plot.clip(cc => line(cc, [[plot.X(q.x), plot.Y(q.ly - q.le)], [plot.X(q.x), plot.Y(q.ly + q.le)]], { color: C.red, width: 1.3 })); }
+      plot.cross(p.filter(q => isFinite(q.ly)).map(q => [q.x, q.ly]), { color: C.red, s: 4.5, width: 2 });
+      if (p.length >= 2) {
+        if (!hA || !touched) { const a0 = p.find(q => isFinite(q.ly)), b0 = [...p].reverse().find(q => isFinite(q.ly)); hA = [a0.x, a0.ly + 0.35]; hB = [Math.max(b0.x, a0.x + 1), b0.ly - 0.5]; }
+        plot.curve(x => hA[1] + (hB[1] - hA[1]) / (hB[0] - hA[0] || 1e-9) * (x - hA[0]), { color: C.orange, width: 2.2 });
+        handle(c2, plot.X(hA[0]), plot.Y(hA[1]), C.orange, act === 'a'); handle(c2, plot.X(hB[0]), plot.Y(hB[1]), C.orange, act === 'b');
+        rich(c2, 'Drag the orange handles to draw your best-fit line through the error bars', plot.x0 + 6, 13, { size: 11.5, color: C.muted });
+      } else rich(c2, bgN == null ? 'Step 1: measure the background (100 s). Step 2: shake, then count every interval.' : 'Shake the generator, then take readings every interval (or switch on the datalogger).', plot.x0 + plot.pw / 2, plot.y0 + plot.ph / 2, { align: 'center', size: 13, color: C.muted });
+    } else {
+      Object.assign(plot, { xmin: 0, xmax: tmax, ymin: 0, ymax: Math.max(5, A0 * 1.15, ...p.map(q => q.y + q.e)), xlabel: 'time *t* / s', ylabel: 'corrected count rate / s⁻¹', yfmt: null });
+      plot.axes();
+      for (const q of p) plot.clip(cc => line(cc, [[plot.X(q.x), plot.Y(q.y - q.e)], [plot.X(q.x), plot.Y(q.y + q.e)]], { color: C.red, width: 1.3 }));
+      plot.cross(p.map(q => [q.x, q.y]), { color: C.red, s: 4.5, width: 2 });
+      const F = fits(); if (F) { const r0 = Math.exp(F.c), th = Math.log(2) / -F.m; plot.curve(x => r0 * Math.exp(F.m * x), { color: C.green, width: 1.6, n: 200 }); for (let kk = 1; kk <= 3; kk++) { plot.hline(r0 / Math.pow(2, kk), { color: alpha(C.blue, .35) }); plot.vline(th * kk, { color: alpha(C.blue, .45) }); } rich(c2, `Read across from each halving of the rate: each step takes ${fix(th, 1)} s.`, plot.x0 + 6, 13, { size: 11.5, color: C.muted }); }
+    }
+    // readouts
+    const F = fits();
+    const myM = hA ? (hB[1] - hA[1]) / (hB[0] - hA[0] || 1e-9) : NaN;
+    ro.set('bg', bgN == null ? 'not measured' : `${bgN} in ${bgT} s = ${fix(bgRate(), 2)} ± ${fix(Math.sqrt(bgN) / bgT, 2)} s⁻¹`);
+    ro.set('n', String(rows.length));
+    ro.set('my', isFinite(myM) && myM < 0 ? `λ = ${fix(-myM, 4)} s⁻¹ → t½ = ${fix(Math.log(2) / -myM, 1)} s` : '—');
+    ro.set('fit', F && F.m < 0 ? `t½ = ${fix(Math.log(2) / -F.m, 1)} ± ${fix(Math.log(2) / -F.m * F.sm / -F.m, 1)} s` : 'needs 3 readings');
+    ro.set('mm', F && F.mMax < 0 && F.mMin < 0 ? `${fix(Math.log(2) / -F.mMax, 1)} – ${fix(Math.log(2) / -F.mMin, 1)} s` : '—');
+    ro.set('acc', gen[0] === 'x' ? 'revealed when you check' : `${fix(TH, 1)} s`);
+  }, [S1, S2]);
+  // ---- controls ----
+  const g = Group(P.side, 'Apparatus');
+  const gSel = el('select', { class: 'sel', id: 'hl-g', 'aria-label': 'source' }, GEN.map((q, i) => el('option', { value: i }, q[1])));
+  gSel.addEventListener('change', () => { gen = GEN[+gSel.value]; A0 = gen[3]; fresh(); }); g.append(gSel);
+  Seg(g, { label: 'Counting interval', options: [['5', '5 s'], ['10', '10 s'], ['20', '20 s']], value: '10', onchange: v => intv = +v });
+  Seg(g, { label: 'Clock speed', options: [['1', '×1'], ['5', '×5'], ['20', '×20']], value: '5', onchange: v => speed = +v });
+  const b1 = Btns(g);
+  Btn(b1, 'Measure background (100 s)', () => startCount(true), 'sm');
+  Btn(b1, '⟲ Shake and start', () => { fresh(); started = true; startCount(false); }, 'pri sm');
+  Btn(b1, 'Take one reading', () => startCount(false), 'sm');
+  const autoSw = Switch(g, { label: 'Datalogger: count every interval', value: auto, onchange: v => { auto = v; if (v && started && !counting) startCount(false); } });
+  const g2 = Group(P.side, 'Analysis');
+  Seg(g2, { options: [['log', 'ln(rate) against <i>t</i>'], ['lin', 'rate against <i>t</i>']], value: 'log', onchange: v => logMode = v === 'log' });
+  const fb2 = Btns(g2);
+  const fitB = Btn(fb2, 'Show best fit', () => { showFit = !showFit; fitB.textContent = showFit ? 'Hide best fit' : 'Show best fit'; }, 'sm');
+  Btn(fb2, 'Check my line', () => {
+    const F = fits(); if (!F || !hA) { verdict.className = 'flag'; verdict.textContent = 'Take at least three readings first.'; return; }
+    const m = (hB[1] - hA[1]) / (hB[0] - hA[0] || 1e-9), ok = m < 0 && ((m >= F.mMax * 1.03 && m <= F.mMin * 0.97) || Math.abs(m - F.m) < 2 * F.sm);
+    verdict.className = 'flag' + (ok ? ' ok' : ''); verdict.innerHTML = ok ? `✓ Your gradient lies between the steepest and shallowest lines. Your t½ = ${fix(Math.log(2) / -m, 1)} s.${gen[0] === 'x' ? ` The source’s true half-life was ${fix(TH, 1)} s.` : ''}` : '✗ Your line is outside the range the error bars allow. Aim through the middle of the bars, using the first and last points as a guide.';
+  }, 'sm');
+  const verdict = el('div'); g2.append(verdict);
+  const ro = Readout(g2, [['bg', 'Background'], ['n', 'Readings'], ['my', 'From your line', 'hl'], ['fit', 'Best fit (readings ≥ 10 counts)'], ['mm', 'Max/min gradient lines give'], ['acc', 'Accepted value']]); ro.el.classList.add('ro-tight');
+  Note(P.side, '<b>Method:</b> measure the background first. Shake, wait for the layers to separate, then count in fixed intervals for about 5 minutes. Subtract the background, plot ln(corrected rate) against time: gradient = −λ, so t½ = 0.693/λ.');
+  const tcard = Card(P.below, 'Results table', null, 'wide');
+  const tbox = el('div', { class: 'tbl-wrap', style: { maxHeight: '300px', overflowY: 'auto' } }); tcard.append(tbox);
+  function render() {
+    const bgr = bgRate();
+    tbox.innerHTML = rows.length ? `<table class="tbl"><tr><th>mid-time / s</th><th>counts N</th><th>±√N</th><th>rate / s⁻¹</th><th>corrected / s⁻¹</th><th>ln(corrected)</th><th>± in ln</th></tr>${rows.map(r => { const cr = r.n / r.dur - bgr; return `<tr><td>${fix(r.t, 0)}</td><td>${r.n}</td><td>${fix(Math.sqrt(r.n), 0)}</td><td>${fix(r.n / r.dur, 2)}</td><td>${fix(cr, 2)}</td><td>${cr > 0 ? fix(Math.log(cr), 3) : '—'}</td><td>${cr > 0 ? fix(Math.sqrt(r.n) / r.dur / cr, 3) : '—'}</td></tr>`; }).join('')}</table>` : '<p class="muted">No readings yet.</p>';
   }
   render();
-  Card(P.below, 'Describing the experiment (4.6.8)', list(['Measure the <b>background count rate</b> first with no source present, over a long interval, and subtract it from every later reading.', 'Place the source a fixed distance from the GM tube (the protactinium generator is the standard school source: ²³⁴Pa, t½ ≈ 71 s).', 'Record the counts in a fixed interval (say 10 s) at regular times, for at least 4–5 half-lives.', 'Convert to count rate, subtract the background, and plot corrected count rate against time.', 'Read the half-life from the graph: the time to fall from any value to half of it. Repeat from several starting points and average.', 'Better: plot <b>ln(corrected rate) against t</b>. The gradient is −λ, and t½ = 0.693/λ. A straight line also proves the decay is exponential.'], true));
-  Card(P.below, 'Safety & accuracy', list(['Handle sources with long tongs, point them away from people, keep exposure time short and return them to a lead-lined store.', 'Count rates are random, so repeat readings or count for longer intervals to reduce the percentage uncertainty (√N statistics).', 'A short half-life means you must work quickly; a long-lived source needs a different method (measure A and estimate N).']));
+  Card(P.below, 'Describing the experiment (4.6.8)', list(['Measure the <b>background count rate</b> with no source present, over a long time (100 s or more), and subtract it from every reading.', 'Shake the protactinium generator and stand it so the organic (top) layer, which now holds the ²³⁴ᵐPa, is next to the GM tube. Keep the distance fixed.', 'Start the stopclock and record the count in each fixed interval (e.g. 10 s) for about 5 minutes, using a scaler or datalogger.', 'Calculate the corrected count rate for each interval and plot <b>ln(corrected count rate)</b> against <b>time</b> (at the middle of each interval).', 'The graph is a straight line of gradient −λ. Then t½ = 0.693/λ. (Alternatively plot the rate against time and read off several successive halving times, then average them.)'], true));
+  Card(P.below, 'Uncertainty and safety', list(['Counts are random: a count of N has an uncertainty of about √N, so the <b>percentage</b> uncertainty 1/√N is smaller for bigger counts. Count for longer, or bring the tube closer, to reduce it.', 'Error bars on ln(rate) are about ΔR/R, so late readings, with few counts, have the biggest bars. Draw the best-fit line through the middle of them, and steepest and shallowest lines to find the uncertainty in λ.', 'Use tongs, keep the source away from the body, minimise the time of exposure and return it to its lead-lined box. The generator is sealed so the liquid cannot spill.']));
+  Drill(P.below, { title: 'Half-life experiment drill', cls: 'wide', gens: [
+    () => { const bg = randi(18, 30), C1 = randi(300, 900); return { q: `The background count is <b>${bg} per minute</b>. A reading gives <b>${C1} counts in one minute</b>. Find the corrected count rate in counts per second.`, a: (C1 - bg) / 60, unit: 's⁻¹', tol: 0.01, steps: [`corrected = ${C1} − ${bg} = ${C1 - bg} per minute`, `= ${C1 - bg} / 60 = ${fix((C1 - bg) / 60, 2)} s⁻¹`] }; },
+    () => { const m = +(0.005 + Math.random() * 0.02).toFixed(4); return { q: `A graph of ln(corrected count rate) against time in seconds has gradient <b>−${m} s⁻¹</b>. Find the half-life.`, a: Math.log(2) / m, unit: 's', tol: 0.01, steps: ['gradient = −λ ⇒ λ = ' + m + ' s⁻¹', `t½ = 0.693 / ${m} = ${fix(Math.log(2) / m, 1)} s`] }; },
+    () => { const n = pick([100, 400, 2500, 10000]); return { q: `A count of <b>${n}</b> is recorded. What is its percentage uncertainty?`, a: 100 / Math.sqrt(n), unit: '%', tol: 0.01, steps: [`uncertainty ≈ √${n} = ${Math.sqrt(n)}`, `percentage = ${Math.sqrt(n)} / ${n} × 100 = ${fix(100 / Math.sqrt(n), 2)}%`] }; },
+    () => ({ q: 'Why is the background count rate measured <b>before</b> the source is brought in?', options: ['So it can be subtracted from every reading', 'To check the GM tube is warmed up', 'To make the source more active', 'Because background changes the half-life'], correct: 0, why: 'Background radiation adds counts that do not come from the source; subtract it before analysing the decay.' }),
+  ] });
 }
 
 topic({
   id: 'decay', code: '4.6', unit: 'A2 1', title: 'Nuclear Decay', short: 'Decay',
-  blurb: 'Alpha, beta and gamma: what gets through what, how the numbers balance in a decay equation, and why random events on a nuclear scale give a perfect exponential.',
+  blurb: 'Zoom from the bench to the ion pairs along an alpha track, follow the uranium series across a zoomable chart of nuclides, watch 40 000 nuclei decay at random into a perfect exponential, and measure a half-life with real counting statistics.',
   outcomes: [
     ['4.6.1', 'demonstrate an understanding of how the nature of alpha particles, beta particles and gamma radiation determines their penetration and range', 'penetration'],
     ['4.6.2', 'calculate changes to nucleon number and proton number as a result of emissions', 'equations'],
@@ -6444,13 +7051,22 @@ topic({
     ['4.6.8', 'describe an experiment to measure half-life of a radioactive source', 'halflife'],
   ],
   labs: [
-    { id: 'penetration', title: 'Penetration & range', hint: 'paper, aluminium, lead', spec: ['4.6.1'], mount: mountPenetration },
-    { id: 'equations', title: 'Decay equations', hint: 'A and Z bookkeeping', spec: ['4.6.2'], mount: mountEquations },
-    { id: 'random', title: 'Random & exponential decay', hint: '400 nuclei, live', spec: ['4.6.3', '4.6.4', '4.6.5', '4.6.6', '4.6.7'], mount: mountDecay },
-    { id: 'halflife', title: 'Half-life experiment', hint: 'with background', spec: ['4.6.8'], mount: mountHalfLife },
+    { id: 'penetration', title: 'Penetration & ionisation', hint: 'bench → ion pairs', spec: ['4.6.1'], mount: mountPenetration, noFill: true },
+    { id: 'equations', title: 'Decay equations & series', hint: 'zoomable N–Z chart', spec: ['4.6.2'], mount: mountEquations, noFill: true },
+    { id: 'random', title: 'Random & exponential decay', hint: 'up to 40 000 nuclei', spec: ['4.6.3', '4.6.4', '4.6.5', '4.6.6', '4.6.7'], mount: mountDecay, noFill: true },
+    { id: 'halflife', title: 'Half-life experiment', hint: 'counts, errors, best fit', spec: ['4.6.8'], mount: mountHalfLife, noFill: true },
   ],
-  equations: [['A = -\\lambda N', 'activity, in Bq'], ['A = A_0 e^{-\\lambda t}', ''], ['N = N_0 e^{-\\lambda t}', ''], ['t_{1/2} = \\frac{0.693}{\\lambda}', ''], ['\\ln A = \\ln A_0 - \\lambda t', 'straight-line form']],
-  traps: ['Subtract the <b>background</b> count rate before any half-life analysis.', 'λ has units s⁻¹ (or h⁻¹, y⁻¹) — keep time units consistent with the half-life.', 'A = λN links activity to the <b>number of undecayed nuclei</b>, not the mass.', 'Half-life is defined for the <b>average</b>: decay is random, so real data scatter.', 'In the exam, “random” means you cannot predict which nucleus or when; “exponential” means constant fractional decrease per unit time. Say both.', 'Gamma emission changes neither A nor Z.'],
+  equations: [['A = -\\frac{\\Delta N}{\\Delta t} = \\lambda N', 'activity, in Bq'], ['A = A_0 e^{-\\lambda t}', ''], ['N = N_0 e^{-\\lambda t}', ''], ['t_{1/2} = \\frac{0.693}{\\lambda}', ''], ['\\ln A = \\ln A_0 - \\lambda t', 'straight-line form'], ['^{A}_{Z}X \\to ^{A-4}_{Z-2}Y + ^{4}_{2}\\alpha', 'alpha'], ['^{A}_{Z}X \\to ^{A}_{Z+1}Y + ^{0}_{-1}\\beta', 'beta-minus']],
+  traps: ['Subtract the <b>background</b> count rate before any half-life analysis.', 'λ has units s⁻¹ (or h⁻¹, y⁻¹): keep the time units consistent with the half-life.', 'A = λN links activity to the <b>number of undecayed nuclei</b>, not the mass: convert mass to N with N_A first.', 'Half-life is an <b>average</b>: decay is random, so real data scatter, most of all when the count is low.', 'In the exam, “random” means you cannot predict which nucleus decays or when; “exponential” means a constant fractional decrease per unit time. Say both.', 'Gamma emission changes neither A nor Z.', 'Gamma has no definite range: it is absorbed exponentially. Alpha and beta do have a range.', 'Link the reasons: more ionising ⇒ loses energy faster ⇒ shorter range. Don’t just list the properties.'],
+  notes: [
+    ['The three radiations', '<table><tr><th></th><th>α</th><th>β⁻</th><th>γ</th></tr><tr><td>nature</td><td>helium nucleus ⁴₂He</td><td>fast electron ⁰₋₁e</td><td>EM photon</td></tr><tr><td>charge</td><td>+2e</td><td>−e</td><td>0</td></tr><tr><td>ion pairs per cm of air</td><td>~10⁴</td><td>~10²</td><td>~1</td></tr><tr><td>range in air</td><td>a few cm</td><td>up to a few m</td><td>no definite range</td></tr><tr><td>stopped by</td><td>paper</td><td>a few mm of Al</td><td>reduced by cm of lead</td></tr></table>'],
+    ['Why range depends on nature', 'A particle loses a little energy every time it ionises an atom. α (large charge, large mass, slow) produces a dense trail of ion pairs, so it loses its energy in a few cm. β (single charge, tiny mass, fast) ionises far less, so it travels further. γ is uncharged and only ionises when it happens to interact, so it is absorbed exponentially and its intensity in air falls mainly by the inverse square law.'],
+    ['Decay equations', 'α: ᴬ_Z X → ᴬ⁻⁴_{Z−2} Y + ⁴₂He. β⁻: ᴬ_Z X → ᴬ_{Z+1} Y + ⁰₋₁e (+ antineutrino). γ: no change in A or Z. Nucleon number and proton number are both conserved. Number of α in a series = ΔA/4; then number of β⁻ = 2 × (number of α) − ΔZ.'],
+    ['Random and exponential', 'Decay is random (you cannot predict which nucleus decays next or when) and spontaneous (unaffected by temperature, pressure or chemistry). Every nucleus has the same probability per second of decaying, so the number decaying per second is proportional to the number left: N = N₀e^(−λt).'],
+    ['Activity and decay constant', 'A = −ΔN/Δt = λN, in becquerel. λ is the fraction of the undecayed nuclei that decay per second (the probability per second for one nucleus). A = A₀e^(−λt).'],
+    ['Half-life', 'The average time for the number of undecayed nuclei (or the activity) to halve: t½ = ln 2/λ = 0.693/λ. After n half-lives the fraction left is (½)ⁿ.'],
+    ['Measuring half-life', 'Measure background first. Use a short half-life source such as a protactinium-234m generator (t½ ≈ 70 s) and a GM tube with a scaler or datalogger. Record counts in fixed intervals for about 5 minutes, subtract background, plot ln(corrected rate) against time: gradient = −λ, t½ = 0.693/λ. Counts are random, so each has an uncertainty of about √N.'],
+  ],
 });
 })();
 
