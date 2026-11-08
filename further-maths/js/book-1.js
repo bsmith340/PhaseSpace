@@ -208,6 +208,23 @@ BOOK.al1 = [
     T`$\dfrac{2}{(x+1)(x+2)}\equiv\dfrac{A}{x+1}+\dfrac{B}{x+2}$: $x=-1\Rightarrow A=2$, $x=-2\Rightarrow B=-2$.`,
     T`Answer: $1+\dfrac2{x+1}-\dfrac2{x+2}$.`]),
   B.tip(T`<p><b>Cover-up rule</b> (for a non-repeated linear factor): to find $A$ over $(x-a)$, cover up $(x-a)$ in the original fraction and substitute $x=a$ into what's left. In Example 1: cover $(x-1)$, put $x=1$: $\frac{5+1}{1+2}=2$. It's the substitution method done mentally.</p>`),
+  T`<h3>3. Harder forms CCEA sets</h3>
+<p>Three variations appear again and again: a linear factor that is not monic, a numerator one degree <i>higher</i> than the denominator, and an improper fraction with a quadratic factor. The method never changes: <b>get it proper, choose the form, multiply up, substitute, compare</b>.</p>`,
+  B.ex(5, T`Express $\dfrac{7x+1}{(2x-1)(x+1)}$ in partial fractions.`, [
+    T`$\dfrac{7x+1}{(2x-1)(x+1)}\equiv\dfrac{A}{2x-1}+\dfrac{B}{x+1}$, so $7x+1\equiv A(x+1)+B(2x-1)$.`,
+    T`Put $x=\tfrac12$ (the root of $2x-1$): $\tfrac92=\tfrac32A\Rightarrow A=3$.`,
+    T`Put $x=-1$: $-6=-3B\Rightarrow B=2$.`,
+    T`Answer: $\dfrac{3}{2x-1}+\dfrac{2}{x+1}$. Check at $x=0$: $\frac{1}{-1}=-1$ and $\frac3{-1}+\frac21=-1$ ✓.`], T`A non-monic factor is still linear, so its numerator is still a constant. The only change is a fractional value of $x$ to substitute.`),
+  B.ex(6, T`Express $\dfrac{x^3+2x^2-2x+5}{(x-1)(x+2)}$ in partial fractions.`, [
+    T`Degree 3 over degree 2: divide first. $(x-1)(x+2)=x^2+x-2$.`,
+    T`$x^3+2x^2-2x+5=(x+1)(x^2+x-2)+(-x+7)$, so the fraction is $x+1+\dfrac{-x+7}{(x-1)(x+2)}$.`,
+    T`$-x+7\equiv A(x+2)+B(x-1)$: $x=1\Rightarrow A=2$; $x=-2\Rightarrow B=-3$.`,
+    T`Answer: $x+1+\dfrac{2}{x-1}-\dfrac{3}{x+2}$.`], T`The quotient is linear when the top is one degree higher than the bottom. Long division (or comparing coefficients in $x^3+\cdots\equiv(Px+K)(x^2+x-2)+\ldots$) finds it.`),
+  B.ex(7, T`Express $\dfrac{2x^3-x^2+3x+4}{(x-1)(x^2+1)}$ in partial fractions.`, [
+    T`Degree 3 over degree 3: the constant is the ratio of leading coefficients, $2$. $(x-1)(x^2+1)=x^3-x^2+x-1$, and $2x^3-x^2+3x+4-2(x^3-x^2+x-1)=x^2+x+6$.`,
+    T`So the fraction is $2+\dfrac{x^2+x+6}{(x-1)(x^2+1)}$, with $x^2+x+6\equiv A(x^2+1)+(Bx+C)(x-1)$.`,
+    T`$x=1$: $8=2A\Rightarrow A=4$. Compare $x^2$: $1=A+B\Rightarrow B=-3$. Constants: $6=A-C\Rightarrow C=-2$.`,
+    T`Answer: $2+\dfrac{4}{x-1}-\dfrac{3x+2}{x^2+1}$.`]),
   B.warn([T`Using $\dfrac{A}{x^2+1}$ instead of $\dfrac{Ax+B}{x^2+1}$.`, T`Only one term for a repeated factor: $(x+1)^2$ needs both $\frac{B}{x+1}$ and $\frac{C}{(x+1)^2}$.`, T`Not dividing first when the fraction is improper.`, T`Arithmetic slips with negatives in substitution — always check with one extra value of $x$.`]),
   B.exam([T`"Express in partial fractions" usually leads to a "hence" part (integrate or sum). Get the constants right — later marks depend on them.`, T`Write the identity line explicitly; it often carries a method mark.`]),
   B.checks([
@@ -262,6 +279,18 @@ $$\begin{aligned}u_1&=f(1)-f(2)\\u_2&=f(2)-f(3)\\&\ \ \vdots\\u_n&=f(n)-f(n+1)\e
     T`Write the terms: $\tfrac12\Big[\left(1-\tfrac13\right)+\left(\tfrac12-\tfrac14\right)+\left(\tfrac13-\tfrac15\right)+\dots+\left(\tfrac1{n-1}-\tfrac1{n+1}\right)+\left(\tfrac1n-\tfrac1{n+2}\right)\Big]$.`,
     T`Survivors: the first two positives $1,\tfrac12$ and the last two negatives: $\tfrac12\left(\tfrac32-\tfrac1{n+1}-\tfrac1{n+2}\right)$.`,
     T`Simplify: $=\dfrac34-\dfrac{2n+3}{2(n+1)(n+2)}$. Sum to infinity $\tfrac34$.`], T`Always write out enough terms at <b>both</b> ends to see which survive.`),
+  T`<h3>3. Changing the limits, and other telescopes</h3>`,
+  B.ex(5, T`Show that $\displaystyle\sum_{r=n+1}^{2n}r^2=\tfrac16n(2n+1)(7n+1)$.`, [
+    T`$\displaystyle\sum_{r=n+1}^{2n}=\sum_{r=1}^{2n}-\sum_{r=1}^{n}$: replace $n$ by $2n$ in the formula, then subtract.`,
+    T`$=\tfrac16(2n)(2n+1)(4n+1)-\tfrac16n(n+1)(2n+1)$.`,
+    T`Factorise out $\tfrac16n(2n+1)$: $\tfrac16n(2n+1)\left[2(4n+1)-(n+1)\right]=\tfrac16n(2n+1)(7n+1)$ ✓.`], T`Factorise rather than expand: "show that" answers are almost always reached by taking out common factors.`),
+  B.ex(6, T`Show that $\dfrac{1}{r(r+1)(r+2)}=\dfrac12\left[\dfrac1{r(r+1)}-\dfrac1{(r+1)(r+2)}\right]$, and hence find $\displaystyle\sum_{r=1}^{n}\frac{1}{r(r+1)(r+2)}$.`, [
+    T`Over the common denominator $r(r+1)(r+2)$, the bracket is $\dfrac{(r+2)-r}{r(r+1)(r+2)}=\dfrac{2}{r(r+1)(r+2)}$, and $\frac12\times2=1$ ✓.`,
+    T`With $f(r)=\dfrac1{r(r+1)}$ each term is $\frac12[f(r)-f(r+1)]$, so the sum is $\frac12[f(1)-f(n+1)]$.`,
+    T`$=\dfrac12\left[\dfrac12-\dfrac1{(n+1)(n+2)}\right]=\dfrac14-\dfrac{1}{2(n+1)(n+2)}$. The sum to infinity is $\frac14$.`], T`Three factors in a row: pair them as "first two" minus "last two". It telescopes in one step.`),
+  B.ex(7, T`By writing $r\cdot r!$ as $(r+1)!-r!$, find $\displaystyle\sum_{r=1}^{n}r\cdot r!$.`, [
+    T`$(r+1)!-r!=r!\,[(r+1)-1]=r\cdot r!$ ✓.`,
+    T`Telescoping: $(2!-1!)+(3!-2!)+\cdots+((n+1)!-n!)=(n+1)!-1$.`]),
   B.warn([T`$\sum_{r=1}^n 5=5$ — wrong, it's $5n$.`, T`$\sum_{r=m}^n=S(n)-S(m)$ — wrong, it's $S(n)-S(m-1)$.`, T`Missing survivors in a "two-apart" telescope.`]),
   B.exam([T`Show the written-out terms with the cancellation visible — it's usually where the method mark is.`, T`For "show that", factorise to exactly the given form.`]),
   B.checks([[T`$\sum_{r=1}^n(6r^2+2r)$ in factorised form.`, T`$n(n+1)(2n+1)+n(n+1)=n(n+1)(2n+2)=2n(n+1)^2$.`],
@@ -322,6 +351,33 @@ BOOK.sr1 = [
     T`$\tan x=x+\dfrac{2}{3!}x^3+\cdots=x+\dfrac13x^3+\cdots$`]),
   B.tip(T`<p><b>Euler's formula from series.</b> Put $x=i\theta$ into $e^x$ and use $i^2=-1$, $i^3=-i$, $i^4=1$:</p>
 $$e^{i\theta}=1+i\theta-\frac{\theta^2}{2!}-i\frac{\theta^3}{3!}+\frac{\theta^4}{4!}+\cdots=\Big(1-\frac{\theta^2}{2!}+\cdots\Big)+i\Big(\theta-\frac{\theta^3}{3!}+\cdots\Big)=\cos\theta+i\sin\theta.$$`),
+  T`<h3>3. The general term</h3>
+<p>The specification asks for the series "including the general term": a formula for the term in $x^r$ (or $x^{2r}$, $x^{2r+1}$) that generates every term. Three ingredients build it: a <b>sign</b> factor, a <b>power of the constant</b>, and the <b>factorial or divisor</b> from the standard series.</p>
+<table class="tbl"><tr><th>Series</th><th>General term</th><th>Starts at</th></tr>
+<tr><td>$e^x$</td><td>$\dfrac{x^r}{r!}$</td><td>$r=0$</td></tr>
+<tr><td>$\sin x$</td><td>$\dfrac{(-1)^rx^{2r+1}}{(2r+1)!}$</td><td>$r=0$</td></tr>
+<tr><td>$\cos x$</td><td>$\dfrac{(-1)^rx^{2r}}{(2r)!}$</td><td>$r=0$</td></tr>
+<tr><td>$\ln(1+x)$</td><td>$\dfrac{(-1)^{r+1}x^r}{r}$</td><td>$r=1$</td></tr>
+<tr><td>$(1+x)^n$</td><td>$\dbinom{n}{r}x^r=\dfrac{n(n-1)\cdots(n-r+1)}{r!}x^r$</td><td>$r=0$</td></tr></table>`,
+  B.ex(7, T`Write down the general term of the Maclaurin series of (a) $e^{-2x}$, (b) $\cos3x$, (c) $\ln\left(1+\tfrac{x}{2}\right)$.`, [
+    T`(a) Replace $x$ by $-2x$ in $\dfrac{x^r}{r!}$: $\dfrac{(-2x)^r}{r!}=\dfrac{(-2)^rx^r}{r!}$.`,
+    T`(b) Replace $x$ by $3x$ in $\dfrac{(-1)^rx^{2r}}{(2r)!}$: $\dfrac{(-1)^r3^{2r}x^{2r}}{(2r)!}=\dfrac{(-1)^r9^rx^{2r}}{(2r)!}$.`,
+    T`(c) Replace $x$ by $\frac x2$ in $\dfrac{(-1)^{r+1}x^r}{r}$: $\dfrac{(-1)^{r+1}x^r}{2^r\,r}$. Check $r=2$: $-\dfrac{x^2}{8}$, and the series gives $-\frac12\left(\frac x2\right)^2=-\frac{x^2}8$ ✓.`], T`Always test a general term by putting in $r=0,1,2$ and comparing with the written-out series.`),
+  T`<h3>4. Range of validity</h3>
+<p>$e^x$, $\sin x$ and $\cos x$ are valid for all $x$. The other two are not: $\ln(1+x)$ needs $-1\lt x\le1$ and $(1+x)^n$ needs $|x|\lt1$ (unless $n$ is a positive integer, when the series stops). After a substitution, <b>apply the condition to the new argument and solve</b>.</p>`,
+  B.ex(8, T`State the range of validity of the series for (a) $\ln(1-3x)$, (b) $(4+x)^{-\frac12}$, (c) $e^x\ln(1+2x)$.`, [
+    T`(a) Need $-1\lt-3x\le1$. Divide by $-3$ and <b>flip</b> both inequalities: $-\tfrac13\le x\lt\tfrac13$.`,
+    T`(b) $(4+x)^{-\frac12}=\tfrac12\left(1+\tfrac x4\right)^{-\frac12}$, valid for $\left|\tfrac x4\right|\lt1$, i.e. $|x|\lt4$.`,
+    T`(c) $e^x$ is valid everywhere; $\ln(1+2x)$ needs $-\tfrac12\lt x\le\tfrac12$. A product is valid only where both parts are: $-\tfrac12\lt x\le\tfrac12$.`]),
+  B.ex(9, T`Expand $\sqrt{4-x}$ in ascending powers of $x$ up to the term in $x^2$, and state the range of validity.`, [
+    T`Take out the $4$: $\sqrt{4-x}=2\left(1-\tfrac x4\right)^{\frac12}$.`,
+    T`$(1+u)^{\frac12}=1+\tfrac12u-\tfrac18u^2+\cdots$ with $u=-\tfrac x4$: $1-\tfrac x8-\tfrac{x^2}{128}+\cdots$`,
+    T`Multiply by $2$: $\sqrt{4-x}=2-\tfrac x4-\tfrac{x^2}{64}+\cdots$, valid for $|x|\lt4$. (Check: $x=0.1$ gives $1.974844$; $\sqrt{3.9}=1.974842$.)`], T`Forgetting to take the constant outside the bracket, or forgetting to raise it to the power $n$, are the two commonest losses here.`),
+  T`<h3>5. Building series by integrating and differentiating</h3>
+<p>Inside its range, a series can be differentiated or integrated term by term. That gives series you would not want to find by repeated differentiation.</p>`,
+  B.ex(10, T`Use $\dfrac{1}{1+x^2}=1-x^2+x^4-\cdots$ to find the series for $\arctan x$.`, [
+    T`$\arctan x=\displaystyle\int_0^x\frac{dt}{1+t^2}=\int_0^x(1-t^2+t^4-\cdots)\,dt$.`,
+    T`$=x-\dfrac{x^3}{3}+\dfrac{x^5}{5}-\cdots$, general term $\dfrac{(-1)^rx^{2r+1}}{2r+1}$, valid for $|x|\le1$.`]),
   B.warn([T`$(2x)^3=8x^3$, not $2x^3$.`, T`Forgetting the factorials.`, T`Multiplying series and keeping terms beyond the requested power (wasted time) or missing a cross term.`, T`Using $\ln(1+x)$ outside $-1\lt x\le1$.`]),
   B.exam([T`If the question says "using the Maclaurin series for…", use it — repeated differentiation may score nothing.`, T`State the range of validity when asked, e.g. "valid for $-\frac12\lt x\le\frac12$" for $\ln(1+2x)$.`]),
   B.checks([[T`Series for $e^{-x^2}$ up to $x^6$.`, T`$1-x^2+\frac{x^4}2-\frac{x^6}{6}$.`], [T`Series for $\ln(1+2x)$ up to $x^3$, with validity.`, T`$2x-2x^2+\frac83x^3$, valid for $-\frac12\lt x\le\frac12$.`], [T`Estimate $\int_0^{0.5}e^{-x^2}dx$ using three terms.`, T`$\left[x-\frac{x^3}3+\frac{x^5}{10}\right]_0^{0.5}=0.5-0.041\overline6+0.003125\approx0.4615$ (true $0.4613$).`]]),

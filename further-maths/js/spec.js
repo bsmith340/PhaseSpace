@@ -123,5 +123,5 @@ defineCourse({
 });
 
 // Simulation assignments for spec points (keeps every sim on-spec)
-Object.entries({ al1: ['pfrac'], al2: ['telescope'], ca6: ['pfrac'], ca5: ['improper'], ca2: [], ca1: [], ca3: [], ca7: [], sr2: ['maclaurin'], hy5: [] })
+Object.entries({ al1: ['pfsolve', 'pfrac'], al2: ['powsums', 'telescope'], sr1: ['serieslab', 'maclaurin'], sa1: ['smallangle', 'smallerr'], ca6: ['pfrac'], ca5: ['improper'], ca2: [], ca1: [], ca3: [], ca7: [], sr2: ['maclaurin'], hy5: [] })
   .forEach(([id, sims]) => { if (POOL[id]) POOL[id].sims = sims; });

@@ -56,6 +56,7 @@ function poly(terms) {
   return s || '0';
 }
 const sgn = c => c < 0 ? `- ${Math.abs(c)}` : `+ ${c}`; // "+ 3" / "- 3"
+const cof = k => k === 1 ? '' : k === -1 ? '-' : '' + k; // coefficient in front of a variable: 1x -> x, -1x -> -x
 const par = c => (typeof c === 'string' ? c.startsWith('-') : c < 0) ? `(${c})` : '' + c;
 
 // Vectors

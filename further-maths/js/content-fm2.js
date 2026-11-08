@@ -18,11 +18,11 @@ topic({
       drills: [
         () => {
           const a = ri(1, 4), b = ri(1, 4);
-          return { q: T`For small $x$, $\dfrac{1-\cos ${a === 1 ? '' : a}x}{x\sin ${b === 1 ? '' : b}x}\approx k$. Find $k$.`, fields: [{ label: 'k', ans: a * a / (2 * b) }], sol: T`$1-\cos ${a}x\approx\frac{${a * a}x^2}{2}$ and $x\sin ${b}x\approx ${b}x^2$, so the ratio $\approx\dfrac{${a * a}}{${2 * b}}=${fr(a * a, 2 * b)}$.` };
+          return { q: T`For small $x$, $\dfrac{1-\cos ${a === 1 ? '' : a}x}{x\sin ${b === 1 ? '' : b}x}\approx k$. Find $k$.`, fields: [{ label: 'k', ans: a * a / (2 * b) }], sol: T`$1-\cos ${cof(a)}x\approx\frac{${cof(a * a)}x^2}{2}$ and $x\sin ${cof(b)}x\approx ${cof(b)}x^2$, so the ratio $\approx\dfrac{${a * a}}{${2 * b}}=${fr(a * a, 2 * b)}$.` };
         },
         () => {
           const p = ri(1, 4), q = ri(1, 4), r = ri(1, 4);
-          return { q: T`Use small angle approximations to find the limit value of $\dfrac{\sin ${p === 1 ? '' : p}x\tan ${q === 1 ? '' : q}x}{1-\cos ${r === 1 ? '' : r}x}$ as $x\to0$.`, fields: [{ label: 'value', ans: 2 * p * q / (r * r) }], sol: T`Numerator $\approx(${p}x)(${q}x)=${p * q}x^2$; denominator $\approx\frac{${r * r}x^2}2$. Ratio $\to\dfrac{${2 * p * q}}{${r * r}}=${fr(2 * p * q, r * r)}$.` };
+          return { q: T`Use small angle approximations to find the limit value of $\dfrac{\sin ${p === 1 ? '' : p}x\tan ${q === 1 ? '' : q}x}{1-\cos ${r === 1 ? '' : r}x}$ as $x\to0$.`, fields: [{ label: 'value', ans: 2 * p * q / (r * r) }], sol: T`Numerator $\approx(${cof(p)}x)(${cof(q)}x)=${cof(p * q)}x^2$; denominator $\approx\frac{${cof(r * r)}x^2}2$. Ratio $\to\dfrac{${2 * p * q}}{${r * r}}=${fr(2 * p * q, r * r)}$.` };
         },
         () => {
           const a = rnz(-5, 5), b = rnz(-5, 5), c = ri(-5, 5), co = k => (k === 1 ? '' : k === -1 ? '-' : k), sg = k => (k < 0 ? '-' : '+') + (Math.abs(k) === 1 ? '' : Math.abs(k));

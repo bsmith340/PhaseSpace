@@ -356,10 +356,13 @@ $$f(x)=f(0)+f'(0)x+\frac{f''(0)}{2!}x^2+\dots+\frac{f^{(r)}(0)}{r!}x^r+\dots$$
           return { q: T`Find the coefficient of $x^{${k}}$ in the Maclaurin series of $${F.f}$.`, fields: [{ label: 'coefficient', ans: v }], sol: T`Substitute into the standard series: $${F.s(k)}=${nice(v)}$.` };
         },
         () => {
-          const a = rnz(-3, 3), b = rnz(-3, 3), t = ri(0, 2);
-          if (t === 0) return { q: T`Find the coefficient of $x^2$ in the expansion of $e^{${a}x}\ln(1${b < 0 ? '' : '+'}${b}x)$.`, fields: [{ label: 'coefficient', ans: a * b - b * b / 2 }], sol: T`$(1+${par(a)}x+\dots)(${b}x-\tfrac{${b * b}}{2}x^2+\dots)$. $x^2$: $${par(a)}\cdot${par(b)}-\tfrac{${b * b}}2=${nice(a * b - b * b / 2)}$.` };
-          if (t === 1) return { q: T`Find the coefficient of $x^3$ in $e^{${a}x}\sin(${b}x)$.`, fields: [{ label: 'coefficient', ans: a * a * b / 2 - b ** 3 / 6 }], sol: T`$(1+${par(a)}x+\tfrac{${a * a}}2x^2+\dots)(${b}x-\tfrac{${par(b)}^3}{6}x^3+\dots)$.<br>$x^3$: $\tfrac{${a * a}}2\cdot${par(b)}-\tfrac{${b ** 3}}6=${nice(a * a * b / 2 - b ** 3 / 6)}$.` };
-          return { q: T`Find the coefficient of $x^2$ in $e^{${a}x}\cos(${b}x)$.`, fields: [{ label: 'coefficient', ans: (a * a - b * b) / 2 }], sol: T`$(1+${par(a)}x+\tfrac{${a * a}}2x^2)(1-\tfrac{${b * b}}2x^2)$: $\;\tfrac{${a * a}}2-\tfrac{${b * b}}2=${nice((a * a - b * b) / 2)}$.` };
+          // coefficients are tidied: e^{x} not e^{1x}, sin/cos arguments kept positive, signs folded into the working
+          const a = rnz(-3, 3), b = rnz(1, 3) * (Math.random() < 0.5 ? -1 : 1), t = ri(0, 2), B = Math.abs(b);
+          const ex = T`e^{${cof(a)}x}`, lnT = T`\ln(1${b < 0 ? '-' : '+'}${cof(B)}x)`, sgT = (k, s) => (k < 0 ? '-' : '+') + (Math.abs(k) === 1 && s ? '' : nice(Math.abs(k))) + s;
+          const eS = T`1${sgT(a, 'x')}${sgT(a * a / 2, 'x^2')}${t === 1 ? sgT(a ** 3 / 6, 'x^3') : ''}+\cdots`;
+          if (t === 0) { const v = a * b - b * b / 2; return { q: T`Find the coefficient of $x^2$ in the expansion of $${ex}${lnT}$.`, fields: [{ label: 'coefficient', ans: v }], sol: T`$${ex}=${eS}$ and $${lnT}=${cof(b)}x-${nice(b * b / 2)}x^2+\cdots$<br>$x^2$ terms: $(${cof(a)}x)(${cof(b)}x)$ gives $${a * b}$, and $1\times\left(-${nice(b * b / 2)}x^2\right)$ gives $-${nice(b * b / 2)}$. Coefficient $=${nice(v)}$.` }; }
+          if (t === 1) { const v = a * a * B / 2 - B ** 3 / 6; return { q: T`Find the coefficient of $x^3$ in $${ex}\sin ${cof(B)}x$.`, fields: [{ label: 'coefficient', ans: v }], sol: T`$${ex}=${eS}$ and $\sin ${cof(B)}x=${cof(B)}x-${nice(B ** 3 / 6)}x^3+\cdots$<br>$x^3$ terms: $${nice(a * a / 2)}x^2\times ${cof(B)}x=${a * a * B / 2 === 1 ? '' : nice(a * a * B / 2)}x^3$ and $1\times\left(-${nice(B ** 3 / 6)}x^3\right)$. Coefficient $=${nice(v)}$.` }; }
+          { const v = (a * a - B * B) / 2; return { q: T`Find the coefficient of $x^2$ in $${ex}\cos ${cof(B)}x$.`, fields: [{ label: 'coefficient', ans: v }], sol: T`$${ex}=${eS}$ and $\cos ${cof(B)}x=1-${nice(B * B / 2)}x^2+\cdots$<br>$x^2$ terms: $${nice(a * a / 2)}-${nice(B * B / 2)}=${nice(v)}$.` }; }
         },
         () => {
           const F = pick([
@@ -372,7 +375,7 @@ $$f(x)=f(0)+f'(0)x+\frac{f''(0)}{2!}x^2+\dots+\frac{f^{(r)}(0)}{r!}x^r+\dots$$
             { f: T`\arcsin x`, c: { 3: 1 / 6, 5: 3 / 40 }, s: T`x+\tfrac16x^3+\tfrac3{40}x^5+\cdots` },
             { f: T`\ln(1+e^x)`, c: { 1: 1 / 2, 2: 1 / 8, 4: -1 / 192 }, s: T`\ln2+\tfrac12x+\tfrac18x^2-\tfrac1{192}x^4+\cdots` }]);
           const k = +pick(Object.keys(F.c));
-          return { q: T`Find the coefficient of $x^{${k}}$ in the Maclaurin series of $${F.f}$.`, fields: [{ label: 'coefficient', ans: F.c[k] }], sol: T`$${F.f}=${F.s}$, so the coefficient is $${nice(F.c[k])}$.` };
+          return { q: T`Find the coefficient of $x${k === 1 ? '' : `^{${k}}`}$ in the Maclaurin series of $${F.f}$.`, fields: [{ label: 'coefficient', ans: F.c[k] }], sol: T`$${F.f}=${F.s}$, so the coefficient is $${nice(F.c[k])}$.` };
         },
       ],
     },
