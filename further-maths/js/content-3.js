@@ -99,7 +99,7 @@ $x=${a}$: $${c2 * a * a + c1 * a + c0}=A(${a * a + c})\Rightarrow A=${A}$. Compa
             q: T`Express $\dfrac{${poly([[c2, 'x^2'], [c1, 'x'], [c0, '']])}}{${lin(a)}${lin(b)}}$ as $K+\dfrac{A}{${linp(a)}}+\dfrac{B}{${linp(b)}}$.`,
             fields: [{ label: 'K', ans: K }, { label: 'A', ans: A }, { label: 'B', ans: B }],
             sol: T`Improper (degree 2 over degree 2): the quotient is the ratio of leading coefficients, $K=${K}$.<br>
-$${poly([[c2, 'x^2'], [c1, 'x'], [c0, '']])}\equiv${K}${lin(a)}${lin(b)}+A${lin(b)}+B${lin(a)}$. $x=${a}$: $A=${A}$; $x=${b}$: $B=${B}$.`,
+$${poly([[c2, 'x^2'], [c1, 'x'], [c0, '']])}\equiv ${cof(K)}${lin(a)}${lin(b)}+A${lin(b)}+B${lin(a)}$. $x=${a}$: $A=${A}$; $x=${b}$: $B=${B}$.`,
           };
         },
       ],
@@ -119,7 +119,7 @@ $$\sum_{r=1}^n r=\tfrac12n(n+1),\qquad\sum_{r=1}^n r^2=\tfrac16n(n+1)(2n+1),\qqu
           return {
             q: T`Evaluate $\displaystyle\sum_{r=${m}}^{${n}}(${poly([[a, 'r^2'], [b, 'r'], [c, '']])})$.`,
             fields: [{ label: 'sum', ans: v }],
-            sol: T`$\sum_{r=1}^{N}=${a}\cdot\tfrac16N(N+1)(2N+1)${sgn(b)}\cdot\tfrac12N(N+1)${sgn(c)}N$.<br>${m > 1 ? T`$\sum_{r=${m}}^{${n}}=S(${n})-S(${m - 1})=${S(n)}-${par(S(m - 1))}=${v}$.` : T`$S(${n})=${v}$.`}`,
+            sol: T`$\sum_{r=1}^{N}=${[[a, '\\tfrac16N(N+1)(2N+1)'], [b, '\\tfrac12N(N+1)'], [c, 'N']].filter(t => t[0]).map(([k, s], i) => (k < 0 ? '-' : i ? '+' : '') + (Math.abs(k) === 1 ? '' : Math.abs(k) + (s === 'N' ? '' : '\\cdot')) + s).join('') || '0'}$.<br>${m > 1 ? T`$\sum_{r=${m}}^{${n}}=S(${n})-S(${m - 1})=${S(n)}-${par(S(m - 1))}=${v}$.` : T`$S(${n})=${v}$.`}`,
           };
         },
         () => {

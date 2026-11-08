@@ -27,6 +27,14 @@ BOOK.sa1 = [
     T`$2\left(1-\frac{\theta^2}2\right)+3\theta=2.06\Rightarrow\theta^2-3\theta+0.06=0$.`,
     T`$\theta=\dfrac{3\pm\sqrt{9-0.24}}{2}$: $\theta\approx0.0201$ or $2.98$.`,
     T`Only the small root is valid for the approximation: $\theta\approx0.0201$ rad.`], T`Always reject roots that are not small — the approximation is meaningless there.`),
+  T`<h3>How small is "small"?</h3>
+<p>Each approximation is a Maclaurin series cut short, so the first term left out tells you the error. The relative error of $\sin\theta\approx\theta$ is about $\frac{\theta^2}{6}$; for $\tan\theta\approx\theta$ it is about $\frac{\theta^2}{3}$, twice as big; for $\cos\theta\approx1-\frac{\theta^2}{2}$ it is about $\frac{\theta^4}{24}$, far smaller.</p>
+<table class="tbl"><tr><th>Angle</th><th>$\sin\theta\approx\theta$</th><th>$\tan\theta\approx\theta$</th><th>$\cos\theta\approx1-\frac{\theta^2}2$</th></tr>
+<tr><td>$5^\circ$</td><td>$0.13\%$</td><td>$0.25\%$</td><td>$0.0002\%$</td></tr>
+<tr><td>$10^\circ$</td><td>$0.51\%$</td><td>$1.0\%$</td><td>$0.004\%$</td></tr>
+<tr><td>$15^\circ$</td><td>$1.2\%$</td><td>$2.3\%$</td><td>$0.02\%$</td></tr>
+<tr><td>$20^\circ$</td><td>$2.1\%$</td><td>$4.1\%$</td><td>$0.07\%$</td></tr></table>
+<p class="muted">The simulation <i>How small is "small"?</i> plots these errors against the angle.</p>`,
   B.warn([
     T`Using degrees.`,
     T`Approximating $\cos\theta$ by $1$ when the question needs the $\theta^2$ term (e.g. in $1-\cos\theta$, the $1$s cancel and only $\frac{\theta^2}2$ is left).`,

@@ -407,3 +407,18 @@ html.calm .phys .tc-stage { opacity: .8; }
   .phys .nsec, .phys .card { break-inside: avoid; box-shadow: 0 0 0 1px #999 !important; }
 }
 .phys .pr-opts > .mono { font-size: .8rem; }
+
+/* 4.5 multi-scale labs: on-canvas zoom buttons and full-screen mode */
+.phys .zoombar { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; z-index: 2; }
+.phys .zoombar button { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--ps-line-2, var(--hair)); background: var(--ps-paper); color: var(--ps-ink); font: 600 17px/1 var(--sans); cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.12); display: grid; place-items: center; padding: 0; }
+.phys .zoombar button:hover { border-color: var(--ps-blue); color: var(--ps-blue); }
+.phys .zoombar button:focus-visible { outline: 2px solid var(--ps-blue); outline-offset: 2px; }
+.phys .stage canvas:focus { outline: none; }
+.phys .stage canvas:focus-visible { outline: 2px solid var(--ps-blue); outline-offset: -2px; }
+.phys .stage.ps-max { position: fixed; inset: 0; z-index: 1000; margin: 0; border: 0; border-radius: 0; }
+.phys .stage:fullscreen { width: 100vw; height: 100vh; background-color: var(--ps-paper-2); }
+html.ps-noscroll, html.ps-noscroll body { overflow: hidden; }
+.phys .ro-sel { margin-top: 8px; }
+.phys .ro-sel .small { font-size: .78rem; margin: 6px 0 0; }
+.phys .ro.ro-tight { grid-template-columns: minmax(7.5em, 1fr) minmax(0, auto); }
+.phys .ro.ro-tight dd { white-space: normal; overflow-wrap: anywhere; }
